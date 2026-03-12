@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .admin-shell {
+    background:
+      radial-gradient(900px 520px at 10% 10%, rgba(168, 85, 247, 0.30), transparent 60%),
+      radial-gradient(920px 560px at 80% 20%, rgba(99, 102, 241, 0.28), transparent 62%),
+      radial-gradient(900px 540px at 40% 90%, rgba(236, 72, 153, 0.14), transparent 65%),
+      linear-gradient(180deg, #070318 0%, #090321 45%, #07021a 100%);
+  }
+
+  .admin-panel {
+    @apply bg-white/10 backdrop-blur-xl ring-1 ring-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.35)];
+  }
+}
