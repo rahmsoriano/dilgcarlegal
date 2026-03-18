@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DilgOpinion;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Models\LegalOpinionLibrary;
 
 class OpinionsController extends Controller
 {
     public function index(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-        $opinions = DilgOpinion::query()
+        $opinions = LegalOpinionLibrary::query()
             ->when($q !== '', fn ($query) => $query->search($q))
+            ->orderByDesc('date')
             ->orderByDesc('updated_at')
             ->paginate(20)
             ->withQueryString();
@@ -32,20 +32,49 @@ class OpinionsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:200'],
-            'reference_no' => ['nullable', 'string', 'max:100'],
-            'opinion_date' => ['nullable', 'date'],
-            'tags' => ['nullable', 'string', 'max:200'],
-            'slug' => ['nullable', 'string', 'max:120', 'unique:dilg_opinions,slug'],
-            'body' => ['required', 'string'],
+            'title' => ['required', 'string', 'max:255'],
+            'opinion_number' => ['required', 'string', 'max:255'],
+            'date' => ['required', 'date'],
+            'context' => ['required', 'string'],
         ]);
 
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug(Str::limit($validated['title'], 60, ''));
-        }
+        $opinion = LegalOpinionLibrary::create($validated);
 
-        $opinion = DilgOpinion::create($validated);
+        return redirect()->route('admin.opinions.show', $opinion);
+    }
 
-        return redirect()->route('admin.opinions.index').'#opinion-'.$opinion->id;
+    public function show(LegalOpinionLibrary $opinion)
+    {
+        return view('admin.opinions.show', [
+            'opinion' => $opinion,
+        ]);
+    }
+
+    public function edit(LegalOpinionLibrary $opinion)
+    {
+        return view('admin.opinions.edit', [
+            'opinion' => $opinion,
+        ]);
+    }
+
+    public function update(Request $request, LegalOpinionLibrary $opinion)
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'opinion_number' => ['required', 'string', 'max:255'],
+            'date' => ['required', 'date'],
+            'context' => ['required', 'string'],
+        ]);
+
+        $opinion->update($validated);
+
+        return redirect()->route('admin.opinions.show', $opinion);
+    }
+
+    public function destroy(LegalOpinionLibrary $opinion)
+    {
+        $opinion->delete();
+
+        return redirect()->route('admin.opinions.index');
     }
 }

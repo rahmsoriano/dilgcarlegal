@@ -31,12 +31,12 @@ Route::get('/', function () {
         return redirect()->route('chat.index');
     }
 
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
     if (auth()->user()->is_admin) {
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.legal.ai');
     }
     return redirect()->route('chat.index');
 })->middleware(['auth'])->name('dashboard');
@@ -57,14 +57,13 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/legal-ai', [AdminChatController::class, 'index'])->name('legal.ai');
+    Route::get('/legal-ai/new', [AdminChatController::class, 'create'])->name('legal.ai.new');
     Route::get('/legal-ai/saved', [AdminChatController::class, 'saved'])->name('legal.ai.saved');
     Route::get('/legal-ai/{conversation}', [AdminChatController::class, 'show'])->name('legal.ai.show');
     Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
     Route::patch('/users/{user}', [AdminUsersController::class, 'update'])->name('users.update');
     Route::get('/usage', [AdminUsageController::class, 'index'])->name('usage.index');
-    Route::get('/opinions', [AdminOpinionsController::class, 'index'])->name('opinions.index');
-    Route::get('/opinions/create', [AdminOpinionsController::class, 'create'])->name('opinions.create');
-    Route::post('/opinions', [AdminOpinionsController::class, 'store'])->name('opinions.store');
+    Route::resource('opinions', AdminOpinionsController::class);
 
     Route::resource('laws', AdminLawController::class);
 });

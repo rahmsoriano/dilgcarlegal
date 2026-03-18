@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Law;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Smalot\PdfParser\Parser;
 
@@ -13,6 +14,8 @@ class LawController extends Controller
     public function index(Request $request)
     {
         $query = Law::query();
+        $hasYearColumn = Schema::hasColumn('laws', 'year');
+        $hasCategoryColumn = Schema::hasColumn('laws', 'category');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -23,18 +26,22 @@ class LawController extends Controller
             });
         }
 
-        if ($request->filled('year')) {
+        if ($hasYearColumn && $request->filled('year')) {
             $query->where('year', $request->year);
         }
 
-        if ($request->filled('category')) {
+        if ($hasCategoryColumn && $request->filled('category')) {
             $query->where('category', $request->category);
         }
 
         $laws = $query->latest()->paginate(10);
         
-        $years = Law::select('year')->distinct()->orderBy('year', 'desc')->pluck('year');
-        $categories = Law::select('category')->distinct()->whereNotNull('category')->pluck('category');
+        $years = $hasYearColumn
+            ? Law::select('year')->distinct()->orderBy('year', 'desc')->pluck('year')
+            : collect();
+        $categories = $hasCategoryColumn
+            ? Law::select('category')->distinct()->whereNotNull('category')->pluck('category')
+            : collect();
 
         return view('admin.laws.index', compact('laws', 'years', 'categories'));
     }

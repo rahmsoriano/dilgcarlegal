@@ -31,6 +31,17 @@ class AdminChatController extends Controller
         ]);
     }
 
+    public function create(Request $request)
+    {
+        $conversation = Conversation::create([
+            'user_id' => $request->user()->id,
+            'title' => null,
+            'last_message_at' => now(),
+        ]);
+
+        return redirect()->route('admin.legal.ai.show', $conversation);
+    }
+
     public function show(Request $request, Conversation $conversation)
     {
         $user = $request->user();

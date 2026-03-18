@@ -2,30 +2,29 @@
 
 namespace App\Services;
 
-use App\Models\DilgOpinion;
+use App\Models\LegalOpinionLibrary;
 use Illuminate\Support\Str;
 
 class OpinionRetriever
 {
     public function retrieve(string $query, int $limit = 5): array
     {
-        $results = DilgOpinion::query()
+        $results = LegalOpinionLibrary::query()
             ->search($query)
             ->limit($limit)
-            ->get(['id', 'title', 'reference_no', 'opinion_date', 'slug', 'body']);
+            ->get(['id', 'title', 'opinion_number', 'date', 'context']);
 
         $items = [];
 
         foreach ($results as $op) {
-            $snippet = Str::limit(preg_replace('/\\s+/', ' ', $this->firstParagraph((string) $op->body)), 280, '…');
+            $snippet = Str::limit(preg_replace('/\\s+/', ' ', $this->firstParagraph((string) $op->context)), 280, '…');
             $items[] = [
                 'id' => $op->id,
                 'title' => $op->title,
-                'reference' => $op->reference_no,
-                'date' => optional($op->opinion_date)->format('Y-m-d'),
-                'slug' => $op->slug,
+                'opinion_number' => $op->opinion_number,
+                'date' => optional($op->date)->format('Y-m-d'),
                 'snippet' => $snippet,
-                'url' => route('admin.opinions.index').'#opinion-'.$op->id,
+                'url' => route('admin.opinions.show', $op),
             ];
         }
 
