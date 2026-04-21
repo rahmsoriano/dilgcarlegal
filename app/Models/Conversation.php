@@ -12,12 +12,16 @@ class Conversation extends Model
         'user_id',
         'title',
         'is_saved',
+        'is_pinned',
+        'pinned_at',
         'saved_at',
         'last_message_at',
     ];
 
     protected $casts = [
         'is_saved' => 'boolean',
+        'is_pinned' => 'boolean',
+        'pinned_at' => 'datetime',
         'saved_at' => 'datetime',
         'last_message_at' => 'datetime',
     ];

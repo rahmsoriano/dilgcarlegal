@@ -43,6 +43,11 @@ return [
         'base_uri' => env('GEMINI_BASE_URL', env('gemini_base_url', 'https://generativelanguage.googleapis.com/v1beta')),
         'model' => env('GEMINI_MODEL', env('gemini_model', 'gemini-1.5-flash')),
         'timeout' => (int) env('GEMINI_TIMEOUT', (int) env('gemini_timeout', 60)),
+        'verify_ssl' => (bool) env('GEMINI_VERIFY_SSL', env('APP_ENV') === 'local' ? false : true),
+    ],
+
+    'chat' => [
+        'system_prompt' => env('CHAT_SYSTEM_PROMPT', ''),
     ],
 
 ];

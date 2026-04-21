@@ -12,18 +12,20 @@ class OpinionRetriever
         $results = LegalOpinionLibrary::query()
             ->search($query)
             ->limit($limit)
-            ->get(['id', 'title', 'opinion_number', 'date', 'context']);
+            ->get(['id', 'title', 'opinion_number', 'date', 'context', 'keywords']);
 
         $items = [];
 
         foreach ($results as $op) {
-            $snippet = Str::limit(preg_replace('/\\s+/', ' ', $this->firstParagraph((string) $op->context)), 280, '…');
+            $context = trim((string) $op->context);
+            $snippet = Str::limit(preg_replace('/\\s+/', ' ', $this->firstParagraph($context)), 280, '…');
             $items[] = [
                 'id' => $op->id,
                 'title' => $op->title,
                 'opinion_number' => $op->opinion_number,
                 'date' => optional($op->date)->format('Y-m-d'),
                 'snippet' => $snippet,
+                'context' => $context,
                 'url' => route('admin.opinions.show', $op),
             ];
         }

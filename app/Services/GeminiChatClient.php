@@ -15,6 +15,7 @@ class GeminiChatClient
         $baseUri = rtrim((string) config('services.gemini.base_uri'), '/');
         $timeout = (int) config('services.gemini.timeout', 60);
         $model = $model ?: (string) config('services.gemini.model', 'gemini-1.5-flash');
+        $verifySsl = (bool) config('services.gemini.verify_ssl', true);
 
         if ($apiKey === '') {
             throw new AiRequestException('Gemini API key is not configured.');
@@ -50,15 +51,34 @@ class GeminiChatClient
         $maxAttempts = 3;
         $backoffMs = 250;
 
+        $triedModels = [];
+        $fallbackModels = [];
+        if ($model !== '') {
+            $fallbackModels[] = $model;
+        }
+        if ($model !== '' && ! str_ends_with($model, '-latest')) {
+            $fallbackModels[] = $model.'-latest';
+        }
+        $fallbackModels[] = 'gemini-1.5-flash-latest';
+        $fallbackModels[] = 'gemini-1.5-pro-latest';
+        $fallbackModels[] = 'gemini-2.0-flash';
+
+        $modelIndex = 0;
+
         while (true) {
             $attempt++;
 
             try {
+                $options = ['query' => ['key' => $apiKey]];
+                if (! $verifySsl) {
+                    $options['verify'] = false;
+                }
+
                 $response = Http::acceptJson()
                     ->asJson()
                     ->timeout($timeout)
-                    ->withOptions(['query' => ['key' => $apiKey]])
-                    ->post($baseUri.'/models/'.$model.':generateContent', $payload);
+                    ->withOptions($options)
+                    ->post($baseUri.'/models/'.$fallbackModels[$modelIndex].':generateContent', $payload);
             } catch (ConnectionException $e) {
                 if ($attempt < $maxAttempts) {
                     usleep($backoffMs * 1000);
@@ -79,7 +99,7 @@ class GeminiChatClient
 
                 return [
                     'content' => $text,
-                    'model' => $model,
+                    'model' => $fallbackModels[$modelIndex],
                     'usage' => [
                         'prompt_tokens' => data_get($data, 'usageMetadata.promptTokenCount'),
                         'completion_tokens' => data_get($data, 'usageMetadata.candidatesTokenCount'),
@@ -96,7 +116,18 @@ class GeminiChatClient
             $errorCode = is_numeric(data_get($error, 'code')) ? (string) data_get($error, 'code') : null;
             $errorMessage = is_string(data_get($error, 'message')) ? (string) data_get($error, 'message') : ('AI provider error (HTTP '.$status.').');
 
-            if (in_array($status, [429, 500, 502, 503, 504], true) && $attempt < $maxAttempts) {
+            if ($status === 404) {
+                $triedModels[] = $fallbackModels[$modelIndex];
+                $modelIndex++;
+                if ($modelIndex < count($fallbackModels)) {
+                    $attempt = 0;
+                    $backoffMs = 250;
+
+                    continue;
+                }
+            }
+
+            if (in_array($status, [500, 502, 503, 504], true) && $attempt < $maxAttempts) {
                 usleep($backoffMs * 1000);
                 $backoffMs *= 2;
 
@@ -107,6 +138,8 @@ class GeminiChatClient
                 'http_status' => $status,
                 'error_type' => $errorType,
                 'error_code' => $errorCode,
+                'model' => $fallbackModels[$modelIndex] ?? null,
+                'tried_models' => $triedModels,
             ]);
 
             throw new AiRequestException($errorMessage, $status, $errorType, $errorCode, is_array($payloadErr) ? $payloadErr : null);

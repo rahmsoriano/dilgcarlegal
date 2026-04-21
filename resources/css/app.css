@@ -2,17 +2,201 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes globalLoadingSpin {
+  to { transform: rotate(360deg); }
+}
+
 @layer utilities {
+  body.auth-modal-open {
+    overflow: hidden;
+  }
+
+  .auth-modal-backdrop {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .auth-modal-panel {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .auth-modal.is-open .auth-modal-backdrop {
+    opacity: 1;
+  }
+
+  .auth-modal.is-open .auth-modal-panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .auth-modal-close {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    z-index: 10;
+    display: inline-flex;
+    height: 40px;
+    width: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    color: rgba(15, 23, 42, 0.78);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
+  }
+
+  .auth-modal-close:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+
+  :root {
+    --dilg-purple: #2b1b5a;
+    --dilg-blue: #254aa8;
+    --dilg-red: #b23a3b;
+    --dilg-orange: #d27a2a;
+    --dilg-yellow: #e3c54d;
+  }
+
+  .auth-grid {
+    background-image:
+      radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.14), transparent 38%),
+      radial-gradient(circle at 78% 40%, rgba(255, 255, 255, 0.12), transparent 42%),
+      linear-gradient(90deg,
+        var(--dilg-purple) 0%,
+        var(--dilg-blue) 34%,
+        var(--dilg-red) 62%,
+        var(--dilg-orange) 82%,
+        var(--dilg-yellow) 100%
+      ),
+      linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: auto, auto, auto, 26px 26px, 26px 26px;
+  }
+
+  .auth-input {
+    background: rgba(15, 23, 42, 0.04);
+    border: 0;
+  }
+
+  .auth-input::placeholder {
+    color: rgba(15, 23, 42, 0.45);
+  }
+
+  .auth-login-button {
+    background: linear-gradient(90deg,
+      var(--dilg-purple) 0%,
+      var(--dilg-blue) 34%,
+      var(--dilg-red) 62%,
+      var(--dilg-orange) 82%,
+      var(--dilg-yellow) 100%
+    );
+    box-shadow:
+      0 14px 34px rgba(37, 74, 168, 0.22),
+      0 10px 22px rgba(43, 27, 90, 0.12);
+  }
+
+  .auth-login-button:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 18px 46px rgba(37, 74, 168, 0.26),
+      0 14px 30px rgba(43, 27, 90, 0.14);
+  }
+
+  .auth-view {
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .auth-view[aria-hidden="true"] {
+    opacity: 0;
+    transform: translateX(14px);
+    pointer-events: none;
+  }
+
+  .auth-view[aria-hidden="false"] {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
   .admin-shell {
     background:
-      radial-gradient(900px 520px at 16% 18%, rgba(99, 102, 241, 0.35), transparent 60%),
-      radial-gradient(820px 520px at 84% 22%, rgba(59, 130, 246, 0.32), transparent 62%),
-      radial-gradient(720px 520px at 72% 88%, rgba(14, 165, 233, 0.18), transparent 66%),
-      linear-gradient(135deg, #0a1027 0%, #0b1432 35%, #0b163a 70%, #0a1536 100%);
+      radial-gradient(900px 520px at 16% 18%, rgba(99, 102, 241, 0.14), transparent 62%),
+      radial-gradient(860px 540px at 84% 22%, rgba(14, 165, 233, 0.12), transparent 64%),
+      radial-gradient(720px 520px at 72% 88%, rgba(236, 72, 153, 0.06), transparent 68%),
+      radial-gradient(780px 520px at 24% 86%, rgba(34, 197, 94, 0.05), transparent 70%),
+      linear-gradient(180deg, #f8fafc 0%, #eef2ff 52%, #ffffff 100%);
     background-attachment: fixed;
   }
 
   .admin-panel {
     @apply bg-white/10 backdrop-blur-xl ring-1 ring-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.35)];
+  }
+
+  .global-loading-backdrop {
+    background: rgba(15, 23, 42, 0.22);
+  }
+
+  .global-loading-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px 18px 16px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+  }
+
+  .global-loading-spinner {
+    height: 56px;
+    width: 56px;
+    border-radius: 9999px;
+    background: conic-gradient(from 0deg, #2563eb 0deg 70deg, rgba(148, 163, 184, 0.35) 70deg 360deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 0);
+    animation: globalLoadingSpin 0.9s linear infinite;
+  }
+
+  .global-loading-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+  }
+
+  :root {
+    --app-scrollbar-size: 6px;
+    --app-scrollbar-thumb: rgba(148, 163, 184, 0.45);
+    --app-scrollbar-thumb-hover: rgba(148, 163, 184, 0.6);
+    --app-scrollbar-track: transparent;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: var(--app-scrollbar-size);
+    height: var(--app-scrollbar-size);
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--app-scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--app-scrollbar-thumb);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--app-scrollbar-thumb-hover);
   }
 }

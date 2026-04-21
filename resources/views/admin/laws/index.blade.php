@@ -187,7 +187,7 @@
                                         </button>
 
                                         <!-- Delete Button -->
-                                        <form action="{{ route('admin.laws.destroy', $law) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this document?')">
+                                        <form action="{{ route('admin.laws.destroy', $law) }}" method="POST" data-confirm="delete" data-confirm-title="Delete Document" data-confirm-message="Are you sure you want to delete this document?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all"

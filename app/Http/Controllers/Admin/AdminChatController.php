@@ -13,6 +13,9 @@ class AdminChatController extends Controller
         $user = $request->user();
 
         $conversations = $user->conversations()
+            ->where('is_saved', false)
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('pinned_at')
             ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->limit(100)
@@ -20,7 +23,7 @@ class AdminChatController extends Controller
 
         $activeConversation = $conversations->first();
         $messages = $activeConversation
-            ? $activeConversation->messages // Access the already loaded messages
+            ? $activeConversation->messages()->orderBy('id')->get()
             : collect();
 
         return view('admin.chat', [
@@ -33,13 +36,23 @@ class AdminChatController extends Controller
 
     public function create(Request $request)
     {
-        $conversation = Conversation::create([
-            'user_id' => $request->user()->id,
-            'title' => null,
-            'last_message_at' => now(),
-        ]);
+        $user = $request->user();
 
-        return redirect()->route('admin.legal.ai.show', $conversation);
+        $conversations = $user->conversations()
+            ->where('is_saved', false)
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('pinned_at')
+            ->orderByDesc('last_message_at')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get();
+
+        return view('admin.chat', [
+            'conversations' => $conversations,
+            'activeConversation' => null,
+            'messages' => collect(),
+            'mode' => 'all',
+        ]);
     }
 
     public function show(Request $request, Conversation $conversation)
@@ -49,6 +62,9 @@ class AdminChatController extends Controller
         abort_unless($conversation->user_id === $user->id, 404);
 
         $conversations = $user->conversations()
+            ->where('is_saved', false)
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('pinned_at')
             ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->limit(100)
@@ -75,16 +91,8 @@ class AdminChatController extends Controller
              ->limit(100)
              ->get();
 
-         $activeConversation = $conversations->first();
-        $messages = $activeConversation
-            ? $activeConversation->messages()->orderBy('id')->get()
-            : collect();
-
-        return view('admin.chat', [
+        return view('admin.archive', [
             'conversations' => $conversations,
-            'activeConversation' => $activeConversation,
-            'messages' => $messages,
-            'mode' => 'saved',
         ]);
     }
 }
