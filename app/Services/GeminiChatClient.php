@@ -14,6 +14,9 @@ class GeminiChatClient
         $apiKey = (string) config('services.gemini.api_key');
         $baseUri = rtrim((string) config('services.gemini.base_uri'), '/');
         $timeout = (int) config('services.gemini.timeout', 60);
+        $connectTimeout = (int) config('services.gemini.connect_timeout', 10);
+        $maxAttempts = (int) config('services.gemini.max_attempts', 1);
+        $maxModels = (int) config('services.gemini.max_models', 3);
         $model = $model ?: (string) config('services.gemini.model', 'gemini-1.5-flash');
         $verifySsl = (bool) config('services.gemini.verify_ssl', true);
 
@@ -48,7 +51,6 @@ class GeminiChatClient
         }
 
         $attempt = 0;
-        $maxAttempts = 3;
         $backoffMs = 250;
 
         $triedModels = [];
@@ -63,6 +65,10 @@ class GeminiChatClient
         $fallbackModels[] = 'gemini-1.5-pro-latest';
         $fallbackModels[] = 'gemini-2.0-flash';
 
+        if ($maxModels > 0) {
+            $fallbackModels = array_slice($fallbackModels, 0, $maxModels);
+        }
+
         $modelIndex = 0;
 
         while (true) {
@@ -76,11 +82,12 @@ class GeminiChatClient
 
                 $response = Http::acceptJson()
                     ->asJson()
+                    ->connectTimeout($connectTimeout)
                     ->timeout($timeout)
                     ->withOptions($options)
                     ->post($baseUri.'/models/'.$fallbackModels[$modelIndex].':generateContent', $payload);
             } catch (ConnectionException $e) {
-                if ($attempt < $maxAttempts) {
+                if ($attempt < max(1, $maxAttempts)) {
                     usleep($backoffMs * 1000);
                     $backoffMs *= 2;
 
@@ -127,7 +134,7 @@ class GeminiChatClient
                 }
             }
 
-            if (in_array($status, [500, 502, 503, 504], true) && $attempt < $maxAttempts) {
+            if (in_array($status, [500, 502, 503, 504], true) && $attempt < max(1, $maxAttempts)) {
                 usleep($backoffMs * 1000);
                 $backoffMs *= 2;
 

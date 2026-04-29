@@ -7,22 +7,22 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class OpenAiChatClient
+class GroqChatClient
 {
     public function chat(array $messages, ?string $model = null): array
     {
-        $apiKey = config('services.openai.api_key');
-        $baseUri = rtrim((string) config('services.openai.base_uri'), '/');
-        $timeout = (int) config('services.openai.timeout', 60);
-        $connectTimeout = (int) config('services.openai.connect_timeout', 10);
-        $maxAttempts = (int) config('services.openai.max_attempts', 1);
+        $apiKey = config('services.groq.api_key');
+        $baseUri = rtrim((string) config('services.groq.base_uri'), '/');
+        $timeout = (int) config('services.groq.timeout', 60);
+        $connectTimeout = (int) config('services.groq.connect_timeout', 10);
+        $maxAttempts = (int) config('services.groq.max_attempts', 1);
 
-        if (! is_string($apiKey) || $apiKey === '') {
-            throw new AiRequestException('OpenAI API key is not configured.');
+        if (! is_string($apiKey) || $apiKey === '' || $apiKey === 'your_groq_api_key_here') {
+            throw new AiRequestException('Groq API key is not configured.');
         }
 
         $payload = [
-            'model' => $model ?: (string) config('services.openai.model', 'gpt-4o-mini'),
+            'model' => $model ?: (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
             'messages' => $messages,
         ];
 
@@ -47,8 +47,8 @@ class OpenAiChatClient
                     continue;
                 }
 
-                Log::warning('OpenAI connection error', ['message' => $e->getMessage()]);
-                throw new AiRequestException('AI provider connection error.', null, 'connection_error');
+                Log::warning('Groq connection error', ['message' => $e->getMessage()]);
+                throw new AiRequestException('AI provider connection error (Groq).', null, 'connection_error');
             }
 
             if ($response->successful()) {
@@ -56,7 +56,7 @@ class OpenAiChatClient
                 $content = data_get($data, 'choices.0.message.content');
 
                 if (! is_string($content)) {
-                    throw new AiRequestException('AI provider returned an unexpected response.', $response->status(), 'unexpected_response', null, is_array($data) ? $data : null);
+                    throw new AiRequestException('AI provider returned an unexpected response (Groq).', $response->status(), 'unexpected_response', null, is_array($data) ? $data : null);
                 }
 
                 return [
@@ -72,7 +72,7 @@ class OpenAiChatClient
             $error = is_array($errorPayload) ? (array) data_get($errorPayload, 'error', []) : [];
             $errorType = is_string(data_get($error, 'type')) ? (string) data_get($error, 'type') : null;
             $errorCode = is_string(data_get($error, 'code')) ? (string) data_get($error, 'code') : null;
-            $errorMessage = is_string(data_get($error, 'message')) ? (string) data_get($error, 'message') : ('AI provider error (HTTP '.$status.').');
+            $errorMessage = is_string(data_get($error, 'message')) ? (string) data_get($error, 'message') : ('AI provider error (Groq HTTP '.$status.').');
 
             if (in_array($status, [429, 500, 502, 503, 504], true) && $attempt < max(1, $maxAttempts)) {
                 $retryAfterSeconds = (int) ($response->header('Retry-After') ?: 0);
@@ -83,7 +83,7 @@ class OpenAiChatClient
                 continue;
             }
 
-            Log::warning('OpenAI request failed', [
+            Log::warning('Groq request failed', [
                 'http_status' => $status,
                 'error_type' => $errorType,
                 'error_code' => $errorCode,

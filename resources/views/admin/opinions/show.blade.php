@@ -1,8 +1,11 @@
-<x-admin-layout>
+<x-admin-layout :mode="$isAdmin ? 'admin' : 'public'">
     <div class="max-w-5xl mx-auto space-y-8">
         <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div class="flex items-start gap-6">
-                <a href="{{ route('admin.opinions.index') }}" class="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-slate-500 ring-1 ring-slate-900/5 hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-sm">
+                @php
+                    $backRoute = $isAdmin ? route('admin.opinions.index') : route('legal.ai');
+                @endphp
+                <a href="{{ $backRoute }}" class="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-slate-500 ring-1 ring-slate-900/5 hover:bg-white hover:text-slate-900 transition-all duration-300 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
@@ -19,18 +22,20 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <a href="{{ route('admin.opinions.edit', $opinion) }}" class="inline-flex items-center justify-center rounded-2xl bg-white/80 px-6 py-3.5 text-sm font-bold text-slate-700 ring-1 ring-slate-900/10 hover:bg-white hover:text-slate-900 transition-all shadow-sm">
-                    Edit
-                </a>
-                <form method="POST" action="{{ route('admin.opinions.destroy', $opinion) }}" data-confirm="delete" data-confirm-title="Delete Legal Opinion" data-confirm-message="Delete this legal opinion?">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-rose-500/5 px-6 py-3.5 text-sm font-bold text-rose-600 ring-1 ring-rose-500/20 hover:bg-rose-600 hover:text-white transition-all">
-                        Delete
-                    </button>
-                </form>
-            </div>
+            @if ($isAdmin)
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('admin.opinions.edit', $opinion) }}" class="inline-flex items-center justify-center rounded-2xl bg-white/80 px-6 py-3.5 text-sm font-bold text-slate-700 ring-1 ring-slate-900/10 hover:bg-white hover:text-slate-900 transition-all shadow-sm">
+                        Edit
+                    </a>
+                    <form method="POST" action="{{ route('admin.opinions.destroy', $opinion) }}" data-confirm="delete" data-confirm-title="Delete Legal Opinion" data-confirm-message="Delete this legal opinion?">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-rose-500/5 px-6 py-3.5 text-sm font-bold text-rose-600 ring-1 ring-rose-500/20 hover:bg-rose-600 hover:text-white transition-all">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
 
         @if (session('success'))

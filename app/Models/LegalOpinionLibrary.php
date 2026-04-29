@@ -36,7 +36,7 @@ class LegalOpinionLibrary extends Model
 
         if ($driver === 'mysql') {
             return $query
-                ->select('*')
+                ->select(['id', 'title', 'opinion_number', 'date', 'keywords'])
                 ->selectRaw('MATCH(title, opinion_number, context, keywords) AGAINST (? IN NATURAL LANGUAGE MODE) AS score', [$term])
                 ->whereRaw('MATCH(title, opinion_number, context, keywords) AGAINST (? IN NATURAL LANGUAGE MODE)', [$term])
                 ->orderByDesc('score');

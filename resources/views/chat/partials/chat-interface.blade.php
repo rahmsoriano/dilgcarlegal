@@ -111,6 +111,13 @@
     }
 </style>
 
+<style>
+    /* Force hide the global loading overlay for the chat interface as requested */
+    #global-loading-overlay {
+        display: none !important;
+    }
+</style>
+
 <div class="chat-shell h-full min-h-0 {{ $isPro ? '' : 'px-4 py-4 sm:px-6 lg:px-8' }}">
     <div class="mx-auto flex h-full min-h-0 w-full {{ $isPro ? 'max-w-full' : 'max-w-[1700px]' }}">
         <section class="chat-panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[2.5rem]">
@@ -121,7 +128,7 @@
                 @if ($messages->isEmpty())
                     <div class="flex h-full flex-col items-center justify-center text-center">
                         <div class="relative mb-8">
-                            <div class="absolute inset-0 bg-indigo-500 blur-[40px] opacity-20 animate-pulse"></div>
+                            <div class="absolute inset-0 bg-[#002C76] blur-[40px] opacity-20 animate-pulse"></div>
                             <div class="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white shadow-2xl">
                                 <img
                                     src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg"
@@ -130,7 +137,7 @@
                                 >
                             </div>
                         </div>
-                        <h3 class="text-3xl font-black tracking-tight {{ $isPro ? 'text-slate-900' : 'text-slate-950' }}">What can I assist you today?</h3>
+                        <h3 class="text-3xl font-black tracking-tight {{ $isPro ? 'text-slate-900' : 'text-slate-950' }}">What can Lex assist you today?</h3>
                         <p class="mt-4 max-w-md text-lg text-slate-500 font-medium leading-relaxed">Ask about legal opinions.</p>
                     </div>
                 @else
@@ -138,16 +145,16 @@
                         @foreach ($messages as $message)
                             <div class="message-enter {{ $message->role === 'user' ? 'ml-auto max-w-2xl' : 'mr-auto max-w-3xl' }}">
                                 <div class="mb-4 flex items-center gap-4 px-2 {{ $message->role === 'user' ? 'flex-row-reverse text-right' : '' }}">
-                                    <div class="shrink-0 {{ $message->role === 'user' ? ($isPro ? 'bg-gradient-to-br from-indigo-600 to-blue-600 shadow-sm' : 'bg-slate-950') : ($isPro ? 'bg-slate-900/[0.04] ring-1 ring-slate-900/10' : 'bg-sky-100') }} flex h-10 w-10 items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-widest {{ $message->role === 'user' ? 'text-white' : ($isPro ? 'text-slate-800' : 'text-sky-800') }}">
-                                        {{ $message->role === 'user' ? 'You' : 'AI' }}
+                                    <div class="shrink-0 {{ $message->role === 'user' ? ($isPro ? 'shadow-sm' : 'bg-slate-950') : ($isPro ? 'bg-slate-900/[0.04] ring-1 ring-slate-900/10' : 'bg-sky-100') }} flex h-10 w-10 items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-widest {{ $message->role === 'user' ? 'text-white' : ($isPro ? 'text-slate-800' : 'text-sky-800') }}" style="{{ $message->role === 'user' && $isPro ? 'background-color: #002C76 !important;' : '' }}">
+                                        {{ $message->role === 'user' ? 'You' : 'LX' }}
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-xs font-black uppercase tracking-[0.2em] {{ $isPro ? 'text-slate-900' : 'text-slate-900' }}">{{ $message->role === 'user' ? 'You' : 'LAW Assistant' }}</div>
+                                        <div class="text-xs font-black uppercase tracking-[0.2em] {{ $isPro ? 'text-slate-900' : 'text-slate-900' }}">{{ $message->role === 'user' ? 'You' : 'Lex' }}</div>
                                     </div>
                                 </div>
 
                                 <div class="{{ $message->role === 'user' ? ($isPro ? 'rounded-[2rem_2rem_0.5rem_2rem] message-bubble-user text-white' : 'rounded-[2rem_2rem_0.5rem_2rem] bg-slate-950 text-white') : ($isPro ? 'rounded-[2rem_2rem_2rem_0.5rem] message-bubble-ai text-slate-800' : 'rounded-[2rem_2rem_2rem_0.5rem] border border-slate-200 bg-white text-slate-800 shadow-sm') }} px-8 py-6 shadow-2xl">
-                                    <div class="whitespace-pre-wrap text-[15px] leading-relaxed font-medium tracking-wide">{{ $message->content }}</div>
+                                    <div class="whitespace-pre-wrap text-[15px] leading-relaxed font-medium tracking-wide">{!! $message->content !!}</div>
                                 </div>
                             </div>
                         @endforeach
@@ -173,7 +180,7 @@
                                 class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-medium leading-6 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
                                 placeholder="Type your legal inquiry here..."
                             ></textarea>
-                            <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-12 items-center justify-center rounded-2xl {{ $isPro ? 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20' : 'bg-slate-950 hover:bg-slate-800' }} text-white transition-all duration-300 hover:-translate-y-1">
+                            <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-12 items-center justify-center rounded-2xl {{ $isPro ? 'bg-[#002C76] hover:bg-[#002C76]/90 shadow-lg shadow-[#002C76]/20' : 'bg-slate-950 hover:bg-slate-800' }} text-white transition-all duration-300 hover:-translate-y-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 transition-transform group-hover:translate-x-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.76 0 013.27 20.876L5.999 12zm0 0h7.5" />
                                 </svg>
@@ -185,6 +192,35 @@
             </div>
             </div>
         </section>
+    </div>
+
+    <!-- Opinion Viewer Modal -->
+    <div id="opinion-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 sm:p-6" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[6px] transition-opacity" id="opinion-modal-overlay"></div>
+
+        <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col transform overflow-hidden rounded-[2.5rem] bg-white ring-1 ring-slate-900/10 shadow-[0_24px_70px_rgba(15,23,42,0.18)] transition-all">
+            <div class="absolute right-6 top-6 z-10">
+                <button type="button" id="close-opinion-modal" class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-8 pb-10 pt-12 sm:px-12 sm:pb-12 sm:pt-16 chat-scrollbar">
+                <div id="opinion-modal-content" class="opacity-0 transition-opacity duration-300">
+                    <div class="mb-8">
+                        <div id="opinion-modal-number" class="inline-flex rounded-full bg-indigo-50 px-4 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-indigo-600 ring-1 ring-indigo-500/10 mb-4"></div>
+                        <h2 id="opinion-modal-title" class="text-3xl font-black tracking-tight text-slate-900 leading-tight"></h2>
+                        <div id="opinion-modal-date" class="mt-3 text-sm font-bold text-slate-500 uppercase tracking-widest"></div>
+                    </div>
+
+                    <div class="prose prose-slate max-w-none">
+                        <div id="opinion-modal-body" class="whitespace-pre-wrap text-base leading-relaxed text-slate-700 font-medium"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -213,7 +249,11 @@
             link = document.createElement('a');
             link.dataset.conversationId = String(id);
             link.href = url;
-            link.className = 'block rounded-2xl border px-4 py-3 transition-all border-indigo-500/30 bg-indigo-500/10 text-slate-900 ring-1 ring-indigo-500/20 shadow-sm';
+            link.className = 'block rounded-2xl border px-4 py-3 transition-all';
+            link.style.borderColor = '#FFDE15';
+            link.style.backgroundColor = 'white';
+            link.style.color = '#002C76';
+            link.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
             const text = document.createElement('div');
             text.className = 'truncate text-sm font-semibold tracking-tight';
             link.appendChild(text);
@@ -247,21 +287,21 @@
         const avatar = document.createElement('div');
         if (isPro) {
             avatar.className = (role === 'user'
-                ? 'bg-gradient-to-br from-indigo-600 to-blue-600 shadow-sm text-white'
+                ? 'bg-[#002C76] shadow-sm text-white'
                 : 'bg-slate-900/[0.04] ring-1 ring-slate-900/10 text-slate-800') + ' shrink-0 flex h-10 w-10 items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-widest';
         } else {
             avatar.className = (role === 'user'
                 ? 'bg-slate-950 text-white'
                 : 'bg-sky-100 text-sky-800') + ' flex h-10 w-10 items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-widest';
         }
-        avatar.textContent = role === 'user' ? 'You' : 'AI';
+        avatar.textContent = role === 'user' ? 'You' : 'LX';
 
         const metaText = document.createElement('div');
         metaText.className = 'min-w-0';
 
         const label = document.createElement('div');
         label.className = 'text-xs font-black uppercase tracking-[0.2em] ' + (isPro ? 'text-slate-900' : 'text-slate-900');
-        label.textContent = role === 'user' ? 'You' : 'Assistant';
+        label.textContent = role === 'user' ? 'You' : 'Lex';
 
         metaText.appendChild(label);
         meta.appendChild(avatar);
@@ -280,7 +320,11 @@
 
         const body = document.createElement('div');
         body.className = 'whitespace-pre-wrap text-[15px] leading-relaxed font-medium tracking-wide';
-        body.textContent = content;
+        if (role === 'user') {
+            body.textContent = content;
+        } else {
+            body.innerHTML = content;
+        }
 
         bubble.appendChild(body);
         container.appendChild(meta);
@@ -322,7 +366,13 @@
             return { id: existingId, url: existingUrl, messagesUrl: existingMessagesUrl };
         }
 
-        const resp = await window.axios.post(form.dataset.createUrl, {}, { headers: { Accept: 'application/json' } });
+        const resp = await window.axios.post(form.dataset.createUrl, {}, { 
+            headers: { 
+                Accept: 'application/json',
+                'X-Loader-Skip': 'true'
+            },
+            timeout: 45000,
+        });
         form.dataset.conversationId = String(resp.data.id);
         form.dataset.activeConversationUrl = resp.data.url;
         form.dataset.messagesUrl = resp.data.messages_url;
@@ -361,12 +411,18 @@
 
         try {
             const conv = await ensureConversation();
-            const resp = await window.axios.post(conv.messagesUrl, { prompt }, { headers: { Accept: 'application/json' } });
+            const resp = await window.axios.post(conv.messagesUrl, { prompt }, { 
+                headers: { 
+                    Accept: 'application/json',
+                    'X-Loader-Skip': 'true'
+                },
+                timeout: 45000,
+            });
             const content = resp?.data?.assistant_message?.content ?? '';
             if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
                 const body = thinkingEl.querySelector('.whitespace-pre-wrap');
                 if (body) {
-                    body.textContent = content;
+                    body.innerHTML = content;
                     body.classList.remove('chat-reply-fade-in');
                     void body.offsetWidth;
                     body.classList.add('chat-reply-fade-in');
@@ -404,4 +460,59 @@
     });
 
     scrollToBottom();
+
+    // Opinion Modal Logic
+    const opinionModal = document.getElementById('opinion-modal');
+    const opinionModalContent = document.getElementById('opinion-modal-content');
+    const closeOpinionModalBtn = document.getElementById('close-opinion-modal');
+    const opinionModalOverlay = document.getElementById('opinion-modal-overlay');
+
+    const openOpinionModal = async (opinionId) => {
+        // Force hide global loader if it's stuck
+        if (window.__globalLoaderStop) window.__globalLoaderStop();
+        
+        opinionModal.classList.remove('hidden');
+        opinionModalContent.classList.add('opacity-0');
+        document.body.classList.add('overflow-hidden');
+
+        try {
+            const resp = await window.axios.get(`/api/opinions/${opinionId}`, {
+                headers: { 'X-Loader-Skip': 'true' }
+            });
+            const data = resp.data;
+
+            document.getElementById('opinion-modal-number').textContent = data.opinion_number;
+            document.getElementById('opinion-modal-title').textContent = data.title;
+            document.getElementById('opinion-modal-date').textContent = data.date;
+            document.getElementById('opinion-modal-body').textContent = data.context;
+
+            opinionModalContent.classList.remove('opacity-0');
+        } catch (err) {
+            console.error('Failed to fetch opinion details:', err);
+            closeOpinionModal();
+        }
+    };
+
+    const closeOpinionModal = () => {
+        opinionModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    };
+
+    if (closeOpinionModalBtn) closeOpinionModalBtn.addEventListener('click', closeOpinionModal);
+    if (opinionModalOverlay) opinionModalOverlay.addEventListener('click', closeOpinionModal);
+    
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeOpinionModal();
+    });
+
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('.opinion-link');
+        if (link) {
+            e.preventDefault();
+            e.stopPropagation(); // Stop event bubbling
+            const opinionId = link.dataset.opinionId;
+            openOpinionModal(opinionId);
+            return false;
+        }
+    }, true); // Use capture phase to intercept early
 </script>

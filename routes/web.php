@@ -32,6 +32,9 @@ Route::get('/legal-ai/{conversationId}', [ChatController::class, 'publicShow'])
     ->whereNumber('conversationId')
     ->name('legal.ai.show');
 
+Route::get('/opinions/{opinion}', [AdminOpinionsController::class, 'publicShow'])->name('opinions.public.show');
+Route::get('/api/opinions/{opinion}', [AdminOpinionsController::class, 'publicDetails'])->name('opinions.public.details');
+
 Route::post('/legal-ai/conversations', [ConversationController::class, 'storePublic'])->name('legal.ai.conversations.store');
 Route::patch('/legal-ai/conversations/{conversationId}', [ConversationController::class, 'updatePublic'])
     ->whereNumber('conversationId')

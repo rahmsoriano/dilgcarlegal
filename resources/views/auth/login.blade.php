@@ -126,7 +126,10 @@
 
                             <div class="flex flex-1 flex-col justify-center">
                                 <div class="max-w-sm">
-                                    <p class="text-sm font-semibold uppercase tracking-[0.38em] text-cyan-200/90">DILG Legal-Assist AI</p>
+                                    <p class="text-sm font-semibold uppercase tracking-[0.38em] text-cyan-200/90">
+                                        <span>GABAY-Lex</span>
+                                        <span class="mt-2 block text-[11px] font-semibold normal-case tracking-wide text-white/80">Guidance and Advisory for Better Administration in Law</span>
+                                    </p>
                                     <h2 class="mt-5 text-4xl font-semibold leading-tight text-white">
                                         Smart legal support for efficient public service.
                                     </h2>

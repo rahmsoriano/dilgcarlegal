@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'GABAY-Lex') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
@@ -27,12 +27,16 @@
                 }
 
                 .admin-sidebar {
-                    width: 320px;
-                    flex: 0 0 auto;
+                    width: 350px;
+                    min-width: 350px;
+                    flex: 0 0 350px;
+                    height: 100%; /* Ensure it fills the vertical space of the grid */
                 }
 
                 .sidebar-collapsed .admin-sidebar {
                     width: 92px;
+                    min-width: 92px;
+                    flex: 0 0 92px;
                 }
 
                 .admin-main {
@@ -49,6 +53,10 @@
 
             .admin-sidebar {
                 transition: width 220ms ease, padding 220ms ease, border-radius 220ms ease;
+            }
+
+            .sidebar-collapsed .admin-sidebar {
+                padding: 1rem !important;
             }
 
             .sidebar-toggle-btn svg {
@@ -127,7 +135,7 @@
             }
 
             .sidebar-search-collapsed {
-                display: none;
+                display: none !important;
             }
 
             .sidebar-collapsed .sidebar-search-expanded {
@@ -135,7 +143,7 @@
             }
 
             .sidebar-collapsed .sidebar-search-collapsed {
-                display: flex;
+                display: flex !important;
             }
 
             .sidebar-search-fade {
@@ -172,6 +180,125 @@
                 -webkit-appearance: none;
                 appearance: none;
             }
+
+            .sidebar-chat-title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                display: block;
+            }
+
+            .sidebar-history {
+                height: 0;
+                flex-grow: 1;
+                min-height: 0;
+            }
+
+            .sidebar-chats-scroll {
+                scrollbar-width: thin;
+                scrollbar-color: #FFDE15 transparent;
+            }
+
+            .sidebar-chats-scroll::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .sidebar-chats-scroll::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .sidebar-chats-scroll::-webkit-scrollbar-thumb {
+                background-color: #000;
+                border-radius: 20px;
+            }
+
+            #sidebar-chat-search:focus {
+                border-color: #002C76 !important;
+                box-shadow: 0 0 0 2px rgba(0, 44, 118, 0.1) !important;
+            }
+
+            .sidebar-icon-box {
+                width: 48px;
+                height: 48px;
+                border-radius: 1rem;
+                background-color: transparent;
+                color: #000;
+                border: 2px solid #e2e8f0;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .sidebar-icon-box-plain {
+                width: 48px;
+                height: 48px;
+                border-radius: 1rem;
+                background-color: transparent;
+                color: #000;
+                border: 2px solid #e2e8f0;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .sidebar-icon-box-yellow {
+                width: 48px;
+                height: 48px;
+                border-radius: 1rem;
+                background-color: #FFDE15;
+                color: #000;
+                border: 2px solid transparent;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .sidebar-nav-link {
+                position: relative;
+                color: #000 !important;
+            }
+
+            .sidebar-nav-link::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border: 2px solid transparent;
+                border-radius: inherit;
+                pointer-events: none;
+            }
+
+            .sidebar-nav-link:hover::after {
+                border-color: #002C76;
+            }
+
+            .sidebar-nav-link.active-link {
+                padding-top: 0.95rem !important;
+                padding-bottom: 0.95rem !important;
+                position: relative !important;
+                z-index: 1 !important;
+            }
+
+            .sidebar-nav-link.active-link::after {
+                border-color: #002C76;
+            }
+
+            .sidebar-collapsed .sidebar-nav-link::after {
+                border-color: transparent !important;
+            }
+
+            .sidebar-collapsed .sidebar-nav-link:hover .sidebar-icon-box,
+            .sidebar-collapsed .sidebar-nav-link:hover .sidebar-icon-box-plain,
+            .sidebar-collapsed .sidebar-nav-link.active-link .sidebar-icon-box,
+            .sidebar-collapsed .sidebar-nav-link.active-link .sidebar-icon-box-plain {
+                border-color: #002C76 !important;
+            }
         </style>
     </head>
     <body class="font-sans antialiased selection:bg-slate-900/10 selection:text-slate-900">
@@ -187,14 +314,17 @@
                                 class="h-full w-full object-contain"
                             >
                         </div>
-                        <span class="text-xl font-bold tracking-tight text-slate-900">{{ config('app.name', 'DILG Legal Assistant') }}</span>
+                        <div class="min-w-0">
+                            <div class="text-xl font-bold tracking-tight leading-tight" style="color: #002C76 !important;">{{ config('app.name', 'GABAY-Lex') }}</div>
+                            <div class="text-[11px] font-semibold leading-tight tracking-wide" style="color: #002C76 !important; opacity: 0.7;">Guidance and Advisory for Better Administration in Law</div>
+                        </div>
                     </div>
 
                     <div></div>
                 </header>
 
-                <div class="admin-grid grid flex-1 min-h-0 grid-cols-1 gap-6 lg:gap-8">
-                    <aside id="app-sidebar" class="admin-sidebar relative flex min-h-0 flex-col overflow-visible rounded-[2rem] bg-white/80 backdrop-blur-xl p-6 ring-1 ring-slate-900/5 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+                <div class="admin-grid grid flex-1 min-h-0 grid-cols-1 gap-6 lg:gap-8 h-full">
+                    <aside id="app-sidebar" class="admin-sidebar relative flex h-full min-h-0 flex-col overflow-visible rounded-[2rem] p-6 ring-1 ring-slate-900/5 shadow-[0_24px_70px_rgba(15,23,42,0.08)]" style="background-color: #f0f4f8 !important;">
                         @php
                             $routeConversation = request()->route('conversation');
                             $activeConversationId = is_object($routeConversation) && isset($routeConversation->id)
@@ -233,7 +363,7 @@
                             }
                         @endphp
                         <div class="mb-4">
-                            <button id="sidebar-chat-search-collapsed" type="button" aria-label="Search chats" class="sidebar-search-collapsed mx-auto h-12 w-12 items-center justify-center rounded-2xl bg-white/60 text-slate-700 ring-1 ring-slate-900/10 transition hover:bg-white hover:text-slate-900">
+                            <button id="sidebar-chat-search-collapsed" type="button" aria-label="Search chats" class="sidebar-search-collapsed sidebar-icon-box-plain mx-auto transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
                                     <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 104.473 8.708l2.41 2.409a.75.75 0 101.06-1.06l-2.409-2.41A5.5 5.5 0 009 3.5zM4.5 9a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z" clip-rule="evenodd" />
                                 </svg>
@@ -246,7 +376,7 @@
                                             <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 104.473 8.708l2.41 2.409a.75.75 0 101.06-1.06l-2.409-2.41A5.5 5.5 0 009 3.5zM4.5 9a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
-                                    <input id="sidebar-chat-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search chats..." class="w-full rounded-2xl border border-slate-900/10 bg-white/70 py-2.5 pl-10 pr-10 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none ring-1 ring-transparent transition focus:border-indigo-500/30 focus:ring-2 focus:ring-indigo-500/20">
+                                    <input id="sidebar-chat-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search chats..." class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-10 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition">
                                     <button id="sidebar-chat-search-clear" type="button" aria-label="Exit search" class="absolute right-2 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-900/[0.04] hover:text-slate-900">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                                             <path fill-rule="evenodd" d="M4.22 4.22a.75.75 0 011.06 0L10 8.94l4.72-4.72a.75.75 0 111.06 1.06L11.06 10l4.72 4.72a.75.75 0 11-1.06 1.06L10 11.06l-4.72 4.72a.75.75 0 11-1.06-1.06L8.94 10 4.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
@@ -258,53 +388,59 @@
 
                         <div id="sidebar-primary" class="sidebar-search-fade">
                             <nav class="shrink-0 space-y-3">
-                            <a href="{{ route($newChatRoute) }}" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-slate-700 hover:text-slate-900 hover:bg-white/40 ring-1 ring-transparent hover:ring-black/10">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 ring-1 ring-amber-600/20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4">
+                            <a href="{{ route($newChatRoute) }}" class="sidebar-nav-link {{ request()->routeIs($newChatRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs($newChatRoute) ? 'background-color: #002C76 !important; color: #000 !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
+                                <div class="sidebar-icon-box-plain">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-5 w-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                     </svg>
                                 </div>
-                                <span class="sidebar-nav-label text-sm font-semibold">New Chat</span>
+                                <span class="sidebar-nav-label text-sm font-bold">New Chat</span>
                             </a>
 
-                            @if ($showOpinionsNav)
-                                <a href="{{ route('admin.opinions.index') }}" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-2xl transition-all {{ request()->routeIs('admin.opinions.*') ? 'bg-white/70 text-slate-900 ring-1 ring-black/10 shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/40 ring-1 ring-transparent hover:ring-black/10' }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5 text-slate-600">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5-3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                    </svg>
+                            @if ($showOpinionsNav && auth()->check() && auth()->user()->is_admin)
+                                <a href="{{ route('admin.opinions.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.opinions.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs('admin.opinions.*') ? 'background-color: white !important; color: #000 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
+                                    <div class="sidebar-icon-box-plain">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5-3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                        </svg>
+                                    </div>
                                     <span class="sidebar-nav-label text-sm font-semibold">Opinions Library</span>
                                 </a>
 
                                 @if (auth()->check() && auth()->user()->is_admin)
-                                    <a href="{{ route('admin.faq-responses.index') }}" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-2xl transition-all {{ request()->routeIs('admin.faq-responses.*') ? 'bg-white/70 text-slate-900 ring-1 ring-black/10 shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/40 ring-1 ring-transparent hover:ring-black/10' }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5 text-slate-600">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 1.354-.784 2.535-1.917 3.091-.806.393-1.333 1.19-1.333 2.084v.225m0 3.75h.008v.008H12v-.008z" />
-                                        </svg>
+                                    <a href="{{ route('admin.faq-responses.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.faq-responses.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs('admin.faq-responses.*') ? 'background-color: white !important; color: #000 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
+                                        <div class="sidebar-icon-box-plain">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 1.354-.784 2.535-1.917 3.091-.806.393-1.333 1.19-1.333 2.084v.225m0 3.75h.008v.008H12v-.008z" />
+                                            </svg>
+                                        </div>
                                         <span class="sidebar-nav-label text-sm font-semibold">FAQ Response Manager</span>
                                     </a>
                                 @endif
                             @endif
 
-                            <a href="{{ route($archiveRoute) }}" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-2xl transition-all {{ request()->routeIs($archiveRoute) ? 'bg-white/70 text-slate-900 ring-1 ring-black/10 shadow-sm' : 'text-slate-700 hover:text-slate-900 hover:bg-white/40 ring-1 ring-transparent hover:ring-black/10' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5 text-slate-600">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                                </svg>
+                            <a href="{{ route($archiveRoute) }}" class="sidebar-nav-link {{ request()->routeIs($archiveRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs($archiveRoute) ? 'background-color: white !important; color: #000 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
+                                <div class="sidebar-icon-box-plain">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                    </svg>
+                                </div>
                                 <span class="sidebar-nav-label text-sm font-semibold">Archive</span>
                             </a>
                             </nav>
                         </div>
 
-                        <button id="sidebar-collapse-toggle" type="button" class="sidebar-toggle-btn absolute -right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white ring-1 ring-black/10 shadow-md hover:shadow-lg transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-slate-700">
+                        <button id="sidebar-collapse-toggle" type="button" class="sidebar-toggle-btn absolute -right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full shadow-md hover:shadow-lg transition" style="background-color: white !important; border: 1px solid #e2e8f0 !important;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" style="color: #000 !important;">
                                 <path fill-rule="evenodd" d="M12.53 4.47a.75.75 0 010 1.06L8.06 10l4.47 4.47a.75.75 0 11-1.06 1.06l-5-5a.75.75 0 010-1.06l5-5a.75.75 0 011.06 0z" clip-rule="evenodd" />
                             </svg>
                         </button>
 
                         <div class="sidebar-history mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
                             <div class="sidebar-history-inner flex min-h-0 flex-1 flex-col">
-                                <button id="sidebar-chats-toggle" type="button" class="flex items-center justify-between px-4 py-2 text-left">
-                                    <div class="sidebar-section-label text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Your Chats</div>
-                                    <svg id="sidebar-chats-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 text-slate-600 transition-transform duration-200">
+                                <button id="sidebar-chats-toggle" type="button" class="flex items-center justify-between px-4 py-2 text-left w-full">
+                                    <div class="sidebar-section-label text-[10px] font-black uppercase tracking-[0.2em]" style="color: #002C76 !important; opacity: 0.6;">Your Chats</div>
+                                    <svg id="sidebar-chats-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 transition-transform duration-200" style="color: #002C76 !important; opacity: 0.6;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                     </svg>
                                 </button>
@@ -323,7 +459,8 @@
                                                     data-toggle-pin-url="{{ route($sidebarTogglePinRoute, $conversation->id) }}"
                                                     data-toggle-save-url="{{ route($sidebarToggleSaveRoute, $conversation->id) }}"
                                                     data-delete-url="{{ route($sidebarDeleteRoute, $conversation->id) }}"
-                                                    class="sidebar-chat-item group relative flex items-center gap-2 rounded-2xl border transition-all {{ (string) $activeConversationId === (string) $conversation->id ? 'border-indigo-500/30 bg-white/70 text-slate-900 ring-1 ring-indigo-500/20 shadow-sm' : 'border-black/10 bg-white/35 text-slate-700 hover:border-black/20 hover:bg-white/55 hover:text-slate-900' }}"
+                                                    class="sidebar-chat-item group relative flex items-center gap-2 rounded-2xl border transition-all w-full overflow-hidden"
+                                                    style="{{ (string) $activeConversationId === (string) $conversation->id ? 'border-color: #FFDE15 !important; background-color: white !important; color: #002C76 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; transform: scale(1.02) !important;' : 'border-color: #e2e8f0 !important; background-color: white !important; color: #334155 !important;' }}"
                                                 >
                                                     <a href="{{ route($chatShowRoute, $conversation->id) }}" class="min-w-0 flex-1 px-4 py-3">
                                                         <div class="sidebar-chat-title truncate text-sm font-semibold tracking-tight">
@@ -421,14 +558,16 @@
                                         </form>
                                     </div>
 
-                                    <button id="sidebar-profile-trigger" type="button" class="w-full flex items-center gap-3 rounded-2xl px-2 py-2 hover:bg-slate-900/[0.03] transition">
-                                        <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=6366f1&color=fff" alt="User Avatar" class="h-10 w-10 rounded-xl shadow-lg">
+                                    <button id="sidebar-profile-trigger" type="button" class="w-full flex items-center gap-3 rounded-2xl px-3 py-3 shadow-sm transition" style="background-color: white !important; border: 1px solid #e2e8f0 !important;">
+                                        <div class="sidebar-icon-box-yellow shadow-md text-xs font-bold" style="width: 40px; height: 40px; border-radius: 0.75rem;">
+                                            {{ collect(explode(' ', auth()->user()->name))->map(fn($n) => mb_substr($n, 0, 1))->take(2)->join('') }}
+                                        </div>
                                         <div class="sidebar-account-details min-w-0 flex-1 text-left">
-                                            <div class="truncate text-sm font-bold text-slate-900">{{ auth()->user()->name }}</div>
+                                            <div class="truncate text-sm font-bold" style="color: #002C76 !important;">{{ auth()->user()->name }}</div>
                                             <div class="truncate text-[10px] font-medium text-slate-500">{{ auth()->user()->email }}</div>
                                         </div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="sidebar-account-chevron h-4 w-4 text-slate-500">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="sidebar-account-chevron h-4 w-4 text-slate-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                         </svg>
                                     </button>
                                 </div>
@@ -489,7 +628,10 @@
 
                                     <div class="flex flex-1 flex-col justify-center">
                                         <div class="max-w-sm">
-                                            <p class="text-sm font-semibold uppercase tracking-[0.38em] text-cyan-200/90">DILG Legal-Assist AI</p>
+                                            <p class="text-sm font-semibold uppercase tracking-[0.38em] text-cyan-200/90">
+                                                <span>GABAY-Lex</span>
+                                                <span class="mt-2 block text-[11px] font-semibold normal-case tracking-wide text-white/80">Guidance and Advisory for Better Administration in Law</span>
+                                            </p>
                                             <h2 class="mt-5 text-4xl font-semibold leading-tight text-white">
                                                 Smart legal support for efficient public service.
                                             </h2>
@@ -1209,7 +1351,13 @@
                     item.dataset.togglePinUrl = toggle_pin_url || `/conversations/${id}/toggle-pin`;
                     item.dataset.toggleSaveUrl = toggle_save_url || `/conversations/${id}/toggle-save`;
                     item.dataset.deleteUrl = delete_url || `/conversations/${id}`;
-                    item.className = 'sidebar-chat-item group relative flex items-center gap-2 rounded-2xl border transition-all border-indigo-500/30 bg-white/70 text-slate-900 ring-1 ring-indigo-500/20 shadow-sm';
+                    item.className = 'sidebar-chat-item group relative flex items-center gap-2 rounded-2xl border transition-all';
+                    item.style.borderColor = '#FFDE15';
+                    item.style.backgroundColor = 'white';
+                    item.style.color = '#002C76';
+                    item.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+                    item.style.transform = 'scale(1.02)';
+                    item.style.transformOrigin = 'center';
 
                     const a = document.createElement('a');
                     a.href = url;

@@ -79,8 +79,29 @@ class OpinionsController extends Controller
 
     public function show(LegalOpinionLibrary $opinion)
     {
+        $isAdmin = auth()->check() && auth()->user()->is_admin;
         return view('admin.opinions.show', [
             'opinion' => $opinion,
+            'isAdmin' => $isAdmin,
+        ]);
+    }
+
+    public function publicShow(LegalOpinionLibrary $opinion)
+    {
+        return view('admin.opinions.show', [
+            'opinion' => $opinion,
+            'isAdmin' => false, // Hardcoded to false for public view
+        ]);
+    }
+
+    public function publicDetails(LegalOpinionLibrary $opinion): JsonResponse
+    {
+        return response()->json([
+            'id' => $opinion->id,
+            'title' => $opinion->title,
+            'opinion_number' => $opinion->opinion_number,
+            'date' => $opinion->date ? $opinion->date->format('F j, Y') : 'N/A',
+            'context' => $opinion->context,
         ]);
     }
 
