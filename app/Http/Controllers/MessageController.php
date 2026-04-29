@@ -510,8 +510,7 @@ class MessageController extends Controller
         $systemPrompt = trim((string) config('services.chat.system_prompt', ''));
         $isSmallTalk = $this->isSmallTalk($prompt);
         $isListRequest = $this->isOpinionListRequest($prompt);
-        $isAnswerMode = ! $isSmallTalk && ! $isListRequest && $this->isAnswerMode($prompt);
-        $isSearchMode = ! $isSmallTalk && ! $isAnswerMode;
+        $isSearchMode = ! $isSmallTalk && $isListRequest;
 
         if ($isSearchMode) {
             $topic = $isListRequest ? $this->extractOpinionListTopic($prompt) : trim($prompt);
@@ -521,11 +520,34 @@ class MessageController extends Controller
 
             $opinions = $this->fallbackOpinionListByTopic($topic, 25);
 
+            if (count($opinions) === 0) {
+                $generalInfo = $this->generalInfoFallbackForTopic($topic, $prompt, $openai, $gemini, $groq);
+
+                return [
+                    'content' => $generalInfo,
+                    'model' => 'general_info_fallback',
+                    'provider' => 'ai_fallback_general_info',
+                ];
+            }
+
             return [
                 'content' => $this->buildOpinionListHtml($topic, $opinions),
                 'model' => 'opinion_search_list',
                 'provider' => 'opinion_retriever',
             ];
+        }
+
+        // Priority: FAQ Response Manager (pre-defined answers)
+        if (! $isSmallTalk) {
+            $faqMatch = $faqMatcher->findBestMatch($prompt);
+
+            if ($faqMatch) {
+                return [
+                    'content' => $this->sanitizeAssistantText((string) $faqMatch->response),
+                    'model' => 'faq',
+                    'provider' => 'faq_response_manager',
+                ];
+            }
         }
 
         try {
@@ -541,7 +563,7 @@ class MessageController extends Controller
 
             if ($faqMatch) {
                 return [
-                    'content' => (string) $faqMatch->response,
+                    'content' => $this->sanitizeAssistantText((string) $faqMatch->response),
                     'model' => 'faq',
                     'provider' => 'faq_response_manager',
                 ];
@@ -560,27 +582,29 @@ STRICT FIDELITY RULES:
 - If the user did not provide a specific fact, provide the information in a general, third-person perspective (e.g., "The law states that a person must be...").
 - NEVER invent or substitute values.
 
-RESPONSE FORMAT (FOLLOW THIS EXACT ORDER):
-**Direct Answer**:
+RESPONSE FORMAT (FOLLOW THIS EXACT ORDER, NO MARKDOWN SYMBOLS):
+Direct Answer:
 [Provide a clear, immediate answer in 1–4 sentences.]
 
-**Main Reference (DILG Legal Opinion)**:
-- If there is a DILG legal opinion in the library that directly answers the question, cite ONE main opinion in this format: "[Title] (op. no. [Number]) ([Date])" then add 1–3 sentences explaining why it answers the question.
-- If there is NO directly applicable DILG legal opinion, state: "No directly applicable DILG legal opinion was found in the library for this question."
+Legal Basis / Supporting Reference:
+- If a stored DILG legal opinion directly answers the question, cite it in this format: "[Title] (op. no. [Number]) ([Date])".
+- If no stored DILG legal opinion answers the question, SKIP listing "None" and proceed to general information below.
 
-**Supporting References (Related DILG Legal Opinions)**:
-- List other related DILG legal opinions that do not directly answer but may help. If none, write: "None."
+Explanation:
+[Briefly explain how the law/opinion applies.]
 
-If you are providing information NOT from the DILG opinion library, you MUST include this exact header:
 For general information (not based on stored DILG legal opinions):
+Only include this section if the stored DILG opinion library has no direct answer for the user\'s question. This is a last resort.
+Reminder: The following answer is based on general legal information outside the stored DILG opinion library because no directly relevant DILG legal opinion was found.
 [General information here.]
 
-**Conclusion**:
-[Restate the final advice clearly. If you used general information, clearly separate what is based on DILG opinions vs what is general information.]
+Conclusion:
+[Summarize the final answer in 1–2 sentences.]
 
 STRICT RULES:
 - Clearly state when using information outside the DILG library.
-- Keep the tone professional, factual, and helpful.';
+- Keep the tone professional, factual, and helpful.
+- Do NOT use asterisks (*) or bold markers (**). Use plain text labels and hyphen bullets only.';
 
             $pureSmallTalkPrompt = 'You are a friendly and helpful AI assistant. Respond naturally to the user\'s greeting or small talk. Keep it brief, polite, and engaging. No need to mention any legal library or disclaimers for simple greetings.';
 
@@ -602,7 +626,7 @@ STRICT RULES:
 
             try {
             $resp = $this->chatWithFallback($messages, $openai, $gemini, $groq);
-            $content = (string) ($resp['content'] ?? '');
+            $content = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
             
             if ($this->shouldValidateResponse($prompt, $content)) {
                 $content = $this->validateAndCorrectResponse($prompt, $content, $openai, $gemini, $groq);
@@ -610,6 +634,7 @@ STRICT RULES:
 
             // Linkify if any opinions were found (even if not used in primary logic)
             $content = $this->linkifyOpinions($content, $opinions);
+            $content = $this->ensureMainReferenceLink($content, $opinions);
 
             return [
                 'content' => $content,
@@ -726,28 +751,32 @@ STRICT FIDELITY RULES:
 - If the user did not provide a specific fact, provide the information in a general, third-person perspective (e.g., "The law states that a person must be...").
 - NEVER invent or substitute values.
 
-RESPONSE FORMAT (FOLLOW THIS EXACT ORDER):
-**Direct Answer**:
+RESPONSE FORMAT (FOLLOW THIS EXACT ORDER, NO MARKDOWN SYMBOLS):
+Direct Answer:
 [Provide a clear, immediate answer in 1–4 sentences.]
 
-**Main Reference (DILG Legal Opinion)**:
-[Cite ONE main opinion from the provided library content that most directly answers the question, using: "[Title] (op. no. [Number]) ([Date])" + short explanation.]
+Legal Basis / Supporting Reference:
+- Cite ONE main DILG legal opinion from the provided library content that most directly answers the question, using: "[Title] (op. no. [Number]) ([Date])".
+- If there are other relevant DILG legal opinions, list them as supporting references (do NOT write "None" if there are no other opinions).
 
-**Supporting References (Related DILG Legal Opinions)**:
-[List other related opinions from the provided library content that do not directly answer but may help. If none, write: "None."]
+Explanation:
+[Briefly explain how the cited DILG opinion(s) support the answer.]
 
-GENERAL INFORMATION (STRICTLY CONDITIONAL):
-   - You MUST ONLY provide general legal knowledge IF the provided DILG library content DOES NOT contain enough information to fully answer the question.
-   - If the legal opinions already provide a complete answer, DO NOT include any general information.
-   - If included, use the header: "For general information (not based on stored DILG legal opinions):".
-If you include the general information section, it must come before **Conclusion**.
-In **Conclusion**, clearly separate: (a) what the DILG opinions establish, and (b) what is only general information (if any).
+For general information (not based on stored DILG legal opinions):
+Only include this section if (and only if) the provided DILG library content does NOT contain enough information to answer the user\'s question. This is a last resort.
+If you can answer based on the DILG library content, DO NOT include this section at all.
+Reminder: This section is general information outside the stored DILG opinion library.
+[General information here.]
+
+Conclusion:
+[Summarize the final answer in 1–2 sentences. If you used general information, clearly separate what is based on DILG opinions vs what is general information.]
 If the user asks about "this year/ngayong taon" but did not provide a specific year, DO NOT write a numeric year. Use "this year/ngayong taon" wording instead.
 
 STRICT RULES:
 - ALWAYS prioritize the provided DILG Legal Opinions.
 - Ensure opinion titles and numbers match the context exactly for hyperlinking.
-- Maintain a professional and factual tone.';
+- Maintain a professional and factual tone.
+- Do NOT use asterisks (*) or bold markers (**). Use plain text labels and hyphen bullets only.';
 
         $instruction = $libraryInstruction;
 
@@ -780,7 +809,7 @@ STRICT RULES:
         // but linkifyOpinions should handle it if the AI followed the format.
 
         return [
-            'content' => $content,
+            'content' => $this->sanitizeAssistantText($content),
             'model' => (string) ($resp['model'] ?? $resp['provider']),
             'provider' => $resp['provider'],
         ];
@@ -798,13 +827,114 @@ STRICT RULES:
             
             // Linkify even in fallback mode
             $content = $this->linkifyOpinions($content, $opinions);
+            $content = $this->ensureMainReferenceLink($content, $opinions);
 
             return [
-                'content' => $content,
+                'content' => $this->sanitizeAssistantText($content),
                 'model' => 'fallback-list',
                 'provider' => 'opinion_retriever',
             ];
         }
+    }
+
+    private function ensureMainReferenceLink(string $content, array $opinions): string
+    {
+        if (empty($opinions)) {
+            return $content;
+        }
+
+        if (str_contains($content, 'class="opinion-link"') || str_contains($content, "class='opinion-link'")) {
+            return $content;
+        }
+
+        $first = $opinions[0] ?? null;
+        if (!is_array($first)) {
+            return $content;
+        }
+
+        $id = (int) ($first['id'] ?? 0);
+        $url = (string) ($first['url'] ?? '#');
+        $title = trim((string) ($first['title'] ?? ''));
+        $num = trim((string) ($first['opinion_number'] ?? ''));
+        $date = trim((string) ($first['date'] ?? ''));
+
+        if ($id <= 0 || $title === '') {
+            return $content;
+        }
+
+        $escape = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $meta = implode(' • ', array_values(array_filter([$num, $date], fn ($v) => trim((string) $v) !== '')));
+        $link = '<a href="'.$escape($url).'" data-opinion-id="'.$id.'" class="opinion-link text-blue-600 underline font-bold" style="color: blue; text-decoration: underline;">'.$escape($title).'</a>';
+
+        $line = 'Main Reference: '.$link.($meta !== '' ? ' <span style="opacity:0.85; font-size: 12px;">— '.$escape($meta).'</span>' : '');
+
+        return rtrim($content)."\n\n".$line;
+    }
+
+    private function generalInfoFallbackForTopic(string $topic, string $originalPrompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
+    {
+        $topic = trim($topic);
+        $title = $topic !== '' ? $topic : $originalPrompt;
+
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+The user asked for DILG legal opinions about a topic, but no matching DILG legal opinions were found in the stored DILG opinion library for this query.
+
+Task: Provide helpful GENERAL legal information related to the topic in the Philippines.
+
+Strict rules:
+- Do not claim you found or cited any DILG legal opinion.
+- Do not invent specific cases, dates, or circular/opinion numbers.
+- Use plain text only. Do NOT use asterisks (*) or markdown bold (**).
+- Keep it practical and concise.
+
+Response format (exact labels, no extra sections):
+General Information:
+[short explanation]
+
+Practical Notes:
+- [2–5 bullets]
+
+Reminder:
+This answer is based on general legal information outside the stored DILG opinion library because no directly relevant DILG legal opinion was found.';
+
+        try {
+            $messages = [
+                ['role' => 'system', 'content' => $instruction],
+                ['role' => 'user', 'content' => $originalPrompt],
+            ];
+
+            $resp = $this->chatWithFallback($messages, $openai, $gemini, $groq);
+            $content = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            $content = 'General Information:'."\n".'I can provide general information, but I could not reach the AI provider at the moment.'."\n\n".'Practical Notes:'."\n".'- Please try again.'."\n\n".'Reminder:'."\n".'This answer is based on general legal information outside the stored DILG opinion library because no directly relevant DILG legal opinion was found.';
+        }
+
+        return 'No matching DILG legal opinions found for: '.$title."\n\n".$content;
+    }
+
+    private function sanitizeAssistantText(string $text): string
+    {
+        $t = (string) $text;
+        if ($t === '') {
+            return $t;
+        }
+
+        $t = str_replace(["\r\n", "\r"], "\n", $t);
+
+        // Remove markdown bold markers
+        $t = preg_replace('/\*\*(.*?)\*\*/s', '$1', $t) ?? $t;
+
+        // Convert leading '*' bullets to '-'
+        $t = preg_replace('/^\s*\*\s+/m', '- ', $t) ?? $t;
+
+        // Remove standalone "None"/"None." lines
+        $t = preg_replace('/^\s*none\.?\s*$/mi', '', $t) ?? $t;
+
+        // Collapse excessive blank lines
+        $t = preg_replace("/\n{3,}/", "\n\n", $t) ?? $t;
+
+        return trim($t);
     }
 
     private function isOpinionListRequest(string $prompt): bool
@@ -815,7 +945,8 @@ STRICT RULES:
         }
 
         $patterns = [
-            '/\b(legal\s+opinions?|opinions?)\s+(about|on|regarding)\b/u',
+            '/\b(legal\s+opinions?|opinions?)\s+(about|on|regarding|of)\b/u',
+            '/\b(legal\s+opinion|opinion)\s+of\b/u',
             '/\b(list|show|give)\s+me\b.*\b(legal\s+opinions?|opinions?)\b/u',
             '/\b(mga|listahan)\b.*\b(legal\s+opinions?|opinion)\b/u',
             '/\b(tungkol|patungkol)\b.*\b(legal\s+opinions?|opinion)\b/u',
@@ -903,6 +1034,7 @@ STRICT RULES:
         $stop = [
             'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
             'legal', 'lgal', 'opinion', 'opinions', 'dilg', 'director', 'region',
+            'act', 'law', 'code', 'rules', 'rule', 'regulation', 'regulations', 'section', 'article', 'republic', 'philippines', 'philippine',
             'ang', 'mga', 'ng', 'na', 'sa', 'si', 'kay', 'kayo', 'ko', 'ako', 'ito', 'yan', 'dito', 'doon', 'para', 'tungkol', 'patungkol',
         ];
 
@@ -921,6 +1053,40 @@ STRICT RULES:
         return array_values(array_unique($out));
     }
 
+    private function minRequiredMatches(array $tokens): int
+    {
+        $n = count($tokens);
+        if ($n <= 1) {
+            return 1;
+        }
+        if ($n <= 3) {
+            return 2;
+        }
+        return 2;
+    }
+
+    private function isBroadTopicToken(string $token): bool
+    {
+        $t = mb_strtolower(trim($token));
+        if ($t === '') {
+            return false;
+        }
+
+        $broad = [
+            'visaya', 'visayas',
+            'luzon',
+            'mindanao',
+            'philippines', 'philippine',
+            'region', 'rehiyon',
+            'province', 'probinsya',
+            'city', 'siyudad',
+            'municipality', 'munisipyo',
+            'barangay', 'brgy',
+        ];
+
+        return in_array($t, $broad, true);
+    }
+
     private function fallbackOpinionListByTopic(string $topic, int $limit): array
     {
         $topic = trim($topic);
@@ -937,12 +1103,20 @@ STRICT RULES:
 
         if (count($tokens) === 1) {
             $name = (string) $tokens[0];
-            $query->where(function ($q) use ($name) {
+            $allowContext = ! $this->isBroadTopicToken($name);
+            $query->where(function ($q) use ($name, $allowContext) {
                 $q->where('title', 'like', $name.' -%')
                     ->orWhere('title', 'like', $name.' —%')
                     ->orWhere('title', 'like', $name.' –%')
                     ->orWhere('title', 'like', $name.'-%')
-                    ->orWhere('title', 'like', $name.'%');
+                    ->orWhere('title', 'like', $name.'%')
+                    ->orWhere('title', 'like', '%'.$name.'%')
+                    ->orWhere('opinion_number', 'like', '%'.$name.'%')
+                    ->orWhere('keywords', 'like', '%'.$name.'%');
+
+                if ($allowContext) {
+                    $q->orWhere('context', 'like', '%'.$name.'%');
+                }
             });
         } else {
             $query->where(function ($q) use ($tokens) {
@@ -961,10 +1135,33 @@ STRICT RULES:
             ->orderByDesc('date')
             ->orderByDesc('id')
             ->limit($limit)
-            ->get(['id', 'title', 'opinion_number', 'date', 'context']);
+            ->get(['id', 'title', 'opinion_number', 'date', 'keywords', 'context']);
 
         $items = [];
+        $minMatches = $this->minRequiredMatches($tokens);
         foreach ($models as $op) {
+            $allowContextForMatch = true;
+            if (count($tokens) === 1) {
+                $allowContextForMatch = ! $this->isBroadTopicToken((string) $tokens[0]);
+            }
+
+            $haystack = mb_strtolower(
+                (string) ($op->title ?? '')."\n".
+                (string) ($op->opinion_number ?? '')."\n".
+                (string) ($op->keywords ?? '')."\n".
+                ($allowContextForMatch ? mb_substr((string) ($op->context ?? ''), 0, 4000) : '')
+            );
+
+            $matchCount = 0;
+            foreach ($tokens as $t) {
+                if ($t !== '' && str_contains($haystack, mb_strtolower($t))) {
+                    $matchCount++;
+                }
+            }
+            if ($matchCount < $minMatches) {
+                continue;
+            }
+
             $context = (string) ($op->context ?? '');
             $author = $this->extractOpinionAuthor($context);
             $summary = $this->extractBriefSummaryFromContext($context);
@@ -1157,8 +1354,8 @@ CHECKLIST:
 1. Does the response assume or invent an age, position (e.g., "Kagawad"), or any other fact not in the user prompt?
 2. Did the AI use personal pronouns like "Since you are..." or "As a..." when the user didn\'t state those facts?
 3. Did the AI use the word "Summary:" in references? (This is NOT allowed).
-4. Does the response follow the required section order: **Direct Answer** → **Main Reference (DILG Legal Opinion)** → **Supporting References (Related DILG Legal Opinions)** → (optional) For general information... → **Conclusion**?
-5. If there is NO directly applicable DILG legal opinion, does the **Main Reference** section clearly state that no directly applicable opinion was found?
+4. Does the response follow the required section order: Direct Answer → Legal Basis / Supporting Reference → Explanation → (optional) For general information... → Conclusion?
+5. If there is no directly applicable DILG legal opinion, does the response avoid outputting the word "None" and instead proceed to general information (with a reminder) when needed?
 6. Did the AI include general information when the legal opinions already provided a direct and complete answer? (General info should ONLY be present if library content was insufficient).
 7. If the response includes general information, does it use the exact header: "For general information (not based on stored DILG legal opinions):"?
 8. If the response includes the general information section, does the final conclusion explicitly separate what is based on DILG legal opinions vs what is only general information?
@@ -1166,8 +1363,10 @@ CHECKLIST:
 CORRECTION RULES:
 - REMOVE any assumed facts if they are not in the user prompt.
 - REMOVE the word "Summary:" from all references.
-- Do NOT remove headings like "**Direct Answer**", "**Main Reference (DILG Legal Opinion)**", "**Supporting References (Related DILG Legal Opinions)**", or "**Conclusion**" if they are used.
+- Remove markdown symbols like "**" and "*" if present; output should be plain text labels.
+- Remove standalone "None"/"None." lines.
 - REMOVE general information if the legal library references already provided a direct and sufficient answer to the user\'s question.
+- REMOVE the entire general information section if the response has a valid DILG Legal Basis citation and the library content is sufficient to answer.
 - ENSURE any necessary general legal knowledge has the exact header "For general information (not based on stored DILG legal opinions):" and is positioned before the final conclusion.
 - If the general information section exists, UPDATE the final conclusion so it clearly states (1) what the DILG opinions cited actually establish (or that they do not directly answer), and (2) what the general information indicates, without presenting the general information as a DILG-library-based ruling.
 - If the response is already accurate and faithful, return it EXACTLY as it is.

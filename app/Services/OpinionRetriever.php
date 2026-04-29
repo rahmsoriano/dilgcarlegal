@@ -8,6 +8,18 @@ use Illuminate\Support\Str;
 
 class OpinionRetriever
 {
+    protected function minRequiredMatches(array $tokens): int
+    {
+        $n = count($tokens);
+        if ($n <= 1) {
+            return 1;
+        }
+        if ($n <= 3) {
+            return 2;
+        }
+        return 2;
+    }
+
     /**
      * Search in the AI's learned knowledge first.
      */
@@ -23,6 +35,7 @@ class OpinionRetriever
     {
         $query = trim($query);
         $expandedQueries = $this->buildExpandedQueries($query);
+        $queryTokens = $this->extractMeaningfulTokens($query);
 
         $candidateIds = collect();
         $maxCandidates = max(80, $limit * 20);
@@ -66,14 +79,51 @@ class OpinionRetriever
                 ->whereIn('id', $dedupedIds->all())
                 ->get(['id', 'title', 'opinion_number', 'date', 'context', 'keywords']);
 
-        $ranked = $deduped
-            ->map(function (LegalOpinionLibrary $op) use ($query) {
+        $scored = $deduped
+            ->map(function (LegalOpinionLibrary $op) use ($query, $queryTokens) {
+                $haystack = mb_strtolower(
+                    ($op->title ?? '')."\n".
+                    ($op->opinion_number ?? '')."\n".
+                    ($op->keywords ?? '')."\n".
+                    mb_substr((string) ($op->context ?? ''), 0, 4000)
+                );
+
+                $matchCount = 0;
+                foreach ($queryTokens as $t) {
+                    if ($t !== '' && str_contains($haystack, $t)) {
+                        $matchCount++;
+                    }
+                }
+
                 return [
                     'op' => $op,
                     'score' => $this->scoreOpinion($op, $query),
+                    'match_count' => $matchCount,
                 ];
             })
-            ->sortByDesc('score')
+            ->sortByDesc('score');
+
+        $poolSize = max(12, $limit * 4);
+        $pool = $scored->take($poolSize)->values();
+
+        $ranked = $pool;
+        if (count($queryTokens) > 0 && $pool->isNotEmpty()) {
+            $bestScore = (int) ($pool->first()['score'] ?? 0);
+            $minScore = max(12, (int) floor($bestScore * 0.35));
+            $minMatches = $this->minRequiredMatches($queryTokens);
+
+            $filtered = $pool
+                ->filter(function (array $row) use ($minScore, $minMatches) {
+                    return (int) ($row['score'] ?? 0) >= $minScore && (int) ($row['match_count'] ?? 0) >= $minMatches;
+                })
+                ->values();
+
+            if ($filtered->isNotEmpty()) {
+                $ranked = $filtered;
+            }
+        }
+
+        $ranked = $ranked
             ->take($limit)
             ->values();
 
@@ -98,6 +148,38 @@ class OpinionRetriever
         return $items;
     }
 
+    protected function extractMeaningfulTokens(string $query): array
+    {
+        $q = mb_strtolower(trim($query));
+        $q = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $q) ?? $q;
+        $q = trim(preg_replace('/\s+/u', ' ', $q) ?? $q);
+        if ($q === '') {
+            return [];
+        }
+
+        $terms = preg_split('/\s+/u', $q) ?: [];
+        $stop = [
+            'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
+            'legal', 'opinion', 'opinions', 'dilg',
+            'act', 'law', 'code', 'rules', 'rule', 'regulation', 'regulations', 'section', 'article', 'republic', 'philippines', 'philippine',
+            'ang', 'mga', 'ng', 'na', 'sa', 'si', 'kay', 'kayo', 'ko', 'ako', 'ito', 'yan', 'dito', 'doon', 'para', 'tungkol', 'patungkol',
+        ];
+
+        $out = [];
+        foreach ($terms as $t) {
+            $t = trim((string) $t);
+            if (mb_strlen($t) < 3) {
+                continue;
+            }
+            if (in_array($t, $stop, true)) {
+                continue;
+            }
+            $out[] = $t;
+        }
+
+        return array_values(array_unique($out));
+    }
+
     protected function fallbackLikeSearchIds(string $query, int $limit): \Illuminate\Support\Collection
     {
         $terms = preg_split('/\s+/', trim($query)) ?: [];
@@ -107,6 +189,7 @@ class OpinionRetriever
         $stop = [
             'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
             'legal', 'opinion', 'opinions', 'dilg',
+            'act', 'law', 'code', 'rules', 'rule', 'regulation', 'regulations', 'section', 'article', 'republic', 'philippines', 'philippine',
             'ang', 'mga', 'ng', 'na', 'sa', 'si', 'kay', 'kayo', 'ko', 'ako', 'ito', 'yan', 'dito', 'doon', 'para', 'tungkol', 'patungkol',
         ];
 
