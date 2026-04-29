@@ -6,6 +6,7 @@ use App\Exceptions\AiRequestException;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\AiLearnedKnowledge;
+use App\Models\LegalOpinionLibrary;
 use App\Services\FaqResponseMatcher;
 use App\Services\GeminiChatClient;
 use App\Services\OpenAiChatClient;
@@ -508,10 +509,28 @@ class MessageController extends Controller
     {
         $systemPrompt = trim((string) config('services.chat.system_prompt', ''));
         $isSmallTalk = $this->isSmallTalk($prompt);
+        $isListRequest = $this->isOpinionListRequest($prompt);
+        $isAnswerMode = ! $isSmallTalk && ! $isListRequest && $this->isAnswerMode($prompt);
+        $isSearchMode = ! $isSmallTalk && ! $isAnswerMode;
+
+        if ($isSearchMode) {
+            $topic = $isListRequest ? $this->extractOpinionListTopic($prompt) : trim($prompt);
+            if ($topic === '') {
+                $topic = trim($prompt);
+            }
+
+            $opinions = $this->fallbackOpinionListByTopic($topic, 25);
+
+            return [
+                'content' => $this->buildOpinionListHtml($topic, $opinions),
+                'model' => 'opinion_search_list',
+                'provider' => 'opinion_retriever',
+            ];
+        }
 
         try {
             // 1. Priority: Opinion Library
-            $opinions = $isSmallTalk ? [] : $retriever->retrieve($prompt, 6);
+            $opinions = $isSmallTalk ? [] : $retriever->retrieve($prompt, 12);
         } catch (\Throwable $e) {
             $opinions = [];
         }
@@ -786,6 +805,317 @@ STRICT RULES:
                 'provider' => 'opinion_retriever',
             ];
         }
+    }
+
+    private function isOpinionListRequest(string $prompt): bool
+    {
+        $t = mb_strtolower(trim($prompt));
+        if ($t === '') {
+            return false;
+        }
+
+        $patterns = [
+            '/\b(legal\s+opinions?|opinions?)\s+(about|on|regarding)\b/u',
+            '/\b(list|show|give)\s+me\b.*\b(legal\s+opinions?|opinions?)\b/u',
+            '/\b(mga|listahan)\b.*\b(legal\s+opinions?|opinion)\b/u',
+            '/\b(tungkol|patungkol)\b.*\b(legal\s+opinions?|opinion)\b/u',
+            '/\bano\b.*\b(mga)\b.*\b(legal\s+opinions?|opinion)\b/u',
+            '/\b(related|relevant)\b.*\b(legal\s+opinions?|opinions?)\b/u',
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $t) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isAnswerMode(string $prompt): bool
+    {
+        $t = trim((string) $prompt);
+        if ($t === '') {
+            return false;
+        }
+
+        if (str_contains($t, '?')) {
+            return true;
+        }
+
+        $lower = mb_strtolower($t);
+        $starts = [
+            'am i', 'can i', 'is it', 'is it allowed', 'is it legal', 'are we', 'are they', 'what is', 'what are', 'what\'s',
+            'how', 'when', 'where', 'who',
+            'pwede ba', 'pwede', 'qualified ba', 'qualified', 'allowed ba', 'allowed',
+            'ano ang', 'ano ba', 'paano', 'kelan', 'sino',
+        ];
+
+        foreach ($starts as $s) {
+            if (str_starts_with($lower, $s)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function extractOpinionListTopic(string $prompt): string
+    {
+        $t = trim((string) $prompt);
+        if ($t === '') {
+            return '';
+        }
+
+        $lower = mb_strtolower($t);
+        $topic = $t;
+
+        if (preg_match('/\b(legal\s+opinions?|opinions?|legal\s+opinion|opinion)\s+(about|on|regarding|of)\s+(.+)$/iu', $lower, $m) === 1) {
+            $topic = trim((string) ($m[3] ?? $t));
+        } elseif (preg_match('/\b(tungkol|patungkol)\s+sa?\s+(.+)$/iu', $lower, $m) === 1) {
+            $topic = trim((string) ($m[2] ?? $t));
+        } elseif (preg_match('/\babout\s+(.+)$/iu', $lower, $m) === 1) {
+            $topic = trim((string) ($m[1] ?? $t));
+        } elseif (preg_match('/\bregarding\s+(.+)$/iu', $lower, $m) === 1) {
+            $topic = trim((string) ($m[1] ?? $t));
+        } elseif (preg_match('/\bon\s+(.+)$/iu', $lower, $m) === 1) {
+            $topic = trim((string) ($m[1] ?? $t));
+        }
+
+        $topic = preg_replace('/[?.!]+$/u', '', $topic) ?? $topic;
+        $topic = trim((string) $topic);
+
+        return $topic;
+    }
+
+    private function tokenizeOpinionListTopic(string $topic): array
+    {
+        $text = trim((string) $topic);
+        $text = mb_strtolower($text);
+        $text = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $text) ?? $text;
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+
+        if ($text === '') {
+            return [];
+        }
+
+        $terms = preg_split('/\s+/u', $text) ?: [];
+        $stop = [
+            'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
+            'legal', 'lgal', 'opinion', 'opinions', 'dilg', 'director', 'region',
+            'ang', 'mga', 'ng', 'na', 'sa', 'si', 'kay', 'kayo', 'ko', 'ako', 'ito', 'yan', 'dito', 'doon', 'para', 'tungkol', 'patungkol',
+        ];
+
+        $out = [];
+        foreach ($terms as $t) {
+            $t = trim((string) $t);
+            if (mb_strlen($t) < 3) {
+                continue;
+            }
+            if (in_array($t, $stop, true)) {
+                continue;
+            }
+            $out[] = $t;
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    private function fallbackOpinionListByTopic(string $topic, int $limit): array
+    {
+        $topic = trim($topic);
+        if ($topic === '') {
+            return [];
+        }
+
+        $tokens = $this->tokenizeOpinionListTopic($topic);
+        if (count($tokens) === 0) {
+            return [];
+        }
+
+        $query = LegalOpinionLibrary::query();
+
+        if (count($tokens) === 1) {
+            $name = (string) $tokens[0];
+            $query->where(function ($q) use ($name) {
+                $q->where('title', 'like', $name.' -%')
+                    ->orWhere('title', 'like', $name.' —%')
+                    ->orWhere('title', 'like', $name.' –%')
+                    ->orWhere('title', 'like', $name.'-%')
+                    ->orWhere('title', 'like', $name.'%');
+            });
+        } else {
+            $query->where(function ($q) use ($tokens) {
+                foreach ($tokens as $t) {
+                    $q->where(function ($qq) use ($t) {
+                        $qq->where('title', 'like', '%'.$t.'%')
+                            ->orWhere('opinion_number', 'like', '%'.$t.'%')
+                            ->orWhere('keywords', 'like', '%'.$t.'%')
+                            ->orWhere('context', 'like', '%'.$t.'%');
+                    });
+                }
+            });
+        }
+
+        $models = $query
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get(['id', 'title', 'opinion_number', 'date', 'context']);
+
+        $items = [];
+        foreach ($models as $op) {
+            $context = (string) ($op->context ?? '');
+            $author = $this->extractOpinionAuthor($context);
+            $summary = $this->extractBriefSummaryFromContext($context);
+            $items[] = [
+                'id' => $op->id,
+                'title' => $op->title,
+                'opinion_number' => $op->opinion_number,
+                'date' => optional($op->date)->format('Y-m-d'),
+                'author' => $author,
+                'summary' => $summary,
+                'url' => route('opinions.public.show', $op),
+            ];
+        }
+
+        return $items;
+    }
+
+    private function buildOpinionListHtml(string $prompt, array $opinions): string
+    {
+        $escape = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $tokens = $this->tokenizeOpinionListTopic($prompt);
+
+        $title = $escape(trim($prompt) !== '' ? $prompt : 'your topic');
+        if (count($opinions) === 0) {
+            return '<div><strong>No matching DILG legal opinions found for: </strong>'.$title.'</div>';
+        }
+
+        $html = '<div><strong>Here are the matching DILG legal opinions about: </strong>'.$title.'</div>';
+        $html .= '<div style="margin-top: 6px; font-size: 12px; opacity: 0.8;">Click a title to open the full opinion.</div>';
+        $html .= '<ol style="margin-top: 12px; padding-left: 18px;">';
+
+        foreach ($opinions as $op) {
+            $opTitle = $escape((string) ($op['title'] ?? 'Untitled'));
+            $opNum = $escape((string) ($op['opinion_number'] ?? ''));
+            $opDate = $escape((string) ($op['date'] ?? ''));
+            $opAuthor = $escape((string) ($op['author'] ?? 'DILG'));
+            $opUrl = $escape((string) ($op['url'] ?? '#'));
+            $opId = (int) ($op['id'] ?? 0);
+            $summary = (string) ($op['summary'] ?? '');
+
+            $metaPieces = array_values(array_filter([$opNum, $opDate, $opAuthor], fn ($v) => trim((string) $v) !== ''));
+            $meta = implode(' • ', $metaPieces);
+            $metaHtml = $meta !== '' ? '<div style="margin-top: 4px; font-size: 12px; opacity: 0.85;">'.$this->highlightMatchedKeywords($meta, $tokens).'</div>' : '';
+            $summaryHtml = $summary !== '' ? '<div style="margin-top: 6px; font-size: 13px; opacity: 0.95;"><strong>Brief Summary:</strong> '.$this->highlightMatchedKeywords($summary, $tokens).'</div>' : '';
+
+            $html .= '<li style="margin: 10px 0;">'
+                .'<a href="'.$opUrl.'" data-opinion-id="'.$opId.'" class="opinion-link text-blue-600 underline font-bold" style="color: blue; text-decoration: underline;">'.$opTitle.'</a>'
+                .$metaHtml
+                .$summaryHtml
+                .'</li>';
+        }
+
+        $html .= '</ol>';
+        return $html;
+    }
+
+    private function extractBriefSummaryFromContext(string $context): string
+    {
+        $text = trim((string) $context);
+        if ($text === '') {
+            return '';
+        }
+
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $flat = trim((string) preg_replace('/\s+/u', ' ', $text));
+
+        $needles = [
+            'This refers',
+            'This pertains',
+            'This has reference',
+            'In reply',
+            'In view',
+        ];
+
+        $bestPos = null;
+        foreach ($needles as $needle) {
+            $pos = stripos($flat, $needle);
+            if ($pos !== false) {
+                $bestPos = $bestPos === null ? $pos : min($bestPos, $pos);
+            }
+        }
+
+        if ($bestPos !== null) {
+            $flat = trim((string) substr($flat, $bestPos));
+        }
+
+        return Str::limit($flat, 260, '…');
+    }
+
+    private function highlightMatchedKeywords(string $text, array $tokens): string
+    {
+        $text = (string) $text;
+        if ($text === '') {
+            return '';
+        }
+
+        $tokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $tokens), fn ($t) => $t !== ''));
+        if (count($tokens) === 0) {
+            return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        }
+
+        usort($tokens, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+        $pattern = '/(' . implode('|', array_map(fn ($t) => preg_quote($t, '/'), $tokens)) . ')/iu';
+
+        $parts = preg_split($pattern, $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if (!is_array($parts) || count($parts) === 0) {
+            return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        }
+
+        $out = '';
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            if (preg_match($pattern, $part) === 1) {
+                $out .= '<strong>' . htmlspecialchars($part, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</strong>';
+            } else {
+                $out .= htmlspecialchars($part, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
+        }
+
+        return $out;
+    }
+
+    private function extractOpinionAuthor(string $context): string
+    {
+        $text = (string) $context;
+        if ($text === '') {
+            return 'DILG';
+        }
+
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+
+        if (preg_match('/(?:very truly yours|respectfully yours|truly yours)[^\n]*\n\s*\n?\s*([A-Z][A-Z .,\-\'"]{3,})\s*\n/iu', $text, $m) === 1) {
+            $name = trim((string) ($m[1] ?? ''));
+            $name = preg_replace('/\s+/', ' ', $name) ?? $name;
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if (preg_match('/\n\s*([A-Z][A-Z .,\-\'"]{3,})\s*\n\s*(Undersecretary|Secretary)\b/iu', $text, $m) === 1) {
+            $name = trim((string) ($m[1] ?? ''));
+            $name = preg_replace('/\s+/', ' ', $name) ?? $name;
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'DILG';
     }
 
     private function shouldValidateResponse(string $userPrompt, string $aiResponse): bool

@@ -102,19 +102,33 @@ class OpinionRetriever
     {
         $terms = preg_split('/\s+/', trim($query)) ?: [];
         $terms = array_values(array_unique(array_filter(array_map(fn ($t) => trim((string) $t), $terms), fn ($t) => mb_strlen($t) > 2)));
-        $terms = array_slice($terms, 0, 6);
+        $terms = array_slice($terms, 0, 10);
+
+        $stop = [
+            'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
+            'legal', 'opinion', 'opinions', 'dilg',
+            'ang', 'mga', 'ng', 'na', 'sa', 'si', 'kay', 'kayo', 'ko', 'ako', 'ito', 'yan', 'dito', 'doon', 'para', 'tungkol', 'patungkol',
+        ];
+
+        $filtered = array_values(array_filter($terms, function (string $t) use ($stop) {
+            $lt = mb_strtolower($t);
+            return !in_array($lt, $stop, true);
+        }));
+
+        $contextTerms = $filtered;
+        usort($contextTerms, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+        $contextTerms = array_slice($contextTerms, 0, 3);
 
         $likeQuery = LegalOpinionLibrary::query();
 
-        $likeQuery->where(function ($q) use ($terms) {
-            foreach ($terms as $i => $t) {
+        $likeQuery->where(function ($q) use ($terms, $contextTerms) {
+            foreach ($terms as $t) {
                 $q->orWhere('title', 'like', '%'.$t.'%')
                     ->orWhere('opinion_number', 'like', '%'.$t.'%')
                     ->orWhere('keywords', 'like', '%'.$t.'%');
-
-                if ($i < 2 && mb_strlen($t) >= 5) {
-                    $q->orWhere('context', 'like', '%'.$t.'%');
-                }
+            }
+            foreach ($contextTerms as $t) {
+                $q->orWhere('context', 'like', '%'.$t.'%');
             }
         });
 
