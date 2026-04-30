@@ -834,14 +834,14 @@ class MessageController extends Controller
         }
 
         $terms = preg_split('/\s+/u', $t) ?: [];
+        $allowShort = ['sk', 'sb', 'kk'];
         $stop = [
             'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
             'legal', 'opinion', 'opinions', 'dilg',
             'act', 'law', 'code', 'rules', 'rule', 'regulation', 'regulations', 'section', 'article', 'republic', 'philippines', 'philippine',
             'allowed', 'allow', 'can', 'may', 'should', 'must', 'shall', 'what', 'who', 'when', 'where', 'how', 'is', 'are', 'pwede', 'ba', 'ano', 'paano', 'sino', 'kelan',
             'barangay', 'brgy', 'city', 'municipality', 'province', 'region', 'local', 'official', 'officer', 'government',
-            'kagawad', 'kapitan', 'chairman', 'chairperson', 'vice', 'mayor', 'sangguniang', 'sb', 'sk',
-            'appoint', 'appointing', 'appointment', 'staff', 'position', 'employee', 'employment', 'hire', 'hiring',
+            'kagawad', 'kapitan', 'chairman', 'chairperson', 'vice', 'mayor',
         ];
 
         $out = [];
@@ -850,7 +850,7 @@ class MessageController extends Controller
             if ($w === '') {
                 continue;
             }
-            if (mb_strlen($w) < 4) {
+            if (mb_strlen($w) < 4 && !in_array($w, $allowShort, true)) {
                 continue;
             }
             if (in_array($w, $stop, true)) {
@@ -1096,6 +1096,10 @@ Strict rules:
         $summaries = $this->summarizeReferenceExcerpts($prompt, $refs, $openai, $gemini, $groq);
         $mainSummary = $this->limitToSentences((string) ($summaries['Main'] ?? $mainExcerptRaw), 3);
 
+        if ($this->isNonAnswerFromLibrary($direct."\n".$mainSummary)) {
+            return $this->buildRelatedOnlyAnswer($prompt, $opinions, $openai, $gemini, $groq);
+        }
+
         $out = "Direct Answer:\n".$direct."\n\n";
         $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainSummary."\n\n";
         $out .= "Other Related References That Might Help:\n";
@@ -1121,6 +1125,42 @@ Strict rules:
         $out .= "Conclusion:\n".$conclusion;
 
         return trim($out);
+    }
+
+    private function isNonAnswerFromLibrary(string $text): bool
+    {
+        $t = mb_strtolower(trim((string) $text));
+        if ($t === '') {
+            return false;
+        }
+
+        $signals = [
+            'does not address',
+            'doesn\'t address',
+            'not address',
+            'no direct',
+            'offers no direct',
+            'does not discuss',
+            'doesn\'t discuss',
+            'does not mention',
+            'doesn\'t mention',
+            'unrelated',
+            'not related',
+            'not directly',
+            'cannot confirm',
+            'cannot conclude',
+            'no basis to conclude',
+            'does not provide',
+            'doesn\'t provide',
+        ];
+
+        foreach ($signals as $s) {
+            if (str_contains($t, $s)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function buildStrictLibraryAnswerFallback(string $prompt, array $opinions): string
