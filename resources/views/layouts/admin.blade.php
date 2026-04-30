@@ -15,6 +15,87 @@
         @endif
 
         <style>
+            :root {
+                --brand-navy: #0b1b4a;
+                --brand-blue: #163a8c;
+                --brand-ink: #002C76;
+                --brand-red: #a11d2f;
+                --brand-orange: #d76b2a;
+                --brand-yellow: #FFDE15;
+                --shell-base: #eef3f8;
+                --shell-border: rgba(15, 23, 42, 0.08);
+                --card-border: rgba(15, 23, 42, 0.10);
+                --shadow-soft: 0 18px 60px rgba(15, 23, 42, 0.10);
+                --shadow-mid: 0 16px 46px rgba(15, 23, 42, 0.16);
+            }
+
+            .admin-header {
+                position: sticky;
+                top: 0;
+                z-index: 60;
+                width: 100%;
+                background: linear-gradient(90deg, var(--brand-navy) 0%, var(--brand-blue) 26%, var(--brand-red) 55%, var(--brand-orange) 80%, var(--brand-yellow) 100%);
+                border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+                box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+                overflow: hidden;
+            }
+
+            .admin-header::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background:
+                    radial-gradient(1200px 140px at 18% 0%, rgba(255, 255, 255, 0.30) 0%, transparent 58%),
+                    radial-gradient(1000px 160px at 84% 12%, rgba(255, 255, 255, 0.18) 0%, transparent 60%);
+                opacity: 0.9;
+                mix-blend-mode: overlay;
+            }
+
+            .admin-header-inner {
+                position: relative;
+                z-index: 1;
+                max-width: 1780px;
+                margin: 0 auto;
+                padding: 14px 22px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+            }
+
+            .admin-brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+                margin-left: -6px;
+            }
+
+            .admin-brand-badge {
+                width: 42px;
+                height: 42px;
+                border-radius: 9999px;
+                background: rgba(255, 255, 255, 0.92);
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10);
+                border: 1px solid rgba(255, 255, 255, 0.40);
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 auto;
+            }
+
+            .admin-shell {
+                background:
+                    radial-gradient(1200px 720px at 18% 0%, rgba(22, 58, 140, 0.22) 0%, transparent 60%),
+                    radial-gradient(980px 640px at 86% 10%, rgba(215, 107, 42, 0.20) 0%, transparent 58%),
+                    radial-gradient(900px 620px at 62% 96%, rgba(255, 222, 21, 0.20) 0%, transparent 54%),
+                    linear-gradient(135deg, rgba(11, 27, 74, 0.12) 0%, rgba(22, 58, 140, 0.10) 26%, rgba(161, 29, 47, 0.10) 55%, rgba(215, 107, 42, 0.10) 80%, rgba(255, 222, 21, 0.18) 100%),
+                    var(--shell-base);
+                background-attachment: fixed;
+            }
+
             @media (min-width: 1024px) {
                 .admin-content {
                     zoom: 0.72;
@@ -330,10 +411,6 @@
                 border-color: rgba(0, 44, 118, 0.55) !important;
             }
 
-            .admin-shell {
-                background: #eef3f8;
-            }
-
             .admin-content {
                 width: 100%;
                 max-width: none;
@@ -355,21 +432,53 @@
             }
 
             .admin-sidebar {
-                background: rgba(248, 250, 252, 0.92) !important;
-                border: 1px solid rgba(15, 23, 42, 0.06);
+                background: rgba(255, 255, 255, 0.76) !important;
+                border: 1px solid var(--shell-border);
                 border-radius: 26px;
-                box-shadow: 0 18px 60px rgba(15, 23, 42, 0.10);
+                box-shadow: var(--shadow-soft);
                 padding: 18px !important;
+                backdrop-filter: blur(18px) saturate(1.2);
+            }
+
+            .sidebar-nav-list {
+                background: rgba(255, 255, 255, 0.62);
+                border: 1px solid rgba(15, 23, 42, 0.10);
+                border-radius: 1.25rem;
+                overflow: hidden;
+                backdrop-filter: blur(14px) saturate(1.1);
+            }
+
+            .sidebar-nav-icon {
+                background-color: var(--brand-ink);
+                box-shadow: 0 10px 22px rgba(0, 44, 118, 0.24);
+            }
+
+            .sidebar-chat-item {
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 14px 26px rgba(15, 23, 42, 0.06) !important;
+            }
+
+            .sidebar-chat-item.is-active {
+                background-color: rgba(0, 44, 118, 0.06) !important;
+                border-color: rgba(0, 44, 118, 0.45) !important;
+                box-shadow: 0 1px 2px rgba(0, 44, 118, 0.12), 0 18px 44px rgba(15, 23, 42, 0.10) !important;
+            }
+
+            .sidebar-chats-scroll::-webkit-scrollbar-thumb {
+                background-color: rgba(0, 44, 118, 0.35);
+            }
+
+            .sidebar-chats-scroll::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(0, 44, 118, 0.55);
             }
 
         </style>
     </head>
     <body class="font-sans antialiased selection:bg-slate-900/10 selection:text-slate-900">
-        <div class="admin-shell h-screen text-slate-900 overflow-hidden relative" style="display:flex; flex-direction:column; height:100vh; background: #eef3f8;">
-            <header style="width: 100%; background: linear-gradient(90deg, #002C76 0%, rgba(0, 44, 118, 0.55) 45%, rgba(255, 255, 255, 0.86) 100%); border-bottom: 1px solid rgba(15, 23, 42, 0.10);">
-                <div style="max-width: 1600px; margin: 0 auto; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; align-items: center; gap: 12px; min-width: 0; margin-left: -6px;">
-                        <div style="width: 40px; height: 40px; border-radius: 9999px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10); border: 1px solid rgba(255, 255, 255, 0.35); overflow: hidden; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+        <div class="admin-shell h-screen text-slate-900 overflow-hidden relative" style="display:flex; flex-direction:column; height:100vh;">
+            <header class="admin-header">
+                <div class="admin-header-inner">
+                    <div class="admin-brand">
+                        <div class="admin-brand-badge">
                             <img
                                 src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg"
                                 alt="DILG Seal"
@@ -675,7 +784,7 @@
         <div id="auth-login-modal" class="auth-modal hidden fixed inset-0 z-[2147483100]" aria-hidden="true">
             <div class="auth-modal-backdrop absolute inset-0" data-auth-modal-close></div>
             <div class="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-                <div class="auth-modal-panel relative w-full max-w-5xl">
+                <div class="auth-modal-panel relative w-full max-w-4xl" style="transform: scale(0.86); transform-origin: center;">
                     <button type="button" class="auth-modal-close" aria-label="Close" data-auth-modal-close>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
                             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
