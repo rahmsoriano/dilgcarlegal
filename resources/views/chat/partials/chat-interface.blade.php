@@ -4,28 +4,29 @@
 
 <style>
     .chat-shell {
-        background: {{ $isPro ? 'transparent' : 'radial-gradient(circle at top left, rgba(14, 165, 233, 0.14), transparent 28%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.14), transparent 32%), linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%)' }};
+        background: {{ $isPro ? 'radial-gradient(820px 360px at 8% 0%, rgba(59, 130, 246, 0.10), transparent 55%), radial-gradient(860px 380px at 100% 8%, rgba(147, 197, 253, 0.10), transparent 56%), linear-gradient(180deg, #f9fbff 0%, #eef4fd 48%, #f8fbff 100%)' : 'radial-gradient(circle at top left, rgba(14, 165, 233, 0.14), transparent 28%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.14), transparent 32%), linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%)' }};
     }
 
     .chat-panel {
         backdrop-filter: blur(24px);
-        background: {{ $isPro ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.82)' }};
-        box-shadow: {{ $isPro ? '0 24px 70px rgba(15, 23, 42, 0.08)' : '0 24px 80px rgba(15, 23, 42, 0.08)' }};
-        border: {{ $isPro ? '1px solid rgba(15, 23, 42, 0.08)' : '1px solid rgba(255, 255, 255, 0.7)' }};
+        background: {{ $isPro ? 'linear-gradient(180deg, rgba(255,255,255,0.90) 0%, rgba(247,250,255,0.82) 100%)' : 'rgba(255, 255, 255, 0.82)' }};
+        box-shadow: {{ $isPro ? '0 28px 80px rgba(15, 23, 42, 0.08)' : '0 24px 80px rgba(15, 23, 42, 0.08)' }};
+        border: {{ $isPro ? '1px solid rgba(15, 23, 42, 0.06)' : '1px solid rgba(255, 255, 255, 0.7)' }};
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .pro-input-wrapper {
-        background: rgba(248, 250, 252, 0.9);
-        border: 1px solid rgba(15, 23, 42, 0.10);
-        border-radius: 1.5rem;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(247,250,255,0.96) 100%);
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        border-radius: 9999px;
+        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,0.86);
         transition: all 0.3s ease;
     }
 
     .pro-input-wrapper:focus-within {
         background: rgba(255, 255, 255, 1);
-        border-color: rgba(99, 102, 241, 0.45);
-        box-shadow: 0 0 30px rgba(99, 102, 241, 0.14);
+        border-color: rgba(37, 99, 235, 0.22);
+        box-shadow: 0 24px 48px rgba(37, 99, 235, 0.10), inset 0 1px 0 rgba(255,255,255,0.9);
     }
 
     .message-bubble-user {
@@ -37,6 +38,105 @@
         background: rgba(255, 255, 255, 0.7);
         border: 1px solid rgba(15, 23, 42, 0.08);
         backdrop-filter: blur(10px);
+    }
+
+    .chat-empty-board {
+        position: relative;
+        overflow: hidden;
+        border-radius: 2.2rem;
+        border: 1px solid rgba(15, 23, 42, 0.05);
+        background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(247,250,255,0.88) 100%);
+        box-shadow: 0 34px 90px rgba(15, 23, 42, 0.08);
+    }
+
+    .chat-empty-board::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(620px 280px at 50% -4%, rgba(96, 165, 250, 0.10), transparent 62%),
+            radial-gradient(540px 260px at 100% 30%, rgba(191, 219, 254, 0.12), transparent 62%);
+        pointer-events: none;
+    }
+
+    .chat-hero-wave {
+        position: absolute;
+        right: -4%;
+        top: 10%;
+        width: 44%;
+        height: 62%;
+        opacity: 0.30;
+        background: repeating-radial-gradient(ellipse at 100% 50%, rgba(120, 159, 230, 0.18) 0 2px, transparent 2px 18px);
+        mask-image: linear-gradient(to left, rgba(0,0,0,0.95), transparent 82%);
+        pointer-events: none;
+    }
+
+    .chat-hero-floor {
+        position: absolute;
+        inset: auto -2% -10% -2%;
+        height: 40%;
+        opacity: 0.24;
+        background:
+            repeating-radial-gradient(ellipse at 50% 100%, rgba(115, 155, 230, 0.18) 0 2px, transparent 2px 18px);
+        mask-image: linear-gradient(to top, rgba(0,0,0,0.9), transparent 88%);
+        pointer-events: none;
+    }
+
+    .chat-dot-grid {
+        position: absolute;
+        left: 4rem;
+        top: 32%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.85rem;
+        width: 4.5rem;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .chat-dot-grid span {
+        width: 0.26rem;
+        height: 0.26rem;
+        border-radius: 9999px;
+        background: rgba(96, 139, 224, 0.34);
+    }
+
+    .chat-lex-gradient {
+        background: linear-gradient(135deg, #1f66ff 0%, #2563eb 55%, #60a5fa 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .chat-feature-card {
+        border: 1px solid rgba(15, 23, 42, 0.05);
+        background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(247,250,255,0.90) 100%);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .chat-feature-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(37, 99, 235, 0.14);
+        box-shadow: 0 22px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .chat-feature-arrow {
+        transition: transform 180ms ease, color 180ms ease;
+    }
+
+    .chat-feature-card:hover .chat-feature-arrow {
+        transform: translateX(3px);
+        color: #2563eb;
+    }
+
+    .chat-send-btn {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 18px 34px rgba(37, 99, 235, 0.24);
+    }
+
+    .chat-send-btn:hover {
+        box-shadow: 0 22px 42px rgba(37, 99, 235, 0.28);
     }
 
     @keyframes chat-fade-in {
@@ -127,18 +227,103 @@
             <div id="chat-scroll" class="chat-scrollbar flex-1 overflow-y-auto p-8">
                 @if ($messages->isEmpty())
                     <div class="flex h-full flex-col items-center justify-center text-center">
-                        <div class="relative mb-8">
-                            <div class="absolute inset-0 bg-[#002C76] blur-[40px] opacity-20 animate-pulse"></div>
-                            <div class="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white shadow-2xl">
-                                <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg"
-                                    alt="DILG Seal"
-                                    class="h-full w-full object-contain"
-                                >
+                        <div class="chat-empty-board w-full max-w-[1080px] px-8 py-10 sm:px-14 sm:py-14">
+                            <div class="chat-hero-wave"></div>
+                            <div class="chat-hero-floor"></div>
+                            <div class="chat-dot-grid">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+
+                            <div class="relative mb-8">
+                                <div class="absolute inset-0 bg-[#2563eb] blur-[40px] opacity-15 animate-pulse"></div>
+                                <div class="relative mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_22px_50px_rgba(15,23,42,0.10)] ring-1 ring-slate-900/5">
+                                    <img
+                                        src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg"
+                                        alt="DILG Seal"
+                                        class="h-full w-full object-contain"
+                                    >
+                                </div>
+                            </div>
+
+                            <h3 class="mx-auto max-w-3xl text-4xl font-black tracking-tight text-slate-900 sm:text-[3.15rem]">
+                                What can <span class="chat-lex-gradient">Lex</span> assist you today?
+                            </h3>
+                            <p class="mx-auto mt-4 max-w-md text-lg font-medium leading-relaxed text-slate-500">Ask about legal opinions.</p>
+
+                            <div class="relative z-[1] mx-auto mt-10 grid max-w-3xl gap-4 text-left sm:grid-cols-2">
+                                <button type="button" class="chat-feature-card flex items-center gap-4 rounded-[1.6rem] px-5 py-5" data-chat-prompt="Summarize legal opinions and highlight the key issues involved.">
+                                    <span class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.1rem] bg-blue-50 text-blue-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_20px_rgba(59,130,246,0.10)]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" class="h-7 w-7">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75h6.19a2.25 2.25 0 011.59.659l3.06 3.06a2.25 2.25 0 01.66 1.591v10.69A2.25 2.25 0 0116.75 22H7.5a2.25 2.25 0 01-2.25-2.25V6A2.25 2.25 0 017.5 3.75Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4.5h4.5m1.5-11.25V8.25h3" />
+                                        </svg>
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-lg font-bold tracking-tight text-slate-900">Summarize legal opinions</span>
+                                        <span class="mt-1 block text-sm leading-6 text-slate-500">Get key takeaways from legal issuances</span>
+                                    </span>
+                                    <span class="chat-feature-arrow text-slate-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6" />
+                                        </svg>
+                                    </span>
+                                </button>
+
+                                <button type="button" class="chat-feature-card flex items-center gap-4 rounded-[1.6rem] px-5 py-5" data-chat-prompt="Compare legal concepts, laws, policies, or issuances.">
+                                    <span class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.1rem] bg-emerald-50 text-emerald-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_20px_rgba(16,185,129,0.10)]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" class="h-7 w-7">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-7.5-6h15M6 7.5l6 3 6-3" />
+                                        </svg>
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-lg font-bold tracking-tight text-slate-900">Compare legal concepts</span>
+                                        <span class="mt-1 block text-sm leading-6 text-slate-500">Analyze differences in laws, policies, or issuances</span>
+                                    </span>
+                                    <span class="chat-feature-arrow text-slate-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6" />
+                                        </svg>
+                                    </span>
+                                </button>
+
+                                <button type="button" class="chat-feature-card flex items-center gap-4 rounded-[1.6rem] px-5 py-5" data-chat-prompt="Draft legal guidance, memoranda, circulars, and more.">
+                                    <span class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.1rem] bg-violet-50 text-violet-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_20px_rgba(139,92,246,0.10)]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" class="h-7 w-7">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                                        </svg>
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-lg font-bold tracking-tight text-slate-900">Draft legal guidance</span>
+                                        <span class="mt-1 block text-sm leading-6 text-slate-500">Generate draft memoranda, circulars, and more</span>
+                                    </span>
+                                    <span class="chat-feature-arrow text-slate-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6" />
+                                        </svg>
+                                    </span>
+                                </button>
+
+                                <button type="button" class="chat-feature-card flex items-center gap-4 rounded-[1.6rem] px-5 py-5" data-chat-prompt="Find jurisdictional insights relevant to barangay, municipality, city, or LGU concerns.">
+                                    <span class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.1rem] bg-amber-50 text-amber-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_20px_rgba(245,158,11,0.10)]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" class="h-7 w-7">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9.75 12 4.5l9 5.25M4.5 10.5V18h15v-7.5M9 18V12h6v6" />
+                                        </svg>
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-lg font-bold tracking-tight text-slate-900">Find jurisdictional insights</span>
+                                        <span class="mt-1 block text-sm leading-6 text-slate-500">Get opinions relevant to a specific barangay or LGU</span>
+                                    </span>
+                                    <span class="chat-feature-arrow text-slate-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6" />
+                                        </svg>
+                                    </span>
+                                </button>
                             </div>
                         </div>
-                        <h3 class="text-3xl font-black tracking-tight {{ $isPro ? 'text-slate-900' : 'text-slate-950' }}">What can Lex assist you today?</h3>
-                        <p class="mt-4 max-w-md text-lg text-slate-500 font-medium leading-relaxed">Ask about legal opinions.</p>
                     </div>
                 @else
                     <div data-message-stack="true" class="mx-auto flex w-full max-w-6xl flex-col gap-10">
@@ -162,7 +347,7 @@
                 @endif
             </div>
 
-            <div class="border-t {{ $isPro ? 'border-slate-900/[0.03] bg-white/50' : 'border-slate-200/50 bg-white/70' }} px-6 py-4 sm:px-8 sm:py-5">
+            <div class="border-t {{ $isPro ? 'border-slate-900/[0.03] bg-white/50' : 'border-slate-200/50 bg-white/70' }} px-6 py-5 sm:px-8 sm:py-6">
                 <form
                     id="chat-form"
                     data-loader-skip
@@ -173,19 +358,29 @@
                     data-conversation-id="{{ $activeConversation?->id }}"
                 >
                     <div class="group relative overflow-hidden {{ $isPro ? 'pro-input-wrapper' : 'rounded-[2rem] border border-slate-200 bg-white' }} transition-all duration-500">
-                        <div class="flex items-center gap-3 px-8 py-3">
+                        <div class="flex items-center gap-4 px-6 py-4 sm:px-8">
+                            <div class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#edf4ff] text-[#2b61bf] sm:flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                                    <path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2Z" />
+                                    <path d="M18.5 15l.95 2.55L22 18.5l-2.55.95L18.5 22l-.95-2.55L15 18.5l2.55-.95L18.5 15Z" />
+                                </svg>
+                            </div>
                             <textarea
                                 id="chat-prompt"
                                 rows="1"
-                                class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-medium leading-6 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
+                                class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-medium leading-7 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
                                 placeholder="Type your legal inquiry here..."
                             ></textarea>
-                            <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-10 items-center justify-center rounded-xl bg-[#002C76] text-[#FFDE15] shadow-md shadow-slate-900/10 transition-all duration-200 hover:bg-[#002C76]/95" style="background-color: #002C76 !important; color: #FFDE15 !important;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block; color: #FFDE15 !important;">
+                            <button id="chat-send" type="submit" aria-label="Send" class="chat-send-btn group flex h-12 w-12 items-center justify-center rounded-[1.1rem] text-white transition-all duration-200 hover:-translate-y-0.5" style="color: white !important;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block; color: white !important;">
                                     <path d="M3.478 2.405a.75.75 0 0 1 .81-.163l18 8.25a.75.75 0 0 1 0 1.362l-18 8.25A.75.75 0 0 1 3 19.5v-6.764a.75.75 0 0 1 .553-.724L12 9.75 3.553 7.488A.75.75 0 0 1 3 6.764V3a.75.75 0 0 1 .478-.595Z"/>
                                 </svg>
                             </button>
                         </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 px-1">
+                        <div class="text-xs font-medium text-slate-500">Legal AI can make mistakes. Verify important information.</div>
+                        <div class="text-xs font-medium text-slate-500">Press <span class="rounded-md bg-slate-900/[0.05] px-2 py-1 font-semibold text-slate-700">Enter</span> to send</div>
                     </div>
                 </form>
                 <div id="chat-error" class="mx-auto hidden w-full max-w-6xl mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-6 py-4 text-sm font-bold text-rose-400"></div>
