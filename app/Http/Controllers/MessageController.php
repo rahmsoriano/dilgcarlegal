@@ -552,9 +552,24 @@ class MessageController extends Controller
 
         try {
             // 1. Priority: Opinion Library
-            $opinions = $isSmallTalk ? [] : $retriever->retrieve($prompt, 12);
+            $retrievedOpinions = $isSmallTalk ? [] : $retriever->retrieve($prompt, 12);
         } catch (\Throwable $e) {
-            $opinions = [];
+            $retrievedOpinions = [];
+        }
+
+        $opinions = $retrievedOpinions;
+        if (count($retrievedOpinions) > 0) {
+            $directOpinions = $this->filterOpinionsForDirectUse($prompt, $retrievedOpinions);
+
+            if (count($directOpinions) > 0) {
+                $opinions = $directOpinions;
+            } else {
+                return [
+                    'content' => $this->sanitizeAssistantText($this->buildRelatedOnlyAnswer($prompt, $retrievedOpinions, $openai, $gemini, $groq)),
+                    'model' => 'related_library_plus_general_info',
+                    'provider' => 'opinion_retriever',
+                ];
+            }
         }
 
         if (count($opinions) === 0) {
@@ -569,78 +584,14 @@ class MessageController extends Controller
                 ];
             }
 
-            $conversationalPrompt = 'You are Lex, the GABAY-Lex AI. Respond conversationally, but with strict legal accuracy.
-
-IMPORTANT: 
-- NEVER invent dates, years, or specific names (e.g., "Leni Robredo", "2016-2022") unless they are explicitly mentioned in the USER MESSAGE.
-- If the user asks about a person or event not in your database, state clearly that you do not have that specific information in your DILG legal library.
-
-STRICT FIDELITY RULES:
-- Use ONLY facts explicitly provided in the USER MESSAGE.
-- NEVER assume the user\'s age, position (e.g., "Kagawad"), or status.
-- DO NOT use personal pronouns like "Since you are..." or "As a [position]..." unless the user explicitly stated those facts.
-- If the user did not provide a specific fact, provide the information in a general, third-person perspective (e.g., "The law states that a person must be...").
-- NEVER invent or substitute values.
-
-RESPONSE FORMAT (FOLLOW THIS EXACT ORDER, NO MARKDOWN SYMBOLS):
-Direct Answer:
-[Provide a clear, immediate answer in 1–4 sentences.]
-
-Legal Basis / Supporting Reference:
-- If a stored DILG legal opinion directly answers the question, cite it in this format: "[Title] (op. no. [Number]) ([Date])".
-- If no stored DILG legal opinion answers the question, SKIP listing "None" and proceed to general information below.
-
-Explanation:
-[Briefly explain how the law/opinion applies.]
-
-For general information (not based on stored DILG legal opinions):
-Only include this section if the stored DILG opinion library has no direct answer for the user\'s question. This is a last resort.
-Reminder: The following answer is based on general legal information outside the stored DILG opinion library because no directly relevant DILG legal opinion was found.
-[General information here.]
-
-Conclusion:
-[Summarize the final answer in 1–2 sentences.]
-
-STRICT RULES:
-- Clearly state when using information outside the DILG library.
-- Keep the tone professional, factual, and helpful.
-- Do NOT use asterisks (*) or bold markers (**). Use plain text labels and hyphen bullets only.';
-
-            $pureSmallTalkPrompt = 'You are a friendly and helpful AI assistant. Respond naturally to the user\'s greeting or small talk. Keep it brief, polite, and engaging. No need to mention any legal library or disclaimers for simple greetings.';
-
-            // If it's small talk, ALWAYS use the pure small talk prompt.
-            // If it's NOT small talk but no opinions found, use systemPrompt if available, else conversational.
-            if ($isSmallTalk) {
-                $instruction = $pureSmallTalkPrompt;
-            } else {
-                $instruction = $systemPrompt !== '' ? $systemPrompt : $conversationalPrompt;
-            }
-
-            $messages = [['role' => 'system', 'content' => $instruction]];
-            foreach ($history as $m) {
-                $messages[] = [
-                    'role' => ($m['role'] ?? '') === 'assistant' ? 'assistant' : 'user',
-                    'content' => (string) ($m['content'] ?? ''),
-                ];
-            }
-
             try {
-            $resp = $this->chatWithFallback($messages, $openai, $gemini, $groq);
-            $content = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
-            
-            if ($this->shouldValidateResponse($prompt, $content)) {
-                $content = $this->validateAndCorrectResponse($prompt, $content, $openai, $gemini, $groq);
-            }
+                $content = $this->buildNoLibraryGeneralInfoAnswer($prompt, $openai, $gemini, $groq);
 
-            // Linkify if any opinions were found (even if not used in primary logic)
-            $content = $this->linkifyOpinions($content, $opinions);
-            $content = $this->ensureMainReferenceLink($content, $opinions);
-
-            return [
-                'content' => $content,
-                'model' => (string) ($resp['model'] ?? $resp['provider']),
-                'provider' => $resp['provider'],
-            ];
+                return [
+                    'content' => $this->sanitizeAssistantText($content),
+                    'model' => 'general_info_no_library',
+                    'provider' => 'ai_fallback_general_info',
+                ];
         } catch (AiRequestException $e) {
                 return [
                     'content' => $this->formatAiErrorReply($e),
@@ -742,92 +693,16 @@ STRICT RULES:
             $libraryText .= $block;
         }
 
-        $libraryInstruction = 'You are Lex, the GABAY-Lex AI. Your primary task is to answer user questions using the provided legal opinion context.
-
-STRICT FIDELITY RULES:
-- Use ONLY facts explicitly provided in the USER MESSAGE or the LEGAL OPINIONS LIBRARY CONTENT.
-- NEVER assume the user\'s age, position (e.g., "Kagawad"), or status.
-- DO NOT use personal pronouns like "Since you are..." or "As a [position]..." unless the user explicitly stated those facts.
-- If the user did not provide a specific fact, provide the information in a general, third-person perspective (e.g., "The law states that a person must be...").
-- NEVER invent or substitute values.
-
-RESPONSE FORMAT (FOLLOW THIS EXACT ORDER, NO MARKDOWN SYMBOLS):
-Direct Answer:
-[Provide a clear, immediate answer in 1–4 sentences.]
-
-Legal Basis / Supporting Reference:
-- Cite ONE main DILG legal opinion from the provided library content that most directly answers the question, using: "[Title] (op. no. [Number]) ([Date])".
-- If there are other relevant DILG legal opinions, list them as supporting references (do NOT write "None" if there are no other opinions).
-
-Explanation:
-[Briefly explain how the cited DILG opinion(s) support the answer.]
-
-For general information (not based on stored DILG legal opinions):
-Only include this section if (and only if) the provided DILG library content does NOT contain enough information to answer the user\'s question. This is a last resort.
-If you can answer based on the DILG library content, DO NOT include this section at all.
-Reminder: This section is general information outside the stored DILG opinion library.
-[General information here.]
-
-Conclusion:
-[Summarize the final answer in 1–2 sentences. If you used general information, clearly separate what is based on DILG opinions vs what is general information.]
-If the user asks about "this year/ngayong taon" but did not provide a specific year, DO NOT write a numeric year. Use "this year/ngayong taon" wording instead.
-
-STRICT RULES:
-- ALWAYS prioritize the provided DILG Legal Opinions.
-- Ensure opinion titles and numbers match the context exactly for hyperlinking.
-- Maintain a professional and factual tone.
-- Do NOT use asterisks (*) or bold markers (**). Use plain text labels and hyphen bullets only.';
-
-        $instruction = $libraryInstruction;
-
-        $userText = "USER MESSAGE:\n".$prompt."\n\nLEGAL OPINIONS LIBRARY CONTENT (SEARCH RESULTS):\n".$libraryText;
-
-        $messages = [['role' => 'system', 'content' => $instruction]];
-        // Add history for context even in library mode!
-        $historyLimit = 5;
-        $recentHistory = array_slice($history, -$historyLimit);
-        foreach ($recentHistory as $m) {
-            // Avoid duplication of current prompt
-            if (($m['role'] ?? '') === 'user' && trim((string) ($m['content'] ?? '')) === trim($prompt)) {
-                continue;
-            }
-            $messages[] = [
-                'role' => ($m['role'] ?? '') === 'assistant' ? 'assistant' : 'user',
-                'content' => (string) ($m['content'] ?? ''),
-            ];
-        }
-        $messages[] = ['role' => 'user', 'content' => $userText];
-
         try {
-            $resp = $this->chatWithFallback($messages, $openai, $gemini, $groq);
-            $content = (string) ($resp['content'] ?? '');
+            $content = $this->buildStrictLibraryAnswer($prompt, $opinions, $openai, $gemini, $groq);
 
-        // Linkify opinions found in the library content
-        $content = $this->linkifyOpinions($content, $opinions);
-
-        // Ensure proper bolding of opinion numbers for the regex to match better if needed
-        // but linkifyOpinions should handle it if the AI followed the format.
-
-        return [
-            'content' => $this->sanitizeAssistantText($content),
-            'model' => (string) ($resp['model'] ?? $resp['provider']),
-            'provider' => $resp['provider'],
-        ];
+            return [
+                'content' => $this->sanitizeAssistantText($content),
+                'model' => 'strict_library_answer',
+                'provider' => 'opinion_retriever',
+            ];
         } catch (\Throwable $e) {
-            $lines = [];
-            foreach ($opinions as $op) {
-                $line = $op['title'].' — '.$op['opinion_number'];
-                if ($op['date']) {
-                    $line .= ' ('.$op['date'].')';
-                }
-                $lines[] = $line."\n".$op['snippet'];
-            }
-
-            $content = "I found these relevant legal opinions in the library:\n\n".implode("\n\n", $lines)."\n\n(Note: Detailed AI analysis is currently unavailable, but you can check these references.)";
-            
-            // Linkify even in fallback mode
-            $content = $this->linkifyOpinions($content, $opinions);
-            $content = $this->ensureMainReferenceLink($content, $opinions);
+            $content = $this->buildStrictLibraryAnswerFallback($prompt, $opinions);
 
             return [
                 'content' => $this->sanitizeAssistantText($content),
@@ -869,6 +744,607 @@ STRICT RULES:
         $line = 'Main Reference: '.$link.($meta !== '' ? ' <span style="opacity:0.85; font-size: 12px;">— '.$escape($meta).'</span>' : '');
 
         return rtrim($content)."\n\n".$line;
+    }
+
+    private function enforceLinkedLegalBasisAndRemoveGeneralInfo(string $content, array $opinions): string
+    {
+        if (empty($opinions)) {
+            return $content;
+        }
+
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
+
+        $escape = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $basisLines = [];
+        foreach (array_slice($opinions, 0, 3) as $op) {
+            $id = (int) ($op['id'] ?? 0);
+            $url = (string) ($op['url'] ?? '#');
+            $title = trim((string) ($op['title'] ?? ''));
+            $num = trim((string) ($op['opinion_number'] ?? ''));
+            $date = trim((string) ($op['date'] ?? ''));
+
+            if ($id <= 0 || $title === '') {
+                continue;
+            }
+
+            $link = '<a href="'.$escape($url).'" data-opinion-id="'.$id.'" class="opinion-link text-blue-600 underline font-bold" style="color: blue; text-decoration: underline;">'.$escape($title).'</a>';
+            $line = '- '.$link;
+            if ($num !== '') {
+                $line .= ' — '.$escape($num);
+            }
+            if ($date !== '') {
+                $line .= ' ('.$escape($date).')';
+            }
+            $basisLines[] = $line;
+        }
+
+        if (count($basisLines) > 0) {
+            $basisBlock = "Legal Basis / Supporting Reference:\n".implode("\n", $basisLines)."\n";
+
+            $replaced = 0;
+            $content = preg_replace(
+                '/(^|\n)\s*Legal\s*Basis\s*\/\s*Supporting\s*Reference\s*:\s*\n[\s\S]*?(?=\n\s*(Explanation:|Conclusion:)|\z)/i',
+                "\n\n".$basisBlock."\n",
+                $content,
+                1,
+                $replaced
+            ) ?? $content;
+
+            if ($replaced === 0) {
+                $inserted = 0;
+                $content = preg_replace(
+                    '/\n\s*(Explanation:)/i',
+                    "\n\n".$basisBlock."\n$1",
+                    $content,
+                    1,
+                    $inserted
+                ) ?? $content;
+
+                if ($inserted === 0) {
+                    $content = rtrim($content)."\n\n".$basisBlock;
+                }
+            }
+        }
+
+        $content = preg_replace(
+            '/\n\s*For\s+general\s+information[^\n]*:\s*\n[\s\S]*?(?=\n\s*Conclusion:|\z)/i',
+            "\n",
+            $content
+        ) ?? $content;
+
+        $content = preg_replace(
+            '/\n\s*General\s+information\s*:\s*\n[\s\S]*?(?=\n\s*Conclusion:|\z)/i',
+            "\n",
+            $content
+        ) ?? $content;
+
+        $content = preg_replace("/\n{3,}/", "\n\n", (string) $content) ?? $content;
+
+        return trim((string) $content);
+    }
+
+    private function extractCoreTokensForDirectMatch(string $prompt): array
+    {
+        $t = mb_strtolower(trim((string) $prompt));
+        $t = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $t) ?? $t;
+        $t = trim(preg_replace('/\s+/u', ' ', $t) ?? $t);
+        if ($t === '') {
+            return [];
+        }
+
+        $terms = preg_split('/\s+/u', $t) ?: [];
+        $stop = [
+            'a', 'an', 'and', 'are', 'as', 'at', 'about', 'be', 'by', 'for', 'from', 'in', 'is', 'it', 'of', 'on', 'or', 'that', 'the', 'this', 'to', 'with',
+            'legal', 'opinion', 'opinions', 'dilg',
+            'act', 'law', 'code', 'rules', 'rule', 'regulation', 'regulations', 'section', 'article', 'republic', 'philippines', 'philippine',
+            'allowed', 'allow', 'can', 'may', 'should', 'must', 'shall', 'what', 'who', 'when', 'where', 'how', 'is', 'are', 'pwede', 'ba', 'ano', 'paano', 'sino', 'kelan',
+            'barangay', 'brgy', 'city', 'municipality', 'province', 'region', 'local', 'official', 'officer', 'government',
+            'kagawad', 'kapitan', 'chairman', 'chairperson', 'vice', 'mayor', 'sangguniang', 'sb', 'sk',
+            'appoint', 'appointing', 'appointment', 'staff', 'position', 'employee', 'employment', 'hire', 'hiring',
+        ];
+
+        $out = [];
+        foreach ($terms as $w) {
+            $w = trim((string) $w);
+            if ($w === '') {
+                continue;
+            }
+            if (mb_strlen($w) < 4) {
+                continue;
+            }
+            if (in_array($w, $stop, true)) {
+                continue;
+            }
+            $out[] = $w;
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    private function filterOpinionsForDirectUse(string $prompt, array $opinions): array
+    {
+        $core = $this->extractCoreTokensForDirectMatch($prompt);
+        if (count($core) === 0) {
+            return $opinions;
+        }
+
+        $filtered = [];
+        foreach ($opinions as $op) {
+            if (!is_array($op)) {
+                continue;
+            }
+            $haystack = mb_strtolower(
+                (string) ($op['title'] ?? '')."\n".
+                (string) ($op['opinion_number'] ?? '')."\n".
+                (string) ($op['keywords'] ?? '')."\n".
+                mb_substr((string) ($op['context'] ?? ''), 0, 5000)
+            );
+
+            $hit = false;
+            foreach ($core as $tok) {
+                if ($tok !== '' && str_contains($haystack, $tok)) {
+                    $hit = true;
+                    break;
+                }
+            }
+
+            if ($hit) {
+                $filtered[] = $op;
+            }
+        }
+
+        return count($filtered) > 0 ? array_values($filtered) : [];
+    }
+
+    private function buildNoLibraryGeneralInfoAnswer(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
+    {
+        $general = $this->buildGeneralInfoParagraph($prompt, $openai, $gemini, $groq);
+        $general = $this->limitToSentences($general, 3);
+
+        $conclusion = $this->generateConclusionFromGeneralInfo($prompt, $general, $openai, $gemini, $groq);
+        $conclusion = $this->limitToSentences($conclusion, 2);
+        if (trim($conclusion) === '') {
+            $conclusion = $this->limitToSentences($general, 2);
+        }
+
+        $out = "Direct Answer:\nUnfortunately, I could not find a stored DILG legal opinion that directly addresses your exact question.\n\n";
+        $out .= "General Information (not based in Opinion Library):\n".$general."\n\n";
+        $out .= "Conclusion:\n".$conclusion;
+
+        return trim($out);
+    }
+
+    private function buildRelatedOnlyAnswer(string $prompt, array $opinions, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
+    {
+        $tokens = $this->tokenizeOpinionListTopic($prompt);
+
+        $related = array_slice($opinions, 0, 3);
+        $refs = [];
+        foreach ($related as $idx => $op) {
+            if (!is_array($op)) {
+                continue;
+            }
+            $refs[] = [
+                'label' => 'Other'.($idx + 1),
+                'excerpt' => $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3),
+            ];
+        }
+
+        $summaries = $this->summarizeReferenceExcerpts($prompt, $refs, $openai, $gemini, $groq);
+
+        $general = $this->buildGeneralInfoParagraph($prompt, $openai, $gemini, $groq);
+        $general = $this->limitToSentences($general, 3);
+
+        $direct = $this->limitToSentences('I found stored DILG legal opinion(s) related to your topic, but none directly addresses your exact question. I am providing general information below (not based in the Opinion Library) to help answer it.', 2);
+
+        $conclusion = $this->generateConclusionFromGeneralInfo($prompt, $general, $openai, $gemini, $groq);
+        $conclusion = $this->limitToSentences($conclusion, 2);
+        if (trim($conclusion) === '') {
+            $conclusion = $this->limitToSentences($general, 2);
+        }
+
+        $out = "Direct Answer:\n".$direct."\n\n";
+
+        if (count($related) > 0) {
+            $main = $related[0];
+            if (is_array($main)) {
+                $mainCitation = $this->buildOpinionCitationHtml($main, true);
+                $mainKey = 'Other1';
+                $mainSummary = $this->limitToSentences((string) ($summaries[$mainKey] ?? ''), 3);
+                if (trim($mainSummary) === '') {
+                    $mainSummary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
+                }
+                $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainSummary."\n\n";
+            }
+        }
+
+        $out .= "Other Related References That Might Help:\n";
+
+        $written = 0;
+        foreach (array_slice($related, 1, 3) as $idx => $op) {
+            if (!is_array($op)) {
+                continue;
+            }
+            $citation = $this->buildOpinionCitationHtml($op, true);
+            $key = 'Other'.($idx + 2);
+            $summary = $this->limitToSentences((string) ($summaries[$key] ?? ''), 3);
+            if (trim($summary) === '') {
+                $summary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
+            }
+            $out .= "- ".$citation." - ".$summary."\n";
+            $written++;
+            if ($written >= 3) {
+                break;
+            }
+        }
+
+        if ($written === 0) {
+            $out .= "- No related DILG legal opinions found.\n";
+        }
+
+        $out .= "\nGeneral Information (not based in Opinion Library):\n".$general."\n\n";
+        $out .= "Conclusion:\n".$conclusion;
+
+        return trim($out);
+    }
+
+    private function buildGeneralInfoParagraph(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
+    {
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+Provide a concise general-information answer to the user\'s question in the Philippines.
+
+Strict rules:
+- This must be general legal information outside the stored DILG opinion library.
+- Do not cite or invent any DILG opinion numbers, circular numbers, case names, or exact dates.
+- Output a single paragraph only, 2–3 sentences.';
+
+        try {
+            $resp = $this->chatWithFallback(
+                [
+                    ['role' => 'system', 'content' => $instruction],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                $openai,
+                $gemini,
+                $groq
+            );
+            $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            $text = 'General guidance is available, but I could not reach the AI provider to generate it at the moment.';
+        }
+
+        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+        return $text;
+    }
+
+    private function generateConclusionFromGeneralInfo(string $prompt, string $generalInfo, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
+    {
+        $generalInfo = trim((string) $generalInfo);
+        if ($generalInfo === '') {
+            return '';
+        }
+
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+Write a conclusion in 1–2 sentences that summarizes the practical legal takeaway for the user\'s question using ONLY the provided general information paragraph.
+
+Strict rules:
+- Do not cite or invent any DILG opinion numbers, circular numbers, case names, or exact dates.
+- No extra sections. Output the conclusion text only.';
+
+        try {
+            $resp = $this->chatWithFallback(
+                [
+                    ['role' => 'system', 'content' => $instruction],
+                    ['role' => 'user', 'content' => "USER QUESTION:\n".$prompt."\n\nGENERAL INFORMATION:\n".$generalInfo],
+                ],
+                $openai,
+                $gemini,
+                $groq
+            );
+            $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            return '';
+        }
+
+        return trim((string) $text);
+    }
+
+    private function buildStrictLibraryAnswer(string $prompt, array $opinions, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
+    {
+        $tokens = $this->tokenizeOpinionListTopic($prompt);
+
+        $main = $opinions[0] ?? null;
+        if (!is_array($main)) {
+            return $this->buildStrictLibraryAnswerFallback($prompt, $opinions);
+        }
+
+        $mainContext = (string) ($main['context'] ?? '');
+        $mainContext = mb_substr($mainContext, 0, 3000);
+
+        $ai = $this->generateDirectAnswerAndConclusion($prompt, $mainContext, $openai, $gemini, $groq);
+        $direct = $this->limitToSentences((string) ($ai['direct'] ?? ''), 2);
+        $conclusion = $this->limitToSentences((string) ($ai['conclusion'] ?? ''), 2);
+
+        if (trim($direct) === '') {
+            $direct = 'Please refer to the DILG legal opinion cited below for the applicable rule on this question.';
+        }
+        if (trim($conclusion) === '') {
+            $conclusion = 'Refer to the cited DILG legal opinion as the primary guidance for the issue raised.';
+        }
+
+        $mainCitation = $this->buildOpinionCitationHtml($main, true);
+        $mainExcerptRaw = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
+
+        $others = array_slice($opinions, 1, 3);
+
+        $refs = [
+            ['label' => 'Main', 'excerpt' => $mainExcerptRaw],
+        ];
+        foreach ($others as $idx => $op) {
+            if (!is_array($op)) {
+                continue;
+            }
+            $refs[] = [
+                'label' => 'Other'.($idx + 1),
+                'excerpt' => $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3),
+            ];
+        }
+
+        $summaries = $this->summarizeReferenceExcerpts($prompt, $refs, $openai, $gemini, $groq);
+        $mainSummary = $this->limitToSentences((string) ($summaries['Main'] ?? $mainExcerptRaw), 3);
+
+        $out = "Direct Answer:\n".$direct."\n\n";
+        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainSummary."\n\n";
+        $out .= "Other Related References That Might Help:\n";
+
+        if (count($others) === 0) {
+            $out .= "- No other related DILG legal opinions found.\n\n";
+        } else {
+            foreach ($others as $idx => $op) {
+                if (!is_array($op)) {
+                    continue;
+                }
+                $citation = $this->buildOpinionCitationHtml($op, true);
+                $key = 'Other'.($idx + 1);
+                $summary = $this->limitToSentences((string) ($summaries[$key] ?? ''), 3);
+                if (trim($summary) === '') {
+                    $summary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
+                }
+                $out .= "- ".$citation." - ".$summary."\n";
+            }
+            $out .= "\n";
+        }
+
+        $out .= "Conclusion:\n".$conclusion;
+
+        return trim($out);
+    }
+
+    private function buildStrictLibraryAnswerFallback(string $prompt, array $opinions): string
+    {
+        $main = $opinions[0] ?? null;
+        if (!is_array($main)) {
+            return "Direct Answer:\nI could not generate an AI explanation at the moment.\n\nLegal Basis / Supporting Reference:\n(No DILG legal opinion reference available)\n\nOther Related References That Might Help:\n- (None)\n\nConclusion:\nPlease try again.";
+        }
+
+        $tokens = $this->tokenizeOpinionListTopic($prompt);
+        $mainCitation = $this->buildOpinionCitationHtml($main, true);
+        $mainExcerpt = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
+
+        $out = "Direct Answer:\nA directly relevant DILG legal opinion is available; please see the main reference below.\n\n";
+        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainExcerpt."\n\n";
+        $out .= "Other Related References That Might Help:\n";
+        $others = array_slice($opinions, 1, 3);
+        if (count($others) === 0) {
+            $out .= "- No other related DILG legal opinions found.\n\n";
+        } else {
+            foreach ($others as $op) {
+                if (!is_array($op)) {
+                    continue;
+                }
+                $citation = $this->buildOpinionCitationHtml($op, true);
+                $excerpt = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
+                $out .= "- ".$citation." - ".$excerpt."\n";
+            }
+            $out .= "\n";
+        }
+        $out .= "Conclusion:\nPlease refer to the cited DILG legal opinion(s) as the primary guidance for this issue.";
+
+        return trim($out);
+    }
+
+    private function generateDirectAnswerAndConclusion(string $prompt, string $mainContextExcerpt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): array
+    {
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+Use ONLY the user question and the provided DILG opinion context excerpt. Do not add general information.
+
+Output ONLY the following two sections (no extra text):
+Direct Answer:
+[1–2 sentences, clear and final]
+
+Conclusion:
+[1–2 sentences, summary]';
+
+        $userText = "USER QUESTION:\n".$prompt."\n\nDILG OPINION CONTEXT EXCERPT:\n".$mainContextExcerpt;
+
+        $resp = $this->chatWithFallback(
+            [
+                ['role' => 'system', 'content' => $instruction],
+                ['role' => 'user', 'content' => $userText],
+            ],
+            $openai,
+            $gemini,
+            $groq
+        );
+
+        $content = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+
+        $direct = '';
+        $conclusion = '';
+
+        if (preg_match('/Direct\s*Answer:\s*(.+?)(?=\n\s*Conclusion:|\z)/is', $content, $m) === 1) {
+            $direct = trim((string) ($m[1] ?? ''));
+        }
+        if (preg_match('/Conclusion:\s*(.+)\z/is', $content, $m) === 1) {
+            $conclusion = trim((string) ($m[1] ?? ''));
+        }
+
+        return [
+            'direct' => $direct,
+            'conclusion' => $conclusion,
+        ];
+    }
+
+    private function summarizeReferenceExcerpts(string $prompt, array $refs, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): array
+    {
+        $items = [];
+        foreach ($refs as $r) {
+            $label = trim((string) ($r['label'] ?? ''));
+            $excerpt = trim((string) ($r['excerpt'] ?? ''));
+            if ($label === '' || $excerpt === '') {
+                continue;
+            }
+            $items[] = [$label, $excerpt];
+        }
+
+        if (count($items) === 0) {
+            return [];
+        }
+
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+You will be given a USER QUESTION and multiple EXCERPTS from DILG legal opinions.
+
+For each excerpt, write a 2–3 sentence summary that explains only the IMPORTANT details and why it supports or relates to the user question.
+
+Strict rules:
+- Use ONLY the excerpt content. Do not add outside laws or general information.
+- No bullets. No markdown. No asterisks.
+- Output must be exactly one block per label, using this format:
+Main: [2–3 sentences]
+Other1: [2–3 sentences]
+Other2: [2–3 sentences]
+Other3: [2–3 sentences]
+
+Only include labels that are present in the input.';
+
+        $body = "USER QUESTION:\n".$prompt."\n\n";
+        foreach ($items as [$label, $excerpt]) {
+            $body .= $label." EXCERPT:\n".$excerpt."\n\n";
+        }
+
+        try {
+            $resp = $this->chatWithFallback(
+                [
+                    ['role' => 'system', 'content' => $instruction],
+                    ['role' => 'user', 'content' => $body],
+                ],
+                $openai,
+                $gemini,
+                $groq
+            );
+
+            $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($items as [$label]) {
+            $pattern = '/^'.preg_quote($label, '/').'\s*:\s*(.+?)(?=^\w+\s*:|\z)/ims';
+            if (preg_match($pattern, $text, $m) === 1) {
+                $out[$label] = trim((string) ($m[1] ?? ''));
+            }
+        }
+
+        return $out;
+    }
+
+    private function buildOpinionCitationHtml(array $op, bool $linkTitle): string
+    {
+        $escape = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $id = (int) ($op['id'] ?? 0);
+        $url = (string) ($op['url'] ?? '#');
+        $title = trim((string) ($op['title'] ?? ''));
+        $num = trim((string) ($op['opinion_number'] ?? ''));
+        $date = trim((string) ($op['date'] ?? ''));
+
+        $titleHtml = $escape($title);
+        if ($linkTitle && $id > 0 && $title !== '') {
+            $titleHtml = '<a href="'.$escape($url).'" data-opinion-id="'.$id.'" class="opinion-link text-blue-600 underline font-bold" style="color: blue; text-decoration: underline;">'.$escape($title).'</a>';
+        }
+
+        $parts = [];
+        if ($titleHtml !== '') {
+            $parts[] = $titleHtml;
+        }
+        if ($num !== '') {
+            $parts[] = '— '.$escape($num);
+        }
+        if ($date !== '') {
+            $parts[] = '('.$escape($date).')';
+        }
+
+        return trim(implode(' ', $parts));
+    }
+
+    private function extractRelevantExcerptFromOpinion(array $op, array $tokens): string
+    {
+        $context = trim((string) ($op['context'] ?? ''));
+        if ($context === '') {
+            $snippet = trim((string) ($op['snippet'] ?? ''));
+            return $snippet !== '' ? $snippet : 'No excerpt available.';
+        }
+
+        $flat = trim((string) preg_replace('/\s+/u', ' ', $context));
+        $sentences = preg_split('/(?<=[\.\!\?])\s+/u', $flat) ?: [];
+
+        $needles = array_values(array_filter($tokens, fn ($t) => ! $this->isBroadTopicToken((string) $t)));
+        foreach ($sentences as $i => $s) {
+            $s = trim((string) $s);
+            if ($s === '') {
+                continue;
+            }
+            $ls = mb_strtolower($s);
+            foreach ($needles as $t) {
+                $t = mb_strtolower(trim((string) $t));
+                if ($t !== '' && str_contains($ls, $t)) {
+                    $next = $sentences[$i + 1] ?? '';
+                    $pick = trim($s.' '.trim((string) $next));
+                    return $pick !== '' ? $pick : $s;
+                }
+            }
+        }
+
+        $summary = trim((string) $this->extractBriefSummaryFromContext($context));
+        if ($summary !== '') {
+            return $summary;
+        }
+
+        return mb_substr($flat, 0, 280).(mb_strlen($flat) > 280 ? '…' : '');
+    }
+
+    private function limitToSentences(string $text, int $maxSentences): string
+    {
+        $t = trim((string) $text);
+        if ($t === '' || $maxSentences <= 0) {
+            return $t;
+        }
+
+        $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
+        $parts = preg_split('/(?<=[\.\!\?])\s+/u', $t) ?: [$t];
+        $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
+
+        if (count($parts) <= $maxSentences) {
+            return implode(' ', $parts);
+        }
+
+        return implode(' ', array_slice($parts, 0, $maxSentences));
     }
 
     private function generalInfoFallbackForTopic(string $topic, string $originalPrompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
