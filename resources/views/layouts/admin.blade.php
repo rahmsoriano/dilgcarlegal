@@ -17,7 +17,7 @@
         <style>
             @media (min-width: 1024px) {
                 .admin-content {
-                    zoom: 1;
+                    zoom: 0.72;
                 }
             }
 
@@ -27,9 +27,10 @@
                 }
 
                 .admin-sidebar {
-                    width: 350px;
-                    min-width: 350px;
-                    flex: 0 0 350px;
+                    width: 390px;
+                    min-width: 390px;
+                    flex: 0 0 390px;
+                    zoom: 1.15;
                     height: 100%; /* Ensure it fills the vertical space of the grid */
                 }
 
@@ -37,6 +38,7 @@
                     width: 92px;
                     min-width: 92px;
                     flex: 0 0 92px;
+                    zoom: 1;
                 }
 
                 .admin-main {
@@ -260,37 +262,48 @@
                 flex-shrink: 0;
             }
 
+            .sidebar-nav-list {
+                background: rgba(255, 255, 255, 0.35);
+                border: 1px solid rgba(15, 23, 42, 0.08);
+                border-radius: 1.25rem;
+                overflow: hidden;
+            }
+
+            .sidebar-nav-icon {
+                width: 34px;
+                height: 34px;
+                border-radius: 0.8rem;
+                background-color: #002C76;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .sidebar-nav-icon svg {
+                color: #ffffff;
+            }
+
             .sidebar-nav-link {
                 position: relative;
-                color: #000 !important;
+                color: #0f172a !important;
+                width: 100%;
+                border-radius: 0 !important;
+                border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+                background: transparent !important;
             }
 
-            .sidebar-nav-link::after {
-                content: '';
-                position: absolute;
-                inset: 0;
-                border: 2px solid transparent;
-                border-radius: inherit;
-                pointer-events: none;
+            .sidebar-nav-link:last-child {
+                border-bottom: none;
             }
 
-            .sidebar-nav-link:hover::after {
-                border-color: #002C76;
+            .sidebar-nav-link:hover {
+                background: rgba(0, 44, 118, 0.06) !important;
             }
 
             .sidebar-nav-link.active-link {
-                padding-top: 0.95rem !important;
-                padding-bottom: 0.95rem !important;
-                position: relative !important;
-                z-index: 1 !important;
-            }
-
-            .sidebar-nav-link.active-link::after {
-                border-color: #002C76;
-            }
-
-            .sidebar-collapsed .sidebar-nav-link::after {
-                border-color: transparent !important;
+                background: rgba(0, 44, 118, 0.10) !important;
             }
 
             .sidebar-collapsed .sidebar-nav-link:hover .sidebar-icon-box,
@@ -299,32 +312,83 @@
             .sidebar-collapsed .sidebar-nav-link.active-link .sidebar-icon-box-plain {
                 border-color: #002C76 !important;
             }
+
+            .sidebar-chat-item {
+                background-color: #ffffff !important;
+                border-color: rgba(15, 23, 42, 0.08) !important;
+                border-radius: 1.1rem !important;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+                color: #0f172a !important;
+                transform: none !important;
+            }
+
+            .sidebar-chat-item:hover {
+                background-color: rgba(255, 255, 255, 0.92) !important;
+            }
+
+            .sidebar-chat-item.is-active {
+                border-color: rgba(0, 44, 118, 0.55) !important;
+            }
+
+            .admin-shell {
+                background: #eef3f8;
+            }
+
+            .admin-content {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 22px 26px 30px;
+                box-sizing: border-box;
+            }
+
+            @media (max-width: 1023px) {
+                .admin-content {
+                    padding: 18px 14px 22px;
+                }
+            }
+
+            @media (min-width: 1024px) {
+                .admin-grid {
+                    gap: 30px !important;
+                }
+            }
+
+            .admin-sidebar {
+                background: rgba(248, 250, 252, 0.92) !important;
+                border: 1px solid rgba(15, 23, 42, 0.06);
+                border-radius: 26px;
+                box-shadow: 0 18px 60px rgba(15, 23, 42, 0.10);
+                padding: 18px !important;
+            }
+
         </style>
     </head>
     <body class="font-sans antialiased selection:bg-slate-900/10 selection:text-slate-900">
-        <div class="admin-shell h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,23,42,0.05),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.035),transparent_60%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_55%,#ffffff_100%)] text-slate-900 overflow-hidden relative">
-            <div class="admin-content mx-auto flex h-full max-w-[1600px] flex-col px-4 py-6 lg:px-8">
-                <!-- Top Header -->
-                <header class="flex items-center justify-between mb-8 px-2 lg:px-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-900/10 overflow-hidden">
+        <div class="admin-shell h-screen text-slate-900 overflow-hidden relative" style="display:flex; flex-direction:column; height:100vh; background: #eef3f8;">
+            <header style="width: 100%; background: linear-gradient(90deg, #002C76 0%, rgba(0, 44, 118, 0.55) 45%, rgba(255, 255, 255, 0.86) 100%); border-bottom: 1px solid rgba(15, 23, 42, 0.10);">
+                <div style="max-width: 1600px; margin: 0 auto; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px; min-width: 0; margin-left: -6px;">
+                        <div style="width: 40px; height: 40px; border-radius: 9999px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10); border: 1px solid rgba(255, 255, 255, 0.35); overflow: hidden; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
                             <img
                                 src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg"
                                 alt="DILG Seal"
-                                class="h-full w-full object-contain"
+                                style="width: 100%; height: 100%; object-fit: contain;"
                             >
                         </div>
-                        <div class="min-w-0">
-                            <div class="text-xl font-bold tracking-tight leading-tight" style="color: #002C76 !important;">{{ config('app.name', 'GABAY-Lex') }}</div>
-                            <div class="text-[11px] font-semibold leading-tight tracking-wide" style="color: #002C76 !important; opacity: 0.7;">Guidance and Advisory for Better Administration in Law</div>
+                        <div style="min-width: 0;">
+                            <div style="color: #ffffff; font-weight: 800; font-size: 15px; line-height: 1.1; letter-spacing: -0.01em;">{{ config('app.name', 'GABAY-Lex') }}</div>
+                            <div style="color: rgba(255, 255, 255, 0.78); font-weight: 600; font-size: 10px; line-height: 1.1; letter-spacing: 0.02em; margin-top: 2px;">Guidance and Advisory for Better Administration in Law</div>
                         </div>
                     </div>
-
                     <div></div>
-                </header>
+                </div>
+            </header>
+
+            <div class="admin-content flex flex-1 min-h-0 w-full max-w-none flex-col px-0 py-0">
 
                 <div class="admin-grid grid flex-1 min-h-0 grid-cols-1 gap-6 lg:gap-8 h-full">
-                    <aside id="app-sidebar" class="admin-sidebar relative flex h-full min-h-0 flex-col overflow-visible rounded-[2rem] p-6 ring-1 ring-slate-900/5 shadow-[0_24px_70px_rgba(15,23,42,0.08)]" style="background-color: #f0f4f8 !important;">
+                    <aside id="app-sidebar" class="admin-sidebar relative flex h-full min-h-0 flex-col overflow-visible">
                         @php
                             $routeConversation = request()->route('conversation');
                             $activeConversationId = is_object($routeConversation) && isset($routeConversation->id)
@@ -387,9 +451,9 @@
                         </div>
 
                         <div id="sidebar-primary" class="sidebar-search-fade">
-                            <nav class="shrink-0 space-y-3">
-                            <a href="{{ route($newChatRoute) }}" class="sidebar-nav-link {{ request()->routeIs($newChatRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs($newChatRoute) ? 'background-color: #002C76 !important; color: #000 !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
-                                <div class="sidebar-icon-box-plain">
+                            <nav class="shrink-0 sidebar-nav-list">
+                            <a href="{{ route($newChatRoute) }}" class="sidebar-nav-link {{ request()->routeIs($newChatRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                <div class="sidebar-nav-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-5 w-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                     </svg>
@@ -398,8 +462,8 @@
                             </a>
 
                             @if ($showOpinionsNav && auth()->check() && auth()->user()->is_admin)
-                                <a href="{{ route('admin.opinions.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.opinions.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs('admin.opinions.*') ? 'background-color: white !important; color: #000 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
-                                    <div class="sidebar-icon-box-plain">
+                                <a href="{{ route('admin.opinions.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.opinions.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                    <div class="sidebar-nav-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5-3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                                         </svg>
@@ -408,8 +472,8 @@
                                 </a>
 
                                 @if (auth()->check() && auth()->user()->is_admin)
-                                    <a href="{{ route('admin.faq-responses.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.faq-responses.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs('admin.faq-responses.*') ? 'background-color: white !important; color: #000 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
-                                        <div class="sidebar-icon-box-plain">
+                                    <a href="{{ route('admin.faq-responses.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.faq-responses.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                        <div class="sidebar-nav-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 1.354-.784 2.535-1.917 3.091-.806.393-1.333 1.19-1.333 2.084v.225m0 3.75h.008v.008H12v-.008z" />
                                             </svg>
@@ -419,8 +483,8 @@
                                 @endif
                             @endif
 
-                            <a href="{{ route($archiveRoute) }}" class="sidebar-nav-link {{ request()->routeIs($archiveRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 rounded-2xl transition-all" style="{{ request()->routeIs($archiveRoute) ? 'background-color: white !important; color: #000 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;' : 'background-color: transparent !important; color: #000 !important;' }}">
-                                <div class="sidebar-icon-box-plain">
+                            <a href="{{ route($archiveRoute) }}" class="sidebar-nav-link {{ request()->routeIs($archiveRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                <div class="sidebar-nav-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                     </svg>
@@ -445,6 +509,22 @@
                                     </svg>
                                 </button>
 
+                                <div id="sidebar-chats-bulkbar" class="flex items-center justify-between px-4 pt-1 {{ $sidebarChats->count() > 0 ? '' : 'hidden' }}">
+                                    <label class="inline-flex items-center gap-2 text-xs font-bold tracking-wide text-slate-600 select-none">
+                                        <input id="sidebar-select-all" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[#002C76] focus:ring-[#002C76]" />
+                                        <span>Select all</span>
+                                    </label>
+
+                                    <div id="sidebar-bulk-actions" class="hidden items-center gap-2">
+                                        <a id="sidebar-bulk-archive" href="#" aria-disabled="true" class="text-xs font-black tracking-wide text-slate-600 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-slate-900">
+                                            Archive
+                                        </a>
+                                        <a id="sidebar-bulk-delete" href="#" aria-disabled="true" class="text-xs font-black tracking-wide text-rose-700 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-rose-800">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </div>
+
                                 <div id="sidebar-chats-panel" class="mt-3 min-h-0 flex-1 overflow-hidden">
                                     <div id="sidebar-chats-scroll" class="sidebar-chats-scroll h-full overflow-y-auto px-2 pr-1">
                                         <div id="sidebar-chats-list" class="space-y-1.5">
@@ -459,10 +539,12 @@
                                                     data-toggle-pin-url="{{ route($sidebarTogglePinRoute, $conversation->id) }}"
                                                     data-toggle-save-url="{{ route($sidebarToggleSaveRoute, $conversation->id) }}"
                                                     data-delete-url="{{ route($sidebarDeleteRoute, $conversation->id) }}"
-                                                    class="sidebar-chat-item group relative flex items-center gap-2 rounded-2xl border transition-all w-full overflow-hidden"
-                                                    style="{{ (string) $activeConversationId === (string) $conversation->id ? 'border-color: #FFDE15 !important; background-color: white !important; color: #002C76 !important; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; transform: scale(1.02) !important;' : 'border-color: #e2e8f0 !important; background-color: white !important; color: #334155 !important;' }}"
+                                                    class="sidebar-chat-item group relative flex items-center gap-2 border transition-all w-full overflow-hidden {{ (string) $activeConversationId === (string) $conversation->id ? 'is-active' : '' }}"
                                                 >
-                                                    <a href="{{ route($chatShowRoute, $conversation->id) }}" class="min-w-0 flex-1 px-4 py-3">
+                                                    <div class="px-4 py-3 flex items-center shrink-0">
+                                                        <input type="checkbox" class="sidebar-chat-select h-4 w-4 rounded border-slate-300 text-[#002C76] focus:ring-0 focus:ring-offset-0 outline-none" />
+                                                    </div>
+                                                    <a href="{{ route($chatShowRoute, $conversation->id) }}" class="min-w-0 flex-1 pr-4 py-3">
                                                         <div class="sidebar-chat-title truncate text-sm font-semibold tracking-tight">
                                                             {{ $conversation->title ?: 'Untitled Thread' }}
                                                         </div>
@@ -536,7 +618,7 @@
                                     </a>
                                 </div>
                             @elseif ($showProfileMenu && auth()->check())
-                                <div class="relative px-2 py-4">
+                                <div class="relative px-2 py-1">
                                     <div id="sidebar-profile-menu" class="hidden w-56 overflow-hidden rounded-2xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
                                         <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-900/[0.03] transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-slate-500">
@@ -558,7 +640,7 @@
                                         </form>
                                     </div>
 
-                                    <button id="sidebar-profile-trigger" type="button" class="w-full flex items-center gap-3 rounded-2xl px-3 py-3 shadow-sm transition" style="background-color: white !important; border: 1px solid #e2e8f0 !important;">
+                                    <button id="sidebar-profile-trigger" type="button" class="w-full flex items-center gap-3 rounded-2xl px-3 py-1.5 shadow-sm transition" style="background-color: white !important; border: 1px solid #e2e8f0 !important;">
                                         <div class="sidebar-icon-box-yellow shadow-md text-xs font-bold" style="width: 40px; height: 40px; border-radius: 0.75rem;">
                                             {{ collect(explode(' ', auth()->user()->name))->map(fn($n) => mb_substr($n, 0, 1))->take(2)->join('') }}
                                         </div>
@@ -853,7 +935,9 @@
                     expanded = next;
                     chevron.classList.toggle('rotate-180', expanded);
 
-                    const available = wrapper ? Math.max(0, wrapper.clientHeight - toggle.offsetHeight - 12) : 0;
+                    const bulkBar = document.getElementById('sidebar-chats-bulkbar');
+                    const bulkH = bulkBar ? bulkBar.offsetHeight : 0;
+                    const available = wrapper ? Math.max(0, wrapper.clientHeight - toggle.offsetHeight - bulkH - 12) : 0;
                     panel.style.height = expanded ? `${available}px` : '0px';
                     panel.style.opacity = expanded ? '1' : '0';
                     panel.style.pointerEvents = expanded ? 'auto' : 'none';
@@ -869,7 +953,9 @@
                 if (wrapper) {
                     const ro = new ResizeObserver(() => {
                         if (expanded) {
-                            const available = Math.max(0, wrapper.clientHeight - toggle.offsetHeight - 12);
+                            const bulkBar = document.getElementById('sidebar-chats-bulkbar');
+                            const bulkH = bulkBar ? bulkBar.offsetHeight : 0;
+                            const available = Math.max(0, wrapper.clientHeight - toggle.offsetHeight - bulkH - 12);
                             panel.style.height = `${available}px`;
                         }
                     });
@@ -974,7 +1060,9 @@
                 const panelEl = document.getElementById('sidebar-chats-panel');
                 if (!toggleEl || !chevronEl || !panelEl) return;
                 const wrapper = toggleEl.parentElement;
-                const available = wrapper ? Math.max(0, wrapper.clientHeight - toggleEl.offsetHeight - 12) : 0;
+                const bulkBar = document.getElementById('sidebar-chats-bulkbar');
+                const bulkH = bulkBar ? bulkBar.offsetHeight : 0;
+                const available = wrapper ? Math.max(0, wrapper.clientHeight - toggleEl.offsetHeight - bulkH - 12) : 0;
                 chevronEl.classList.add('rotate-180');
                 panelEl.style.height = `${available}px`;
                 panelEl.style.opacity = '1';
@@ -1197,6 +1285,70 @@
                     chatsList.appendChild(empty);
                 }
                 if (items.length > 0 && existing) existing.remove();
+                updateBulkSelectionUI();
+            };
+
+            const selectAllEl = document.getElementById('sidebar-select-all');
+            const bulkArchiveBtn = document.getElementById('sidebar-bulk-archive');
+            const bulkDeleteBtn = document.getElementById('sidebar-bulk-delete');
+            const bulkActionsWrap = document.getElementById('sidebar-bulk-actions');
+            const bulkBar = document.getElementById('sidebar-chats-bulkbar');
+
+            const getChatItems = () => {
+                if (!chatsList) return [];
+                return Array.from(chatsList.querySelectorAll('.sidebar-chat-item'));
+            };
+
+            const getSelectedItems = () => {
+                return getChatItems().filter((item) => {
+                    const cb = item.querySelector('.sidebar-chat-select');
+                    return cb instanceof HTMLInputElement && cb.checked;
+                });
+            };
+
+            const setItemChecked = (item, checked) => {
+                const cb = item.querySelector('.sidebar-chat-select');
+                if (cb instanceof HTMLInputElement) cb.checked = checked;
+            };
+
+            const setBulkActionEnabled = (el, enabled) => {
+                if (!el) return;
+                el.classList.toggle('pointer-events-none', !enabled);
+                el.classList.toggle('cursor-not-allowed', !enabled);
+                el.classList.toggle('opacity-40', !enabled);
+                el.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+            };
+
+            const updateBulkSelectionUI = () => {
+                const items = getChatItems();
+                const selected = getSelectedItems();
+                const any = selected.length > 0;
+
+                if (bulkBar) {
+                    bulkBar.classList.toggle('hidden', items.length === 0);
+                    bulkBar.classList.toggle('flex', items.length > 0);
+                }
+
+                if (bulkActionsWrap) {
+                    bulkActionsWrap.classList.toggle('hidden', !any);
+                    bulkActionsWrap.classList.toggle('flex', any);
+                }
+
+                setBulkActionEnabled(bulkArchiveBtn, any);
+                setBulkActionEnabled(bulkDeleteBtn, any);
+
+                if (selectAllEl instanceof HTMLInputElement) {
+                    if (items.length === 0) {
+                        selectAllEl.checked = false;
+                    } else if (selected.length === 0) {
+                        selectAllEl.checked = false;
+                    } else if (selected.length === items.length) {
+                        selectAllEl.checked = true;
+                    } else {
+                        selectAllEl.checked = false;
+                    }
+                    selectAllEl.indeterminate = false;
+                }
             };
 
             const updateMenuLabels = (item) => {
@@ -1351,17 +1503,19 @@
                     item.dataset.togglePinUrl = toggle_pin_url || `/conversations/${id}/toggle-pin`;
                     item.dataset.toggleSaveUrl = toggle_save_url || `/conversations/${id}/toggle-save`;
                     item.dataset.deleteUrl = delete_url || `/conversations/${id}`;
-                    item.className = 'sidebar-chat-item group relative flex items-center gap-2 rounded-2xl border transition-all';
-                    item.style.borderColor = '#FFDE15';
-                    item.style.backgroundColor = 'white';
-                    item.style.color = '#002C76';
-                    item.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-                    item.style.transform = 'scale(1.02)';
-                    item.style.transformOrigin = 'center';
+                    const isActive = activeConversationId && String(activeConversationId) === String(id);
+                    item.className = `sidebar-chat-item group relative flex items-center gap-2 border transition-all w-full overflow-hidden${isActive ? ' is-active' : ''}`;
+
+                    const selectWrap = document.createElement('div');
+                    selectWrap.className = 'px-4 py-3 flex items-center shrink-0';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'sidebar-chat-select h-4 w-4 rounded border-slate-300 text-[#002C76] focus:ring-0 focus:ring-offset-0 outline-none';
+                    selectWrap.appendChild(checkbox);
 
                     const a = document.createElement('a');
                     a.href = url;
-                    a.className = 'min-w-0 flex-1 px-4 py-3';
+                    a.className = 'min-w-0 flex-1 pr-4 py-3';
                     const t = document.createElement('div');
                     t.className = 'sidebar-chat-title truncate text-sm font-semibold tracking-tight';
                     a.appendChild(t);
@@ -1383,6 +1537,7 @@
                         </div>
                     `;
 
+                    item.appendChild(selectWrap);
                     item.appendChild(a);
                     const pin = document.createElement('div');
                     pin.className = 'sidebar-pin-indicator pointer-events-none absolute right-10 top-2 z-10' + (is_pinned ? '' : ' hidden');
@@ -1414,11 +1569,107 @@
 
             if (chatsList) {
                 chatsList.querySelectorAll('.sidebar-chat-item').forEach(updateMenuLabels);
+                updateBulkSelectionUI();
+            }
+
+            if (selectAllEl instanceof HTMLInputElement) {
+                selectAllEl.addEventListener('change', () => {
+                    const items = getChatItems();
+                    items.forEach((item) => setItemChecked(item, selectAllEl.checked));
+                    updateBulkSelectionUI();
+                });
+            }
+
+            if (chatsList) {
+                chatsList.addEventListener('click', (e) => {
+                    const target = e.target;
+                    if (!(target instanceof Element)) return;
+                    const cb = target.closest('.sidebar-chat-select');
+                    if (cb) {
+                        e.stopPropagation();
+                    }
+                }, true);
+
+                chatsList.addEventListener('change', (e) => {
+                    const target = e.target;
+                    if (!(target instanceof Element)) return;
+                    const cb = target.closest('.sidebar-chat-select');
+                    if (cb) {
+                        updateBulkSelectionUI();
+                    }
+                });
+            }
+
+            if (bulkArchiveBtn) {
+                bulkArchiveBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const selected = getSelectedItems();
+                    if (selected.length === 0) return;
+                    setBulkActionEnabled(bulkArchiveBtn, false);
+                    setBulkActionEnabled(bulkDeleteBtn, false);
+                    if (selectAllEl instanceof HTMLInputElement) selectAllEl.disabled = true;
+
+                    for (const item of selected) {
+                        try {
+                            const data = await requestJson('post', item.dataset.toggleSaveUrl);
+                            if (data?.is_saved) {
+                                item.remove();
+                            }
+                        } catch (e) {}
+                    }
+
+                    ensureEmptyState();
+                    if (selectAllEl instanceof HTMLInputElement) selectAllEl.disabled = false;
+                    updateBulkSelectionUI();
+                });
+            }
+
+            if (bulkDeleteBtn) {
+                bulkDeleteBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const selected = getSelectedItems();
+                    if (selected.length === 0) return;
+
+                    const ok = await confirmDialog({
+                        title: 'Delete conversations?',
+                        message: `This will permanently delete ${selected.length} conversation(s). This action cannot be undone.`,
+                        okText: 'Delete',
+                        cancelText: 'Cancel',
+                    });
+                    if (!ok) return;
+
+                    setBulkActionEnabled(bulkDeleteBtn, false);
+                    setBulkActionEnabled(bulkArchiveBtn, false);
+                    if (selectAllEl instanceof HTMLInputElement) selectAllEl.disabled = true;
+
+                    let deletedActive = false;
+                    for (const item of selected) {
+                        try {
+                            await requestJson('delete', item.dataset.deleteUrl);
+                            if (activeConversationId && String(activeConversationId) === String(item.dataset.conversationId)) {
+                                deletedActive = true;
+                            }
+                            item.remove();
+                        } catch (e) {}
+                    }
+
+                    ensureEmptyState();
+                    if (selectAllEl instanceof HTMLInputElement) selectAllEl.disabled = false;
+                    updateBulkSelectionUI();
+
+                    if (deletedActive) {
+                        window.location.href = @json(route($chatIndexRoute));
+                    }
+                });
             }
 
             document.addEventListener('click', async (e) => {
                 const target = e.target;
                 if (!(target instanceof Element)) return;
+
+                if (target.closest('.sidebar-chat-select') || target.closest('#sidebar-select-all')) {
+                    return;
+                }
 
                 const menuBtn = target.closest('.sidebar-chat-menu-btn');
                 if (menuBtn) {

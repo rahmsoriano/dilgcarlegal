@@ -180,9 +180,9 @@
                                 class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-medium leading-6 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
                                 placeholder="Type your legal inquiry here..."
                             ></textarea>
-                            <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-12 items-center justify-center rounded-2xl {{ $isPro ? 'bg-[#002C76] hover:bg-[#002C76]/90 shadow-lg shadow-[#002C76]/20' : 'bg-slate-950 hover:bg-slate-800' }} text-white transition-all duration-300 hover:-translate-y-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 transition-transform group-hover:translate-x-1">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.76 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                            <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-10 items-center justify-center rounded-xl bg-[#002C76] text-[#FFDE15] shadow-md shadow-slate-900/10 transition-all duration-200 hover:bg-[#002C76]/95" style="background-color: #002C76 !important; color: #FFDE15 !important;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block; color: #FFDE15 !important;">
+                                    <path d="M3.478 2.405a.75.75 0 0 1 .81-.163l18 8.25a.75.75 0 0 1 0 1.362l-18 8.25A.75.75 0 0 1 3 19.5v-6.764a.75.75 0 0 1 .553-.724L12 9.75 3.553 7.488A.75.75 0 0 1 3 6.764V3a.75.75 0 0 1 .478-.595Z"/>
                                 </svg>
                             </button>
                         </div>
