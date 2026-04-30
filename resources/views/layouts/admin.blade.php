@@ -619,8 +619,8 @@
                                 </div>
                             @elseif ($showProfileMenu && auth()->check())
                                 <div class="relative px-2 py-1">
-                                    <div id="sidebar-profile-menu" class="hidden w-56 overflow-hidden rounded-2xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.14)]">
-                                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-900/[0.03] transition">
+                                    <div id="sidebar-profile-menu" class="hidden w-44 overflow-hidden rounded-xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_18px_46px_rgba(15,23,42,0.14)]">
+                                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-900/[0.03] transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-slate-500">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.118a7.5 7.5 0 0115 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z" />
@@ -630,7 +630,7 @@
                                         <div class="h-px bg-slate-900/10"></div>
                                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                                             @csrf
-                                            <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-500/10 transition">
+                                            <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-500/10 transition">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-rose-600">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9l3 3m0 0l-3 3m3-3H8.25" />
@@ -974,8 +974,7 @@
 
                 const positionProfileMenu = () => {
                     const collapsed = document.body.classList.contains('sidebar-collapsed');
-                    const anchor = (!collapsed && profileTrigger.querySelector('img')) ? profileTrigger.querySelector('img') : profileTrigger;
-                    const rect = anchor.getBoundingClientRect();
+                    const rect = profileTrigger.getBoundingClientRect();
 
                     profileMenu.style.position = 'fixed';
                     profileMenu.style.zIndex = '2147483190';
@@ -989,7 +988,7 @@
 
                     let left = collapsed
                         ? (rect.right + gap)
-                        : rect.left;
+                        : (rect.right - menuWidth);
                     left = Math.min(left, window.innerWidth - menuWidth - padding);
                     left = Math.max(padding, left);
 

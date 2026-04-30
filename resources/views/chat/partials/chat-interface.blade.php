@@ -154,7 +154,7 @@
                                 </div>
 
                                 <div class="{{ $message->role === 'user' ? ($isPro ? 'rounded-[2rem_2rem_0.5rem_2rem] message-bubble-user text-white' : 'rounded-[2rem_2rem_0.5rem_2rem] bg-slate-950 text-white') : ($isPro ? 'rounded-[2rem_2rem_2rem_0.5rem] message-bubble-ai text-slate-800' : 'rounded-[2rem_2rem_2rem_0.5rem] border border-slate-200 bg-white text-slate-800 shadow-sm') }} px-8 py-6 shadow-2xl">
-                                    <div class="whitespace-pre-wrap text-[15px] leading-relaxed font-medium tracking-wide">{!! $message->content !!}</div>
+                                    <div class="whitespace-pre-wrap text-[30px] leading-relaxed font-medium tracking-wide">{!! $message->content !!}</div>
                                 </div>
                             </div>
                         @endforeach
@@ -319,7 +319,7 @@
         }
 
         const body = document.createElement('div');
-        body.className = 'whitespace-pre-wrap text-[15px] leading-relaxed font-medium tracking-wide';
+        body.className = 'whitespace-pre-wrap text-[24px] leading-relaxed font-medium tracking-wide';
         if (role === 'user') {
             body.textContent = content;
         } else {

@@ -512,6 +512,14 @@ class MessageController extends Controller
         $isListRequest = $this->isOpinionListRequest($prompt);
         $isSearchMode = ! $isSmallTalk && $isListRequest;
 
+        if ($isSmallTalk) {
+            return [
+                'content' => $this->sanitizeAssistantText($this->fallbackChatReply($prompt)),
+                'model' => 'smalltalk',
+                'provider' => 'smalltalk',
+            ];
+        }
+
         if ($isSearchMode) {
             $topic = $isListRequest ? $this->extractOpinionListTopic($prompt) : trim($prompt);
             if ($topic === '') {
@@ -2030,7 +2038,7 @@ OUTPUT: Return only the corrected (or original) response text. Do not add any me
         }
 
         if ($this->isSmallTalk($prompt)) {
-            return "Hi! How can I help you today?";
+            return "Hi! I’m Lex. How can I help you today?";
         }
 
         return "I’m having trouble connecting right now. Please try again in a moment.";
