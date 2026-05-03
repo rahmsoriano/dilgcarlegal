@@ -34,7 +34,7 @@
                 top: 0;
                 z-index: 60;
                 width: 100%;
-                background: linear-gradient(90deg, var(--brand-navy) 0%, var(--brand-blue) 26%, var(--brand-red) 55%, var(--brand-orange) 80%, var(--brand-yellow) 100%);
+                background: linear-gradient(90deg, var(--brand-ink) 0%, var(--brand-blue) 55%, #1d4ed8 100%);
                 border-bottom: 1px solid rgba(15, 23, 42, 0.10);
                 box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
                 overflow: hidden;
@@ -87,13 +87,7 @@
             }
 
             .admin-shell {
-                background:
-                    radial-gradient(1200px 720px at 18% 0%, rgba(22, 58, 140, 0.22) 0%, transparent 60%),
-                    radial-gradient(980px 640px at 86% 10%, rgba(215, 107, 42, 0.20) 0%, transparent 58%),
-                    radial-gradient(900px 620px at 62% 96%, rgba(255, 222, 21, 0.20) 0%, transparent 54%),
-                    linear-gradient(135deg, rgba(11, 27, 74, 0.12) 0%, rgba(22, 58, 140, 0.10) 26%, rgba(161, 29, 47, 0.10) 55%, rgba(215, 107, 42, 0.10) 80%, rgba(255, 222, 21, 0.18) 100%),
-                    var(--shell-base);
-                background-attachment: fixed;
+                background: #ffffff;
             }
 
             @media (min-width: 1024px) {
@@ -119,7 +113,7 @@
                     width: 92px;
                     min-width: 92px;
                     flex: 0 0 92px;
-                    zoom: 1;
+                    zoom: 1.15;
                 }
 
                 .admin-main {
@@ -135,7 +129,7 @@
             }
 
             .admin-sidebar {
-                transition: width 220ms ease, padding 220ms ease, border-radius 220ms ease;
+                transition: width 750ms ease-in-out, padding 750ms ease-in-out, border-radius 750ms ease-in-out;
             }
 
             .sidebar-collapsed .admin-sidebar {
@@ -143,7 +137,7 @@
             }
 
             .sidebar-toggle-btn svg {
-                transition: transform 220ms ease;
+                transition: transform 750ms ease-in-out;
             }
 
             .sidebar-collapsed .sidebar-toggle-btn svg {
@@ -156,13 +150,30 @@
             .sidebar-collapsed .sidebar-account-details,
             .sidebar-collapsed .sidebar-login-label,
             .sidebar-collapsed .sidebar-account-chevron {
-                display: none;
+                opacity: 0;
+                transform: translateX(-6px);
+                max-width: 0;
+                pointer-events: none;
+                overflow: hidden;
+            }
+
+            .sidebar-nav-label,
+            .sidebar-section-label,
+            .sidebar-chat-title,
+            .sidebar-account-details,
+            .sidebar-login-label,
+            .sidebar-account-chevron {
+                opacity: 1;
+                transform: translateX(0);
+                max-width: 260px;
+                transition: opacity 520ms ease-in-out, transform 520ms ease-in-out, max-width 750ms ease-in-out;
             }
 
             .sidebar-collapsed .sidebar-nav-link {
                 justify-content: center;
                 padding-left: 0.75rem;
                 padding-right: 0.75rem;
+                gap: 0 !important;
             }
 
             .sidebar-collapsed .sidebar-history {
@@ -172,7 +183,17 @@
             }
 
             .sidebar-collapsed .sidebar-history-inner {
-                display: none;
+                opacity: 0;
+                max-height: 0;
+                pointer-events: none;
+                overflow: hidden;
+                transition: opacity 520ms ease-in-out, max-height 750ms ease-in-out;
+            }
+
+            .sidebar-history-inner {
+                opacity: 1;
+                max-height: 2000px;
+                transition: opacity 520ms ease-in-out, max-height 750ms ease-in-out;
             }
 
             .sidebar-collapsed .sidebar-login-btn {
@@ -233,7 +254,7 @@
                 max-height: 520px;
                 opacity: 1;
                 transform: translateY(0);
-                transition: max-height 220ms ease, opacity 200ms ease, transform 200ms ease;
+                transition: max-height 750ms ease-in-out, opacity 520ms ease-in-out, transform 520ms ease-in-out;
                 overflow: hidden;
             }
 
@@ -432,20 +453,19 @@
             }
 
             .admin-sidebar {
-                background: rgba(255, 255, 255, 0.76) !important;
+                background: #ffffff !important;
                 border: 1px solid var(--shell-border);
                 border-radius: 26px;
                 box-shadow: var(--shadow-soft);
                 padding: 18px !important;
-                backdrop-filter: blur(18px) saturate(1.2);
             }
 
             .sidebar-nav-list {
-                background: rgba(255, 255, 255, 0.62);
+                background: #ffffff;
                 border: 1px solid rgba(15, 23, 42, 0.10);
                 border-radius: 1.25rem;
                 overflow: hidden;
-                backdrop-filter: blur(14px) saturate(1.1);
+                box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
             }
 
             .sidebar-nav-icon {
