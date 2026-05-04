@@ -8,6 +8,7 @@
     }
 
     .chat-panel {
+        position: relative;
         backdrop-filter: blur(24px);
         background: {{ $isPro ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.82)' }};
         box-shadow: {{ $isPro ? '0 24px 70px rgba(15, 23, 42, 0.08)' : '0 24px 80px rgba(15, 23, 42, 0.08)' }};
@@ -170,10 +171,63 @@
         color: #ffffff;
     }
 
+    .chat-scroll-bottom-btn {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 104px;
+        width: 42px;
+        height: 42px;
+        border-radius: 9999px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 20;
+    }
+
+    .chat-scroll-bottom-btn.is-visible {
+        display: flex;
+    }
+
+    .chat-scroll-bottom-btn svg {
+        width: 20px;
+        height: 20px;
+        color: rgba(15, 23, 42, 0.72);
+    }
+
+    @media (max-width: 640px) {
+        .chat-scroll-bottom-btn {
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 96px;
+        }
+    }
+
     .ref-accordion {
-        margin-top: 4px;
-        padding-top: 4px;
+        --ref-fade-rgb: 255, 255, 255;
+        --ref-fade-alpha: 1;
+        margin-top: 1px;
+        padding-top: 1px;
         border-top: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: 14px;
+        user-select: none;
+        cursor: pointer;
+        padding: 6px 8px;
+        transition: background-color 160ms ease-in-out;
+    }
+
+    .ref-accordion:hover {
+        background: rgba(15, 23, 42, 0.04);
+    }
+
+    .ref-accordion:focus-visible {
+        outline: 2px solid rgba(0, 44, 118, 0.35);
+        outline-offset: 2px;
+        background: rgba(0, 44, 118, 0.10);
     }
 
     .ref-accordion-head {
@@ -227,12 +281,42 @@
     }
 
     .ref-accordion-body {
-        margin-top: 6px;
-        padding: 8px 10px;
-        border-radius: 14px;
-        background: rgba(15, 23, 42, 0.03);
-        border: 1px solid rgba(15, 23, 42, 0.08);
+        margin-top: 4px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        border: 0;
         white-space: normal;
+        position: relative;
+        overflow: hidden;
+        line-height: 1.35;
+        max-height: calc(1 * 1.35em);
+        transition: max-height 220ms ease-in-out;
+        color: rgba(15, 23, 42, 0.72);
+    }
+
+    .ref-accordion-body::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: calc(1.35em);
+        background: linear-gradient(
+            to bottom,
+            rgba(var(--ref-fade-rgb), 0) 0%,
+            rgba(var(--ref-fade-rgb), 0.35) 35%,
+            rgba(var(--ref-fade-rgb), var(--ref-fade-alpha)) 100%
+        );
+        pointer-events: none;
+    }
+
+    .ref-accordion.is-open .ref-accordion-body {
+        max-height: 800px;
+    }
+
+    .ref-accordion.is-open .ref-accordion-body::after {
+        display: none;
     }
 
     .external-source-link {
@@ -381,6 +465,12 @@
                 @endif
             </div>
 
+            <button id="chat-scroll-bottom" type="button" class="chat-scroll-bottom-btn" aria-label="Scroll to latest">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 3.25a.75.75 0 01.75.75v10.19l3.22-3.22a.75.75 0 111.06 1.06l-4.5 4.5a.75.75 0 01-1.06 0l-4.5-4.5a.75.75 0 111.06-1.06l3.22 3.22V4a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+                </svg>
+            </button>
+
             <div class="border-t {{ $isPro ? 'border-slate-900/[0.03] bg-white/50' : 'border-slate-200/50 bg-white/70' }} px-6 py-4 sm:px-8 sm:py-5">
                 <form
                     id="chat-form"
@@ -449,6 +539,7 @@
     const sendBtn = document.getElementById('chat-send');
     const scrollEl = document.getElementById('chat-scroll');
     const errorEl = document.getElementById('chat-error');
+    const scrollBottomBtn = document.getElementById('chat-scroll-bottom');
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
@@ -588,15 +679,95 @@
         const el = renderMessage('assistant', 'Thinking');
         const body = el.querySelector('.whitespace-pre-wrap');
         if (body) {
-            body.innerHTML = 'Thinking<span class="chat-thinking-dots"><span>.</span><span>.</span><span>.</span></span>';
+            body.innerHTML = '<span class="chat-thinking-dots"><span>.</span><span>.</span><span>.</span></span>';
         }
         el.dataset.thinking = 'true';
         return el;
     };
 
-    const scrollToBottom = () => {
-        scrollEl.scrollTop = scrollEl.scrollHeight;
+    const htmlToPlainText = (html) => {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = String(html ?? '');
+        return (tmp.innerText || tmp.textContent || '').replace(/\u00A0/g, ' ');
     };
+
+    const typeAssistantResponse = async (bodyEl, html) => {
+        if (!bodyEl) return;
+
+        const fullHtml = String(html ?? '');
+        const text = htmlToPlainText(fullHtml).trimEnd();
+
+        if (!text) {
+            bodyEl.innerHTML = fullHtml;
+            return;
+        }
+
+        const startDistance = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+        const shouldAutoScroll = startDistance < 180;
+
+        const minMs = 450;
+        const maxMs = 2600;
+        const estimated = Math.round(Math.min(maxMs, Math.max(minMs, text.length * 10)));
+        const frameMs = 16;
+        const steps = Math.max(12, Math.round(estimated / frameMs));
+        const charsPerStep = Math.max(1, Math.ceil(text.length / steps));
+
+        let i = 0;
+        bodyEl.textContent = '▍';
+
+        await new Promise((resolve) => {
+            const tick = () => {
+                i = Math.min(text.length, i + charsPerStep);
+                bodyEl.textContent = text.slice(0, i) + (i < text.length ? '▍' : '');
+                if (shouldAutoScroll) scrollToBottom();
+                if (i >= text.length) {
+                    resolve();
+                    return;
+                }
+                window.requestAnimationFrame(tick);
+            };
+            window.requestAnimationFrame(tick);
+        });
+
+        bodyEl.innerHTML = fullHtml;
+        if (shouldAutoScroll) scrollToBottom();
+    };
+
+    const updateScrollBottomBtn = () => {
+        if (!scrollBottomBtn) return;
+        const distance = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+        if (distance > 240) {
+            scrollBottomBtn.classList.add('is-visible');
+        } else {
+            scrollBottomBtn.classList.remove('is-visible');
+        }
+    };
+
+    const scrollToBottom = (smooth = false) => {
+        if (smooth && typeof scrollEl.scrollTo === 'function') {
+            scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+        } else {
+            scrollEl.scrollTop = scrollEl.scrollHeight;
+        }
+        updateScrollBottomBtn();
+    };
+
+    if (scrollBottomBtn) {
+        scrollBottomBtn.addEventListener('click', () => scrollToBottom(true));
+    }
+
+    scrollEl.addEventListener('scroll', () => {
+        window.requestAnimationFrame(updateScrollBottomBtn);
+    }, { passive: true });
+
+    scrollEl.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const item = e.target.closest('.ref-accordion[data-ref-toggle]');
+        if (!item) return;
+        e.preventDefault();
+        const open = item.classList.toggle('is-open');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
 
     const ensureConversation = async () => {
         const existingUrl = form.dataset.activeConversationUrl;
@@ -663,21 +834,18 @@
             if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
                 const body = thinkingEl.querySelector('.whitespace-pre-wrap');
                 if (body) {
-                    body.innerHTML = content;
-                    body.classList.remove('chat-reply-fade-in');
-                    void body.offsetWidth;
-                    body.classList.add('chat-reply-fade-in');
+                    await typeAssistantResponse(body, content);
                 } else {
                     thinkingEl.remove();
-                    renderMessage('assistant', content);
+                    const el = renderMessage('assistant', '');
+                    const b = el.querySelector('.whitespace-pre-wrap');
+                    await typeAssistantResponse(b, content);
                 }
                 delete thinkingEl.dataset.thinking;
             } else {
-                const el = renderMessage('assistant', content);
+                const el = renderMessage('assistant', '');
                 const body = el.querySelector('.whitespace-pre-wrap');
-                if (body) {
-                    body.classList.add('chat-reply-fade-in');
-                }
+                await typeAssistantResponse(body, content);
             }
             upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(prompt), is_pinned: false });
             scrollToBottom();
@@ -849,17 +1017,18 @@
                     if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
                         const body = thinkingEl.querySelector('.whitespace-pre-wrap');
                         if (body) {
-                            body.innerHTML = content;
-                            body.classList.remove('chat-reply-fade-in');
-                            void body.offsetWidth;
-                            body.classList.add('chat-reply-fade-in');
+                            await typeAssistantResponse(body, content);
                         } else {
                             thinkingEl.remove();
-                            renderMessage('assistant', content);
+                            const el = renderMessage('assistant', '');
+                            const b = el.querySelector('.whitespace-pre-wrap');
+                            await typeAssistantResponse(b, content);
                         }
                         delete thinkingEl.dataset.thinking;
                     } else {
-                        renderMessage('assistant', content);
+                        const el = renderMessage('assistant', '');
+                        const b = el.querySelector('.whitespace-pre-wrap');
+                        await typeAssistantResponse(b, content);
                     }
                     upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(editedText), is_pinned: false });
                     scrollToBottom();
@@ -878,26 +1047,16 @@
             return;
         }
 
-        const toggle = e.target.closest('[data-ref-toggle]');
-        if (!toggle) return;
-        const item = toggle.closest('.ref-accordion');
+        const item = e.target.closest('.ref-accordion[data-ref-toggle]');
         if (!item) return;
         const body = item.querySelector('.ref-accordion-body');
         if (!body) return;
-
-        const isHidden = body.hasAttribute('hidden');
-        if (isHidden) {
-            body.removeAttribute('hidden');
-            item.classList.add('is-open');
-            toggle.setAttribute('aria-expanded', 'true');
-        } else {
-            body.setAttribute('hidden', '');
-            item.classList.remove('is-open');
-            toggle.setAttribute('aria-expanded', 'false');
-        }
+        const open = item.classList.toggle('is-open');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
 
     scrollToBottom();
+    updateScrollBottomBtn();
 
     // Opinion Modal Logic
     const opinionModal = document.getElementById('opinion-modal');
