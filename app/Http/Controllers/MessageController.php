@@ -572,10 +572,11 @@ class MessageController extends Controller
             if (count($directOpinions) > 0) {
                 $opinions = $directOpinions;
             } else {
+                $content = $this->buildNoLibraryGeneralInfoAnswer($prompt, $openai, $gemini, $groq);
                 return [
-                    'content' => $this->sanitizeAssistantText($this->buildRelatedOnlyAnswer($prompt, $retrievedOpinions, $openai, $gemini, $groq)),
-                    'model' => 'related_library_plus_general_info',
-                    'provider' => 'opinion_retriever',
+                    'content' => $this->sanitizeAssistantText($content),
+                    'model' => 'general_info_no_direct_library',
+                    'provider' => 'ai_fallback_general_info',
                 ];
             }
         }
@@ -907,8 +908,9 @@ class MessageController extends Controller
 
     private function buildNoLibraryGeneralInfoAnswer(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
     {
-        $general = $this->buildGeneralInfoParagraph($prompt, $openai, $gemini, $groq);
-        $general = $this->limitToSentences($general, 3);
+        $generalBlock = $this->buildGeneralInfoWithSources($prompt, $openai, $gemini, $groq);
+        $general = $this->limitToSentences((string) ($generalBlock['paragraph'] ?? ''), 3);
+        $sources = (array) ($generalBlock['sources'] ?? []);
 
         $conclusion = $this->generateConclusionFromGeneralInfo($prompt, $general, $openai, $gemini, $groq);
         $conclusion = $this->limitToSentences($conclusion, 2);
@@ -916,8 +918,15 @@ class MessageController extends Controller
             $conclusion = $this->limitToSentences($general, 2);
         }
 
-        $out = "Direct Answer:\nUnfortunately, I could not find a stored DILG legal opinion that directly addresses your exact question.\n\n";
-        $out .= "General Information (not based in Opinion Library):\n".$general."\n\n";
+        $out = "Direct Answer:\nNo legal opinion in the Opinion Library directly addresses your exact question. Below is general information from external sources.\n\n";
+        $out .= "General Information:\n".$general."\n";
+        foreach (array_slice(array_values(array_filter(array_map('trim', $sources))), 0, 2) as $src) {
+            if ($src === '') {
+                continue;
+            }
+            $out .= "Source: ".$src."\n";
+        }
+        $out .= "\n";
         $out .= "Conclusion:\n".$conclusion;
 
         return trim($out);
@@ -925,76 +934,7 @@ class MessageController extends Controller
 
     private function buildRelatedOnlyAnswer(string $prompt, array $opinions, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
     {
-        $tokens = $this->tokenizeOpinionListTopic($prompt);
-
-        $related = array_slice($opinions, 0, 3);
-        $refs = [];
-        foreach ($related as $idx => $op) {
-            if (!is_array($op)) {
-                continue;
-            }
-            $refs[] = [
-                'label' => 'Other'.($idx + 1),
-                'excerpt' => $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3),
-            ];
-        }
-
-        $summaries = $this->summarizeReferenceExcerpts($prompt, $refs, $openai, $gemini, $groq);
-
-        $general = $this->buildGeneralInfoParagraph($prompt, $openai, $gemini, $groq);
-        $general = $this->limitToSentences($general, 3);
-
-        $direct = $this->limitToSentences('I found stored DILG legal opinion(s) related to your topic, but none directly addresses your exact question. I am providing general information below (not based in the Opinion Library) to help answer it.', 2);
-
-        $conclusion = $this->generateConclusionFromGeneralInfo($prompt, $general, $openai, $gemini, $groq);
-        $conclusion = $this->limitToSentences($conclusion, 2);
-        if (trim($conclusion) === '') {
-            $conclusion = $this->limitToSentences($general, 2);
-        }
-
-        $out = "Direct Answer:\n".$direct."\n\n";
-
-        if (count($related) > 0) {
-            $main = $related[0];
-            if (is_array($main)) {
-                $mainCitation = $this->buildOpinionCitationHtml($main, true);
-                $mainKey = 'Other1';
-                $mainSummary = $this->limitToSentences((string) ($summaries[$mainKey] ?? ''), 3);
-                if (trim($mainSummary) === '') {
-                    $mainSummary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
-                }
-                $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainSummary."\n\n";
-            }
-        }
-
-        $out .= "Other Related References That Might Help:\n";
-
-        $written = 0;
-        foreach (array_slice($related, 1, 3) as $idx => $op) {
-            if (!is_array($op)) {
-                continue;
-            }
-            $citation = $this->buildOpinionCitationHtml($op, true);
-            $key = 'Other'.($idx + 2);
-            $summary = $this->limitToSentences((string) ($summaries[$key] ?? ''), 3);
-            if (trim($summary) === '') {
-                $summary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
-            }
-            $out .= "- ".$citation." - ".$summary."\n";
-            $written++;
-            if ($written >= 3) {
-                break;
-            }
-        }
-
-        if ($written === 0) {
-            $out .= "- No related DILG legal opinions found.\n";
-        }
-
-        $out .= "\nGeneral Information (not based in Opinion Library):\n".$general."\n\n";
-        $out .= "Conclusion:\n".$conclusion;
-
-        return trim($out);
+        return $this->buildNoLibraryGeneralInfoAnswer($prompt, $openai, $gemini, $groq);
     }
 
     private function buildGeneralInfoParagraph(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
@@ -1025,6 +965,93 @@ Strict rules:
 
         $text = trim((string) preg_replace('/\s+/u', ' ', $text));
         return $text;
+    }
+
+    private function buildGeneralInfoWithSources(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): array
+    {
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+Provide a concise general-information answer to the user\'s question in the Philippines.
+
+Strict rules:
+- This must be general legal information outside the stored DILG opinion library.
+- Do not cite or invent any DILG opinion numbers, circular numbers, case names, or exact dates.
+- Write 2–3 sentences only for the explanation.
+- After the explanation, add 1–2 source lines in the exact format:
+Source: https://example.com
+- Prefer official sources or reputable Philippine legal sources. If unsure, use:
+Source: https://www.officialgazette.gov.ph/
+Source: https://lawphil.net/
+
+Output only the explanation + source lines (no extra headers).';
+
+        try {
+            $resp = $this->chatWithFallback(
+                [
+                    ['role' => 'system', 'content' => $instruction],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                $openai,
+                $gemini,
+                $groq
+            );
+            $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            $text = 'General guidance is available, but I could not reach the AI provider to generate it at the moment.'."\n".
+                'Source: https://www.officialgazette.gov.ph/'."\n".
+                'Source: https://lawphil.net/';
+        }
+
+        $text = str_replace(["\r\n", "\r"], "\n", trim((string) $text));
+        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
+
+        $lines = preg_split("/\n/u", $text) ?: [];
+        $paragraphLines = [];
+        $sources = [];
+        $seenSource = false;
+
+        foreach ($lines as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+
+            if (preg_match('/^\s*sources?\s*:/i', $line) === 1) {
+                $seenSource = true;
+                if (preg_match('/https?:\/\/\S+/i', $line, $m) === 1) {
+                    $sources[] = rtrim((string) $m[0], '|');
+                }
+                continue;
+            }
+
+            if (preg_match('/^\s*source\s*:/i', $line) === 1) {
+                $seenSource = true;
+                if (preg_match('/https?:\/\/\S+/i', $line, $m) === 1) {
+                    $sources[] = rtrim((string) $m[0], '|');
+                }
+                continue;
+            }
+
+            if (! $seenSource) {
+                $paragraphLines[] = $line;
+            }
+        }
+
+        $paragraph = trim((string) preg_replace('/\s+/u', ' ', implode(' ', $paragraphLines)));
+        $paragraph = $this->limitToSentences($paragraph, 3);
+
+        $sources = array_values(array_unique(array_filter(array_map('trim', $sources))));
+        if (count($sources) === 0) {
+            $sources = [
+                'https://www.officialgazette.gov.ph/',
+                'https://lawphil.net/',
+            ];
+        }
+
+        return [
+            'paragraph' => $paragraph,
+            'sources' => array_slice($sources, 0, 2),
+        ];
     }
 
     private function generateConclusionFromGeneralInfo(string $prompt, string $generalInfo, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
@@ -1109,7 +1136,7 @@ Strict rules:
         }
 
         $out = "Direct Answer:\n".$direct."\n\n";
-        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainSummary."\n\n";
+        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation."\n".$mainSummary."\n\n";
         $out .= "Other Related References That Might Help:\n";
 
         if (count($others) === 0) {
@@ -1183,7 +1210,7 @@ Strict rules:
         $mainExcerpt = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
 
         $out = "Direct Answer:\nA directly relevant DILG legal opinion is available; please see the main reference below.\n\n";
-        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation." - ".$mainExcerpt."\n\n";
+        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation."\n".$mainExcerpt."\n\n";
         $out .= "Other Related References That Might Help:\n";
         $others = array_slice($opinions, 1, 3);
         if (count($others) === 0) {
@@ -1878,10 +1905,12 @@ CHECKLIST:
 1. Does the response assume or invent an age, position (e.g., "Kagawad"), or any other fact not in the user prompt?
 2. Did the AI use personal pronouns like "Since you are..." or "As a..." when the user didn\'t state those facts?
 3. Did the AI use the word "Summary:" in references? (This is NOT allowed).
-4. Does the response follow the required section order: Direct Answer → Legal Basis / Supporting Reference → Explanation → (optional) For general information... → Conclusion?
+4. Does the response follow an acceptable section order?
+   - If a directly applicable DILG legal opinion is used: Direct Answer → Legal Basis / Supporting Reference → (optional) Other Related References That Might Help → Conclusion.
+   - If no directly applicable DILG legal opinion is used: Direct Answer → General Information → Conclusion.
 5. If there is no directly applicable DILG legal opinion, does the response avoid outputting the word "None" and instead proceed to general information (with a reminder) when needed?
 6. Did the AI include general information when the legal opinions already provided a direct and complete answer? (General info should ONLY be present if library content was insufficient).
-7. If the response includes general information, does it use the exact header: "For general information (not based on stored DILG legal opinions):"?
+7. If the response includes general information, does it clearly indicate it is not based on the stored Opinion Library (either in Direct Answer or in the General Information section)?
 8. If the response includes the general information section, does the final conclusion explicitly separate what is based on DILG legal opinions vs what is only general information?
 
 CORRECTION RULES:
@@ -1891,7 +1920,7 @@ CORRECTION RULES:
 - Remove standalone "None"/"None." lines.
 - REMOVE general information if the legal library references already provided a direct and sufficient answer to the user\'s question.
 - REMOVE the entire general information section if the response has a valid DILG Legal Basis citation and the library content is sufficient to answer.
-- ENSURE any necessary general legal knowledge has the exact header "For general information (not based on stored DILG legal opinions):" and is positioned before the final conclusion.
+- ENSURE any necessary general legal knowledge is clearly labeled as not based on the stored Opinion Library and is positioned before the final conclusion.
 - If the general information section exists, UPDATE the final conclusion so it clearly states (1) what the DILG opinions cited actually establish (or that they do not directly answer), and (2) what the general information indicates, without presenting the general information as a DILG-library-based ruling.
 - If the response is already accurate and faithful, return it EXACTLY as it is.
 
