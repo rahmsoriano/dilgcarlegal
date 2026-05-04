@@ -7,6 +7,11 @@
         background: {{ $isPro ? 'transparent' : 'radial-gradient(circle at top left, rgba(14, 165, 233, 0.14), transparent 28%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.14), transparent 32%), linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%)' }};
     }
 
+    .chat-shell-with-lex {
+        position: relative;
+        isolation: isolate;
+    }
+
     .chat-panel {
         position: relative;
         backdrop-filter: blur(24px);
@@ -396,6 +401,194 @@
             transform: translateY(0);
         }
     }
+
+    .lex-safe-zone {
+        padding-right: clamp(0rem, 0vw, 0rem);
+    }
+
+    .lex-assistant {
+        --lex-size: clamp(200px, 16vw, 250px);
+        position: fixed;
+        right: clamp(1rem, 2vw, 2rem);
+        bottom: clamp(5.75rem, 8vw, 7.5rem);
+        z-index: 60;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.85rem;
+        pointer-events: none;
+    }
+
+    .lex-assistant__bubble {
+        position: relative;
+        max-width: 260px;
+        padding: 1.15rem 1.15rem 1.05rem;
+        border-radius: 1.75rem;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 22px 44px rgba(15, 23, 42, 0.12);
+        color: #0f172a;
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.5;
+        text-align: center;
+        backdrop-filter: blur(18px);
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+        transform-origin: bottom right;
+        transition: opacity 220ms ease, transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        pointer-events: none;
+    }
+
+    .lex-assistant__bubble::after {
+        content: '';
+        position: absolute;
+        right: 2.2rem;
+        bottom: -0.68rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        background: inherit;
+        border-right: 1px solid rgba(148, 163, 184, 0.18);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        transform: rotate(45deg);
+        border-bottom-right-radius: 0.3rem;
+    }
+
+    .lex-assistant__bubble.is-visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    .lex-assistant__button {
+        position: relative;
+        width: var(--lex-size);
+        display: flex;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        pointer-events: auto;
+        outline: none;
+        animation: lex-float 4.8s ease-in-out infinite;
+    }
+
+    .lex-assistant__button:focus-visible {
+        border-radius: 999px;
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.18);
+    }
+
+    .lex-assistant__figure {
+        position: relative;
+        width: 100%;
+        transform-origin: center bottom;
+        animation: lex-breathe 4.8s ease-in-out infinite;
+        transition: transform 220ms ease, filter 220ms ease;
+        will-change: transform;
+        filter: drop-shadow(0 20px 28px rgba(15, 23, 42, 0.16));
+    }
+
+    .lex-assistant__button:hover .lex-assistant__figure,
+    .lex-assistant__button:focus-visible .lex-assistant__figure {
+        transform: scale(1.05);
+        filter: drop-shadow(0 26px 34px rgba(15, 23, 42, 0.22));
+    }
+
+    .lex-assistant__button.is-idle .lex-assistant__figure {
+        animation: lex-wave 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 1;
+    }
+
+    .lex-assistant__image {
+        display: block;
+        width: 100%;
+        height: auto;
+        user-select: none;
+        -webkit-user-drag: none;
+        transform: translateX(2px);
+    }
+
+    .lex-assistant__shadow {
+        width: calc(var(--lex-size) * 0.58);
+        height: 1.25rem;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(148, 163, 184, 0.32) 0%, rgba(148, 163, 184, 0.14) 50%, rgba(148, 163, 184, 0) 78%);
+        transform: translateY(-0.45rem);
+        animation: lex-shadow 4.8s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes lex-float {
+        0%, 100% { transform: translate3d(0, 0, 0); }
+        50% { transform: translate3d(0, -10px, 0); }
+    }
+
+    @keyframes lex-breathe {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+    }
+
+    @keyframes lex-shadow {
+        0%, 100% { transform: translateY(-0.45rem) scaleX(1); opacity: 0.8; }
+        50% { transform: translateY(-0.25rem) scaleX(0.93); opacity: 0.52; }
+    }
+
+    @keyframes lex-wave {
+        0% { transform: rotate(0deg) scale(1.01); }
+        25% { transform: rotate(-3deg) scale(1.03); }
+        50% { transform: rotate(2deg) scale(1.03); }
+        75% { transform: rotate(-1deg) scale(1.02); }
+        100% { transform: rotate(0deg) scale(1); }
+    }
+
+    @media (min-width: 1280px) {
+        .lex-safe-zone {
+            padding-right: 18rem;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .lex-assistant {
+            --lex-size: 190px;
+            right: 1rem;
+            bottom: 6rem;
+        }
+
+        .lex-safe-zone {
+            padding-right: 12rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .lex-assistant {
+            --lex-size: 146px;
+            right: 0.8rem;
+            bottom: 5.6rem;
+        }
+
+        .lex-assistant__bubble {
+            max-width: 205px;
+            font-size: 0.88rem;
+            padding: 0.9rem 0.9rem 0.82rem;
+        }
+
+        .lex-safe-zone {
+            padding-right: 0;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .lex-assistant__button,
+        .lex-assistant__figure,
+        .lex-assistant__shadow,
+        .lex-assistant__button.is-idle .lex-assistant__figure {
+            animation: none !important;
+        }
+
+        .lex-assistant__bubble,
+        .lex-assistant__figure {
+            transition: none !important;
+        }
+    }
 </style>
 
 <style>
@@ -405,13 +598,13 @@
     }
 </style>
 
-<div class="chat-shell h-full min-h-0 {{ $isPro ? '' : 'px-4 py-4 sm:px-6 lg:px-8' }}">
+<div class="chat-shell chat-shell-with-lex h-full min-h-0 {{ $isPro ? '' : 'px-4 py-4 sm:px-6 lg:px-8' }}">
     <div class="mx-auto flex h-full min-h-0 w-full {{ $isPro ? 'max-w-full' : 'max-w-[1700px]' }}">
         <section class="chat-panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[2.5rem]">
             <div class="flex flex-1 min-h-0 flex-col">
                 <div class="h-2"></div>
 
-            <div id="chat-scroll" class="chat-scrollbar flex-1 overflow-y-auto p-8">
+            <div id="chat-scroll" class="chat-scrollbar lex-safe-zone flex-1 overflow-y-auto p-8">
                 @if ($messages->isEmpty())
                     <div class="flex h-full flex-col items-center justify-center text-center">
                         <div class="relative mb-8">
@@ -503,6 +696,27 @@
         </section>
     </div>
 
+    <div class="lex-assistant" aria-live="polite">
+        <div id="lex-assistant-bubble" class="lex-assistant__bubble" role="status"><strong>Hi, I'm Lex &#128075;</strong><br>How can I help you today?</div>
+        <button
+            id="lex-assistant-trigger"
+            type="button"
+            class="lex-assistant__button"
+            aria-label="Talk to Lex"
+            aria-controls="lex-assistant-bubble"
+            aria-expanded="false"
+        >
+            <div class="lex-assistant__figure">
+                <img
+                    src="{{ asset('images/isay.png') }}"
+                    alt="Lex AI assistant"
+                    class="lex-assistant__image"
+                >
+            </div>
+        </button>
+        <div class="lex-assistant__shadow" aria-hidden="true"></div>
+    </div>
+
     <!-- Opinion Viewer Modal -->
     <div id="opinion-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 sm:p-6" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[6px] transition-opacity" id="opinion-modal-overlay"></div>
@@ -543,6 +757,49 @@
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
+    const lexTrigger = document.getElementById('lex-assistant-trigger');
+    const lexBubble = document.getElementById('lex-assistant-bubble');
+    let lexBubbleTimer = null;
+    let lexIdleTimer = null;
+
+    const showLexBubble = () => {
+        if (!lexBubble || !lexTrigger) return;
+
+        lexBubble.classList.add('is-visible');
+        lexTrigger.setAttribute('aria-expanded', 'true');
+
+        if (lexBubbleTimer) {
+            window.clearTimeout(lexBubbleTimer);
+        }
+
+        lexBubbleTimer = window.setTimeout(() => {
+            lexBubble.classList.remove('is-visible');
+            lexTrigger.setAttribute('aria-expanded', 'false');
+        }, 3000);
+    };
+
+    const triggerLexIdle = () => {
+        if (!lexTrigger) return;
+
+        lexTrigger.classList.remove('is-idle');
+        void lexTrigger.offsetWidth;
+        lexTrigger.classList.add('is-idle');
+
+        window.setTimeout(() => {
+            lexTrigger.classList.remove('is-idle');
+        }, 900);
+    };
+
+    if (lexTrigger) {
+        lexTrigger.addEventListener('click', showLexBubble);
+        lexTrigger.addEventListener('mouseenter', () => {
+            triggerLexIdle();
+        });
+
+        lexIdleTimer = window.setInterval(() => {
+            triggerLexIdle();
+        }, 5000);
+    }
 
     const upsertSidebarConversation = ({ id, url, title, is_pinned, update_url, toggle_pin_url, toggle_save_url, delete_url }) => {
         if (window.__adminSidebarUpsertConversation) {

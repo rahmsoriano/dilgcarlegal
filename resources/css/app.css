@@ -16,6 +16,7 @@
     backdrop-filter: blur(6px);
     opacity: 0;
     transition: opacity 180ms ease;
+    
   }
 
   .auth-modal-panel {
