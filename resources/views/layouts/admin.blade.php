@@ -814,44 +814,7 @@
                     <div class="auth-login-card overflow-hidden rounded-[36px] bg-white">
                         <div class="grid h-[min(640px,calc(100vh-3.5rem))] lg:grid-cols-[1.08fr_0.92fr]">
                             <section class="auth-grid relative hidden h-full overflow-hidden px-8 py-8 text-white lg:block">
-                                <div class="relative flex h-full flex-col">
-                                    <div class="flex items-start gap-4">
-                                        <div class="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-white shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
-                                            <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/c/c9/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg"
-                                                alt="DILG Seal"
-                                                class="h-full w-full object-contain"
-                                            >
-                                        </div>
-
-                                        <div class="min-w-0">
-                                            <div class="text-sm font-black uppercase tracking-wide text-white">
-                                                Department of the Interior and Local Government
-                                            </div>
-                                            <div class="mt-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
-                                                Cordillera Administrative Region
-                                            </div>
-                                            <div class="mt-1 text-xs italic text-white/80">
-                                                Matino. Mahusay.at Maaasahan.
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-1 flex-col justify-center">
-                                        <div class="max-w-sm">
-                                            <p class="text-sm font-semibold uppercase tracking-[0.38em] text-cyan-200/90">
-                                                <span>GABAY-Lex</span>
-                                                <span class="mt-2 block text-[11px] font-semibold normal-case tracking-wide text-white/80">Guidance and Advisory for Better Administration in Law</span>
-                                            </p>
-                                            <h2 class="mt-5 text-4xl font-semibold leading-tight text-white">
-                                                Smart legal support for efficient public service.
-                                            </h2>
-                                            <p class="mt-4 text-base leading-7 text-blue-100/78">
-                                                Instant help, document assistance, and reliable guidance all in one place.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                @include('layouts.partials.auth-modal-hero')
                             </section>
 
                             <section class="flex h-full items-center bg-white px-6 py-6 sm:px-10 lg:px-12 overflow-y-auto">
