@@ -34,9 +34,212 @@
     }
 
     .message-bubble-ai {
-        background: rgba(255, 255, 255, 0.7);
+        background: transparent;
+        border: 0;
+        backdrop-filter: none;
+    }
+
+    .chat-user-bubble {
+        position: relative;
+    }
+
+    .chat-msg-tools {
+        position: absolute;
+        right: 10px;
+        bottom: -20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        opacity: 0;
+        transform: translateY(-2px);
+        pointer-events: none;
+        transition: opacity 180ms ease-in-out, transform 180ms ease-in-out;
+        z-index: 5;
+    }
+
+    .chat-user-bubble:hover .chat-msg-tools {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    .chat-msg-tools-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: rgba(255, 255, 255, 0.92);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .chat-msg-tools-btn svg {
+        width: 18px;
+        height: 18px;
+        color: rgba(15, 23, 42, 0.72);
+    }
+
+    .chat-msg-tools-btn::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        transform: translate(-50%, 8px);
+        padding: 6px 10px;
+        border-radius: 9999px;
+        background: rgba(15, 23, 42, 0.92);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 140ms ease-in-out, transform 140ms ease-in-out;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .chat-msg-tools-btn:hover::after {
+        opacity: 1;
+        transform: translate(-50%, 12px);
+    }
+
+    .chat-user-bubble.is-editing .chat-msg-tools {
+        display: none;
+    }
+
+    .message-enter.is-editing-wide {
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    .chat-user-bubble.is-editing {
+        width: min(1100px, 100%);
+        margin-left: auto;
+        background: rgba(0, 44, 118, 0.12) !important;
+        border: 1px solid rgba(0, 44, 118, 0.18) !important;
+        border-radius: 26px !important;
+        padding: 18px 18px 16px !important;
+        box-shadow: 0 22px 60px rgba(15, 23, 42, 0.14) !important;
+    }
+
+    .chat-edit-textarea {
+        width: 100%;
+        min-height: 130px;
+        resize: none;
+        border: 1px solid rgba(0, 44, 118, 0.25);
+        outline: none;
+        background: rgba(255, 255, 255, 0.85);
+        color: rgba(15, 23, 42, 0.95);
+        font: inherit;
+        line-height: 1.4;
+        padding: 16px 18px;
+        border-radius: 20px;
+    }
+
+    .chat-user-bubble.is-editing .chat-edit-textarea {
+        background: rgba(255, 255, 255, 0.92);
+    }
+
+    .chat-edit-actions {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .chat-edit-action-btn {
+        height: 38px;
+        padding: 0 18px;
+        border-radius: 9999px;
+        border: 1px solid rgba(0, 44, 118, 0.22);
+        background: rgba(255, 255, 255, 0.75);
+        color: rgba(15, 23, 42, 0.92);
+        font-weight: 800;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .chat-edit-action-btn.primary {
+        background: rgba(0, 44, 118, 0.92);
+        border-color: rgba(0, 44, 118, 0.92);
+        color: #ffffff;
+    }
+
+    .ref-accordion {
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    .ref-accordion-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ref-accordion-arrow {
+        flex: 0 0 auto;
+        color: rgba(15, 23, 42, 0.65);
+    }
+
+    .ref-accordion-title {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .ref-accordion-toggle {
+        flex: 0 0 auto;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.75);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 220ms ease-in-out, background-color 220ms ease-in-out, border-color 220ms ease-in-out;
+        padding: 0;
+    }
+
+    .ref-accordion-toggle:hover {
+        background: rgba(15, 23, 42, 0.04);
+        border-color: rgba(15, 23, 42, 0.16);
+    }
+
+    .ref-accordion-chevron {
+        width: 14px;
+        height: 14px;
+        color: rgba(15, 23, 42, 0.70);
+        transition: transform 220ms ease-in-out;
+    }
+
+    .ref-accordion.is-open .ref-accordion-chevron {
+        transform: rotate(180deg);
+    }
+
+    .ref-accordion-body {
+        margin-top: 6px;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: rgba(15, 23, 42, 0.03);
         border: 1px solid rgba(15, 23, 42, 0.08);
-        backdrop-filter: blur(10px);
+        white-space: normal;
+    }
+
+    .external-source-link {
+        font-style: italic;
+        color: #2563eb;
+        text-decoration: underline;
+        word-break: break-all;
     }
 
     @keyframes chat-fade-in {
@@ -143,7 +346,7 @@
                 @else
                     <div data-message-stack="true" class="mx-auto flex w-full max-w-6xl flex-col gap-10">
                         @foreach ($messages as $message)
-                            <div class="message-enter {{ $message->role === 'user' ? 'ml-auto max-w-2xl' : 'mr-auto max-w-3xl' }}">
+                            <div class="message-enter {{ $message->role === 'user' ? 'ml-auto max-w-2xl' : 'mr-auto w-full' }}">
                                 <div class="mb-4 flex items-center gap-4 px-2 {{ $message->role === 'user' ? 'flex-row-reverse text-right' : '' }}">
                                     <div class="shrink-0 {{ $message->role === 'user' ? ($isPro ? 'shadow-sm' : 'bg-slate-950') : ($isPro ? 'bg-slate-900/[0.04] ring-1 ring-slate-900/10' : 'bg-sky-100') }} flex h-10 w-10 items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-widest {{ $message->role === 'user' ? 'text-white' : ($isPro ? 'text-slate-800' : 'text-sky-800') }}" style="{{ $message->role === 'user' && $isPro ? 'background-color: #002C76 !important;' : '' }}">
                                         {{ $message->role === 'user' ? 'You' : 'LX' }}
@@ -153,8 +356,24 @@
                                     </div>
                                 </div>
 
-                                <div class="{{ $message->role === 'user' ? ($isPro ? 'rounded-[2rem_2rem_0.5rem_2rem] message-bubble-user text-white' : 'rounded-[2rem_2rem_0.5rem_2rem] bg-slate-950 text-white') : ($isPro ? 'rounded-[2rem_2rem_2rem_0.5rem] message-bubble-ai text-slate-800' : 'rounded-[2rem_2rem_2rem_0.5rem] border border-slate-200 bg-white text-slate-800 shadow-sm') }} px-8 py-6 shadow-2xl">
-                                    <div class="whitespace-pre-wrap text-[30px] leading-relaxed font-medium tracking-wide">{!! $message->content !!}</div>
+                                <div class="{{ $message->role === 'user' ? ($isPro ? 'rounded-[2rem_2rem_0.5rem_2rem] message-bubble-user text-white chat-user-bubble' : 'rounded-[2rem_2rem_0.5rem_2rem] bg-slate-950 text-white chat-user-bubble') : 'message-bubble-ai text-slate-800' }} {{ $message->role === 'user' ? 'px-8 py-6 shadow-2xl' : 'px-2 py-1' }}" @if($message->role === 'user') data-user-message="{{ e($message->content) }}" @endif>
+                                    @if ($message->role === 'user')
+                                        <div class="chat-msg-tools" data-msg-tools>
+                                            <button type="button" class="chat-msg-tools-btn" data-msg-copy data-tooltip="Copy message" aria-label="Copy message">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M7.75 3A2.75 2.75 0 005 5.75v7.5A2.75 2.75 0 007.75 16h5.5A2.75 2.75 0 0016 13.25v-7.5A2.75 2.75 0 0013.25 3h-5.5z"/>
+                                                    <path d="M4 7.25A3.25 3.25 0 017.25 4H13a.75.75 0 010 1.5H7.25A1.75 1.75 0 005.5 7.25V13a.75.75 0 01-1.5 0V7.25z"/>
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="chat-msg-tools-btn" data-msg-edit data-tooltip="Edit message" aria-label="Edit message">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-8.25 8.25a1 1 0 01-.414.257l-3 1a1 1 0 01-1.257-1.257l1-3a1 1 0 01.257-.414l8.25-8.25z"/>
+                                                    <path d="M11.5 5.5l3 3"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    @endif
+                                    <div class="whitespace-pre-wrap leading-relaxed font-medium tracking-wide" style="font-size: 20px;">{!! $message->content !!}</div>
                                 </div>
                             </div>
                         @endforeach
@@ -279,7 +498,7 @@
 
     const renderMessage = (role, content) => {
         const container = document.createElement('div');
-        container.className = 'message-enter ' + (role === 'user' ? 'ml-auto max-w-2xl' : 'mr-auto max-w-3xl');
+        container.className = 'message-enter ' + (role === 'user' ? 'ml-auto max-w-2xl' : 'mr-auto w-full');
 
         const meta = document.createElement('div');
         meta.className = 'mb-4 flex items-center gap-4 px-2 ' + (role === 'user' ? 'flex-row-reverse text-right' : '');
@@ -310,16 +529,38 @@
         const bubble = document.createElement('div');
         if (isPro) {
             bubble.className = (role === 'user'
-                ? 'rounded-[2rem_2rem_0.5rem_2rem] message-bubble-user text-white'
-                : 'rounded-[2rem_2rem_2rem_0.5rem] message-bubble-ai text-slate-800') + ' px-8 py-6 shadow-2xl';
+                ? 'rounded-[2rem_2rem_0.5rem_2rem] message-bubble-user text-white chat-user-bubble'
+                : 'message-bubble-ai text-slate-800') + (role === 'user' ? ' px-8 py-6 shadow-2xl' : ' px-2 py-1');
         } else {
             bubble.className = (role === 'user'
-                ? 'rounded-[2rem_2rem_0.5rem_2rem] bg-slate-950 text-white shadow-lg'
-                : 'rounded-[2rem_2rem_2rem_0.5rem] border border-slate-200/80 bg-white text-slate-800 shadow-sm') + ' px-8 py-6';
+                ? 'rounded-[2rem_2rem_0.5rem_2rem] bg-slate-950 text-white shadow-lg chat-user-bubble'
+                : 'message-bubble-ai text-slate-800') + (role === 'user' ? ' px-8 py-6' : ' px-2 py-1');
+        }
+        if (role === 'user') {
+            bubble.dataset.userMessage = String(content ?? '');
+            const tools = document.createElement('div');
+            tools.className = 'chat-msg-tools';
+            tools.dataset.msgTools = 'true';
+            tools.innerHTML = `
+                <button type="button" class="chat-msg-tools-btn" data-msg-copy data-tooltip="Copy message" aria-label="Copy message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.75 3A2.75 2.75 0 005 5.75v7.5A2.75 2.75 0 007.75 16h5.5A2.75 2.75 0 0016 13.25v-7.5A2.75 2.75 0 0013.25 3h-5.5z"/>
+                        <path d="M4 7.25A3.25 3.25 0 017.25 4H13a.75.75 0 010 1.5H7.25A1.75 1.75 0 005.5 7.25V13a.75.75 0 01-1.5 0V7.25z"/>
+                    </svg>
+                </button>
+                <button type="button" class="chat-msg-tools-btn" data-msg-edit data-tooltip="Edit message" aria-label="Edit message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-8.25 8.25a1 1 0 01-.414.257l-3 1a1 1 0 01-1.257-1.257l1-3a1 1 0 01.257-.414l8.25-8.25z"/>
+                        <path d="M11.5 5.5l3 3"/>
+                    </svg>
+                </button>
+            `;
+            bubble.appendChild(tools);
         }
 
         const body = document.createElement('div');
-        body.className = 'whitespace-pre-wrap text-[24px] leading-relaxed font-medium tracking-wide';
+        body.className = 'whitespace-pre-wrap leading-relaxed font-medium tracking-wide';
+        body.style.fontSize = '20px';
         if (role === 'user') {
             body.textContent = content;
         } else {
@@ -456,6 +697,203 @@
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             form.requestSubmit();
+        }
+    });
+
+    scrollEl.addEventListener('click', (e) => {
+        const copyBtn = e.target.closest('[data-msg-copy]');
+        if (copyBtn) {
+            const bubble = copyBtn.closest('.chat-user-bubble');
+            if (!bubble) return;
+            const contentEl = bubble.querySelector('.whitespace-pre-wrap');
+            const text = (contentEl && typeof contentEl.innerText === 'string' && contentEl.innerText.trim() !== '')
+                ? contentEl.innerText
+                : (bubble.dataset.userMessage || '');
+            const originalHtml = copyBtn.dataset.originalHtml || copyBtn.innerHTML;
+            copyBtn.dataset.originalHtml = originalHtml;
+            const write = async () => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+                return false;
+            };
+            write()
+                .then((ok) => {
+                    if (!ok) return;
+                    copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 18px; height: 18px; display: block;"><path fill-rule="evenodd" d="M16.704 5.296a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3.25-3.25a1 1 0 011.414-1.414l2.543 2.543 6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+                    if (copyBtn.dataset.copyTimeoutId) {
+                        clearTimeout(Number(copyBtn.dataset.copyTimeoutId));
+                    }
+                    const timeoutId = window.setTimeout(() => {
+                        copyBtn.innerHTML = copyBtn.dataset.originalHtml || originalHtml;
+                        delete copyBtn.dataset.copyTimeoutId;
+                    }, 3000);
+                    copyBtn.dataset.copyTimeoutId = String(timeoutId);
+                })
+                .catch(() => {});
+            return;
+        }
+
+        const editBtn = e.target.closest('[data-msg-edit]');
+        if (editBtn) {
+            const bubble = editBtn.closest('.chat-user-bubble');
+            if (!bubble) return;
+            if (bubble.classList.contains('is-editing')) return;
+
+            const contentEl = bubble.querySelector('.whitespace-pre-wrap');
+            const originalText = (contentEl && typeof contentEl.innerText === 'string' && contentEl.innerText.trim() !== '')
+                ? contentEl.innerText
+                : (bubble.dataset.userMessage || '');
+
+            bubble.dataset.originalUserMessage = originalText;
+            bubble.classList.add('is-editing');
+            const msgContainer = bubble.closest('.message-enter');
+            if (msgContainer) msgContainer.classList.add('is-editing-wide');
+
+            if (contentEl) {
+                contentEl.style.display = 'none';
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.className = 'chat-edit-textarea whitespace-pre-wrap leading-relaxed font-medium tracking-wide';
+            textarea.value = originalText;
+            textarea.style.fontSize = '20px';
+            textarea.rows = 3;
+
+            const actions = document.createElement('div');
+            actions.className = 'chat-edit-actions';
+            actions.innerHTML = `
+                <button type="button" class="chat-edit-action-btn" data-msg-edit-cancel>Cancel</button>
+                <button type="button" class="chat-edit-action-btn primary" data-msg-edit-send>Send</button>
+            `;
+
+            bubble.appendChild(textarea);
+            bubble.appendChild(actions);
+
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            return;
+        }
+
+        const cancelEditBtn = e.target.closest('[data-msg-edit-cancel]');
+        if (cancelEditBtn) {
+            const bubble = cancelEditBtn.closest('.chat-user-bubble');
+            if (!bubble) return;
+            const originalText = bubble.dataset.originalUserMessage || bubble.dataset.userMessage || '';
+            const contentEl = bubble.querySelector('.whitespace-pre-wrap');
+            const textarea = bubble.querySelector('.chat-edit-textarea');
+            const actions = bubble.querySelector('.chat-edit-actions');
+            if (textarea) textarea.remove();
+            if (actions) actions.remove();
+            if (contentEl) {
+                contentEl.style.display = '';
+                contentEl.textContent = originalText;
+            }
+            bubble.dataset.userMessage = originalText;
+            bubble.classList.remove('is-editing');
+            const msgContainer = bubble.closest('.message-enter');
+            if (msgContainer) msgContainer.classList.remove('is-editing-wide');
+            return;
+        }
+
+        const sendEditBtn = e.target.closest('[data-msg-edit-send]');
+        if (sendEditBtn) {
+            const bubble = sendEditBtn.closest('.chat-user-bubble');
+            if (!bubble) return;
+            const textarea = bubble.querySelector('.chat-edit-textarea');
+            if (!textarea) return;
+            const editedText = String(textarea.value || '').trim();
+            if (!editedText) return;
+
+            const contentEl = bubble.querySelector('.whitespace-pre-wrap');
+            const actions = bubble.querySelector('.chat-edit-actions');
+            if (contentEl) {
+                contentEl.style.display = '';
+                contentEl.textContent = editedText;
+            }
+            bubble.dataset.userMessage = editedText;
+            if (textarea) textarea.remove();
+            if (actions) actions.remove();
+            bubble.classList.remove('is-editing');
+            const msgContainer = bubble.closest('.message-enter');
+            if (msgContainer) msgContainer.classList.remove('is-editing-wide');
+
+            const stack = scrollEl.querySelector('[data-message-stack]');
+            if (msgContainer && stack) {
+                let node = msgContainer.nextElementSibling;
+                while (node) {
+                    const next = node.nextElementSibling;
+                    node.remove();
+                    node = next;
+                }
+            }
+
+            sendBtn.disabled = true;
+            promptEl.disabled = true;
+
+            const thinkingEl = renderThinkingMessage();
+            scrollToBottom();
+
+            (async () => {
+                try {
+                    const conv = await ensureConversation();
+                    const resp = await window.axios.post(conv.messagesUrl, { prompt: editedText }, {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Loader-Skip': 'true'
+                        },
+                        timeout: 45000,
+                    });
+                    const content = resp?.data?.assistant_message?.content ?? '';
+                    if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
+                        const body = thinkingEl.querySelector('.whitespace-pre-wrap');
+                        if (body) {
+                            body.innerHTML = content;
+                            body.classList.remove('chat-reply-fade-in');
+                            void body.offsetWidth;
+                            body.classList.add('chat-reply-fade-in');
+                        } else {
+                            thinkingEl.remove();
+                            renderMessage('assistant', content);
+                        }
+                        delete thinkingEl.dataset.thinking;
+                    } else {
+                        renderMessage('assistant', content);
+                    }
+                    upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(editedText), is_pinned: false });
+                    scrollToBottom();
+                } catch (err) {
+                    if (thinkingEl && thinkingEl.dataset.thinking === 'true') thinkingEl.remove();
+                    const message = err?.response?.data?.message || 'Something went wrong while contacting the AI provider.';
+                    errorEl.textContent = message;
+                    errorEl.classList.remove('hidden');
+                } finally {
+                    sendBtn.disabled = false;
+                    promptEl.disabled = false;
+                    promptEl.focus();
+                }
+            })();
+
+            return;
+        }
+
+        const toggle = e.target.closest('[data-ref-toggle]');
+        if (!toggle) return;
+        const item = toggle.closest('.ref-accordion');
+        if (!item) return;
+        const body = item.querySelector('.ref-accordion-body');
+        if (!body) return;
+
+        const isHidden = body.hasAttribute('hidden');
+        if (isHidden) {
+            body.removeAttribute('hidden');
+            item.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+        } else {
+            body.setAttribute('hidden', '');
+            item.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
         }
     });
 

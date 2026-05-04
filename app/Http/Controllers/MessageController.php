@@ -911,6 +911,7 @@ class MessageController extends Controller
         $generalBlock = $this->buildGeneralInfoWithSources($prompt, $openai, $gemini, $groq);
         $general = $this->limitToSentences((string) ($generalBlock['paragraph'] ?? ''), 3);
         $sources = (array) ($generalBlock['sources'] ?? []);
+        $maxSources = 8;
 
         $conclusion = $this->generateConclusionFromGeneralInfo($prompt, $general, $openai, $gemini, $groq);
         $conclusion = $this->limitToSentences($conclusion, 2);
@@ -919,15 +920,17 @@ class MessageController extends Controller
         }
 
         $out = "Direct Answer:\nNo legal opinion in the Opinion Library directly addresses your exact question. Below is general information from external sources.\n\n";
+        $out .= "Conclusion:\n".$conclusion."\n\n";
         $out .= "General Information:\n".$general."\n";
-        foreach (array_slice(array_values(array_filter(array_map('trim', $sources))), 0, 2) as $src) {
+        foreach (array_slice(array_values(array_filter(array_map('trim', $sources))), 0, $maxSources) as $src) {
             if ($src === '') {
                 continue;
             }
-            $out .= "Source: ".$src."\n";
+            $href = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $label = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $out .= 'Source: <a class="external-source-link" href="'.$href.'" target="_blank" rel="noopener noreferrer">'.$label."</a>\n";
         }
         $out .= "\n";
-        $out .= "Conclusion:\n".$conclusion;
 
         return trim($out);
     }
@@ -977,11 +980,19 @@ Strict rules:
 - This must be general legal information outside the stored DILG opinion library.
 - Do not cite or invent any DILG opinion numbers, circular numbers, case names, or exact dates.
 - Write 2–3 sentences only for the explanation.
-- After the explanation, add 1–2 source lines in the exact format:
+- After the explanation, add 2–8 source lines in the exact format:
 Source: https://example.com
-- Prefer official sources or reputable Philippine legal sources. If unsure, use:
-Source: https://www.officialgazette.gov.ph/
-Source: https://lawphil.net/
+- Only use HTTPS URLs from these legitimate Philippine sources (choose the most relevant):
+  - https://www.officialgazette.gov.ph/
+  - https://lawphil.net/
+  - https://senate.gov.ph/
+  - https://www.congress.gov.ph/
+  - https://dilg.gov.ph/
+  - https://comelec.gov.ph/
+  - https://www.csc.gov.ph/
+  - https://ombudsman.gov.ph/
+  - https://sc.judiciary.gov.ph/
+- Use a direct page URL that actually covers the topic (avoid generic homepages when possible).
 
 Output only the explanation + source lines (no extra headers).';
 
@@ -1041,6 +1052,7 @@ Output only the explanation + source lines (no extra headers).';
         $paragraph = $this->limitToSentences($paragraph, 3);
 
         $sources = array_values(array_unique(array_filter(array_map('trim', $sources))));
+        $sources = $this->filterTrustedSources($sources, $prompt);
         if (count($sources) === 0) {
             $sources = [
                 'https://www.officialgazette.gov.ph/',
@@ -1050,8 +1062,113 @@ Output only the explanation + source lines (no extra headers).';
 
         return [
             'paragraph' => $paragraph,
-            'sources' => array_slice($sources, 0, 2),
+            'sources' => array_slice($sources, 0, 8),
         ];
+    }
+
+    private function filterTrustedSources(array $sources, string $prompt, int $max = 8): array
+    {
+        $tokens = $this->extractCoreTokensForDirectMatch($prompt);
+
+        $scored = [];
+        foreach ($sources as $raw) {
+            $url = trim((string) $raw);
+            if ($url === '') {
+                continue;
+            }
+            $score = $this->scoreTrustedSourceUrl($url, $tokens);
+            if ($score === null) {
+                continue;
+            }
+            $scored[] = ['url' => $url, 'score' => $score];
+        }
+
+        usort($scored, static fn ($a, $b) => ($b['score'] <=> $a['score']));
+
+        $picked = [];
+        foreach ($scored as $row) {
+            $picked[] = (string) $row['url'];
+            if (count($picked) >= $max) {
+                break;
+            }
+        }
+
+        return array_values(array_unique($picked));
+    }
+
+    private function scoreTrustedSourceUrl(string $url, array $tokens): ?int
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return null;
+        }
+
+        if (!preg_match('/^https:\/\//i', $url)) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+        $host = isset($parts['host']) ? mb_strtolower((string) $parts['host']) : '';
+        if ($host === '') {
+            return null;
+        }
+
+        $allow = [
+            'officialgazette.gov.ph',
+            'lawphil.net',
+            'senate.gov.ph',
+            'congress.gov.ph',
+            'dilg.gov.ph',
+            'comelec.gov.ph',
+            'csc.gov.ph',
+            'ombudsman.gov.ph',
+            'sc.judiciary.gov.ph',
+        ];
+
+        $okHost = false;
+        foreach ($allow as $d) {
+            if ($host === $d || str_ends_with($host, '.'.$d)) {
+                $okHost = true;
+                break;
+            }
+        }
+        if (! $okHost) {
+            return null;
+        }
+
+        $path = (string) ($parts['path'] ?? '');
+        $query = (string) ($parts['query'] ?? '');
+
+        $isGeneric = ($path === '' || $path === '/') && $query === '';
+
+        $score = 0;
+        if (! $isGeneric) {
+            $score += 10;
+        } else {
+            $score -= 5;
+        }
+
+        $lurl = mb_strtolower($url);
+        $hints = ['statutes', 'republic', 'act', 'ra', 'circular', 'resolution', 'memo', 'memorandum', 'faq', 'guidelines', 'download'];
+        foreach ($hints as $h) {
+            if (str_contains($lurl, $h)) {
+                $score += 2;
+            }
+        }
+
+        $hits = 0;
+        foreach ($tokens as $t) {
+            $t = mb_strtolower(trim((string) $t));
+            if ($t === '' || mb_strlen($t) < 4) {
+                continue;
+            }
+            if (str_contains($lurl, $t)) {
+                $hits++;
+            }
+        }
+        $score += min(8, $hits * 2);
+
+        return $score;
     }
 
     private function generateConclusionFromGeneralInfo(string $prompt, string $generalInfo, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
@@ -1152,7 +1269,16 @@ Strict rules:
                 if (trim($summary) === '') {
                     $summary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
                 }
-                $out .= "- ".$citation." - ".$summary."\n";
+                $out .= '<div class="ref-accordion">';
+                $out .= '<div class="ref-accordion-head">';
+                $out .= '<span class="ref-accordion-arrow">↳</span>';
+                $out .= '<div class="ref-accordion-title">'.$citation.'</div>';
+                $out .= '<button type="button" class="ref-accordion-toggle" data-ref-toggle aria-expanded="false" aria-label="Toggle reference">';
+                $out .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="ref-accordion-chevron"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/></svg>';
+                $out .= '</button>';
+                $out .= '</div>';
+                $out .= '<div class="ref-accordion-body" hidden>'.htmlspecialchars($summary, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
+                $out .= "</div>\n";
             }
             $out .= "\n";
         }
@@ -1222,7 +1348,16 @@ Strict rules:
                 }
                 $citation = $this->buildOpinionCitationHtml($op, true);
                 $excerpt = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
-                $out .= "- ".$citation." - ".$excerpt."\n";
+                $out .= '<div class="ref-accordion">';
+                $out .= '<div class="ref-accordion-head">';
+                $out .= '<span class="ref-accordion-arrow">↳</span>';
+                $out .= '<div class="ref-accordion-title">'.$citation.'</div>';
+                $out .= '<button type="button" class="ref-accordion-toggle" data-ref-toggle aria-expanded="false" aria-label="Toggle reference">';
+                $out .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="ref-accordion-chevron"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/></svg>';
+                $out .= '</button>';
+                $out .= '</div>';
+                $out .= '<div class="ref-accordion-body" hidden>'.htmlspecialchars($excerpt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
+                $out .= "</div>\n";
             }
             $out .= "\n";
         }
@@ -1351,7 +1486,7 @@ Only include labels that are present in the input.';
 
         $titleHtml = $escape($title);
         if ($linkTitle && $id > 0 && $title !== '') {
-            $titleHtml = '<a href="'.$escape($url).'" data-opinion-id="'.$id.'" class="opinion-link text-blue-600 underline font-bold" style="color: blue; text-decoration: underline;">'.$escape($title).'</a>';
+            $titleHtml = '<a href="'.$escape($url).'" data-opinion-id="'.$id.'" class="opinion-link text-blue-600 underline font-bold" style="color: blue; text-decoration: underline; font-style: italic;">'.$escape($title).'</a>';
         }
 
         $parts = [];
