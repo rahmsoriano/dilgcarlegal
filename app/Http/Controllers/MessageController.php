@@ -13,6 +13,7 @@ use App\Services\OpenAiChatClient;
 use App\Services\GroqChatClient;
 use App\Services\OpinionRetriever;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class MessageController extends Controller
@@ -54,8 +55,19 @@ class MessageController extends Controller
         ];
 
         if (($conversation['title'] ?? null) === null) {
-            $titleSeed = preg_replace('/\\s+/', ' ', $prompt);
-            $rows[$idx]['title'] = Str::limit(is_string($titleSeed) ? $titleSeed : $prompt, 60, '');
+            $firstUser = null;
+            foreach ($conversationMessages as $m) {
+                if (($m['role'] ?? null) !== 'user') {
+                    continue;
+                }
+                $c = trim((string) ($m['content'] ?? ''));
+                if ($c !== '') {
+                    $firstUser = $c;
+                    break;
+                }
+            }
+            $titleSeed = preg_replace('/\\s+/', ' ', (string) ($firstUser ?? $prompt));
+            $rows[$idx]['title'] = Str::limit($titleSeed, 60, '');
         }
 
         $rows[$idx]['last_message_at'] = $nowIso;
@@ -152,9 +164,13 @@ class MessageController extends Controller
         ]);
 
         if ($conversation->title === null) {
-            $titleSeed = preg_replace('/\\s+/', ' ', $prompt);
+            $firstUser = $conversation->messages()
+                ->where('role', 'user')
+                ->orderBy('id')
+                ->value('content');
+            $titleSeed = preg_replace('/\\s+/', ' ', trim((string) ($firstUser ?? $prompt)));
             $conversation->update([
-                'title' => Str::limit(is_string($titleSeed) ? $titleSeed : $prompt, 60, ''),
+                'title' => Str::limit($titleSeed, 60, ''),
             ]);
         }
 
@@ -925,13 +941,19 @@ class MessageController extends Controller
         $out .= "Conclusion:\n".$conclusion."\n";
         $out .= $divider;
         $out .= "General Information:\n".$general."\n";
-        foreach (array_slice(array_values(array_filter(array_map('trim', $sources))), 0, $maxSources) as $src) {
-            if ($src === '') {
-                continue;
+        $sources = array_slice(array_values(array_filter(array_map('trim', $sources))), 0, $maxSources);
+        $out .= $divider;
+        if (count($sources) === 0) {
+            $out .= "No reliable or accessible source found for this information.\n";
+        } else {
+            foreach ($sources as $src) {
+                if ($src === '') {
+                    continue;
+                }
+                $href = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $label = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $out .= 'Source: <a class="external-source-link" href="'.$href.'" target="_blank" rel="noopener noreferrer">'.$label."</a>\n";
             }
-            $href = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $label = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $out .= 'Source: <a class="external-source-link" href="'.$href.'" target="_blank" rel="noopener noreferrer">'.$label."</a>\n";
         }
         $out .= "\n";
 
@@ -983,11 +1005,11 @@ Strict rules:
 - This must be general legal information outside the stored DILG opinion library.
 - Do not cite or invent any DILG opinion numbers, circular numbers, case names, or exact dates.
 - Write 2–3 sentences only for the explanation.
-- After the explanation, add 2–8 source lines in the exact format:
+- After the explanation, you MAY add source lines in the exact format:
 Source: https://example.com
 - Only use HTTPS URLs from these legitimate Philippine sources (choose the most relevant):
   - https://www.officialgazette.gov.ph/
-  - https://lawphil.net/
+  - https://lawphil.net/ (PRIORITY: prefer direct LawPhil statute/rule pages when applicable)
   - https://senate.gov.ph/
   - https://www.congress.gov.ph/
   - https://dilg.gov.ph/
@@ -995,7 +1017,8 @@ Source: https://example.com
   - https://www.csc.gov.ph/
   - https://ombudsman.gov.ph/
   - https://sc.judiciary.gov.ph/
-- Use a direct page URL that actually covers the topic (avoid generic homepages when possible).
+- Use a direct page URL that actually covers the topic (avoid generic homepages).
+- Do NOT invent URLs. If you cannot provide reliable, accessible, direct-page URLs, output ZERO source lines.
 
 Output only the explanation + source lines (no extra headers).';
 
@@ -1011,9 +1034,7 @@ Output only the explanation + source lines (no extra headers).';
             );
             $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
         } catch (\Throwable $e) {
-            $text = 'General guidance is available, but I could not reach the AI provider to generate it at the moment.'."\n".
-                'Source: https://www.officialgazette.gov.ph/'."\n".
-                'Source: https://lawphil.net/';
+            $text = 'General guidance is available, but I could not reach the AI provider to generate it at the moment.';
         }
 
         $text = str_replace(["\r\n", "\r"], "\n", trim((string) $text));
@@ -1056,11 +1077,12 @@ Output only the explanation + source lines (no extra headers).';
 
         $sources = array_values(array_unique(array_filter(array_map('trim', $sources))));
         $sources = $this->filterTrustedSources($sources, $prompt);
+        $sources = $this->filterAccessibleSources($sources, 8);
         if (count($sources) === 0) {
-            $sources = [
-                'https://www.officialgazette.gov.ph/',
-                'https://lawphil.net/',
-            ];
+            $lawphil = $this->generateLawphilSourcesOnly($prompt, $openai, $gemini, $groq);
+            $lawphil = $this->filterTrustedSources($lawphil, $prompt);
+            $lawphil = $this->filterAccessibleSources($lawphil, 8);
+            $sources = $lawphil;
         }
 
         return [
@@ -1143,12 +1165,15 @@ Output only the explanation + source lines (no extra headers).';
         $query = (string) ($parts['query'] ?? '');
 
         $isGeneric = ($path === '' || $path === '/') && $query === '';
+        if ($isGeneric) {
+            return null;
+        }
 
         $score = 0;
-        if (! $isGeneric) {
-            $score += 10;
-        } else {
-            $score -= 5;
+        $score += 10;
+
+        if ($host === 'lawphil.net' || str_ends_with($host, '.lawphil.net')) {
+            $score += 8;
         }
 
         $lurl = mb_strtolower($url);
@@ -1172,6 +1197,115 @@ Output only the explanation + source lines (no extra headers).';
         $score += min(8, $hits * 2);
 
         return $score;
+    }
+
+    private function generateLawphilSourcesOnly(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): array
+    {
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+Task:
+Provide 1–5 LawPhil source links relevant to the user question.
+
+Strict rules:
+- Output ONLY lines in this exact format (no other text):
+Source: https://lawphil.net/...
+- Use only LawPhil direct pages (avoid https://lawphil.net/ homepage).
+- Do NOT invent or guess URLs. If you are not confident the exact URL exists, output ZERO lines.';
+
+        try {
+            $resp = $this->chatWithFallback(
+                [
+                    ['role' => 'system', 'content' => $instruction],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                $openai,
+                $gemini,
+                $groq
+            );
+            $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $text = str_replace(["\r\n", "\r"], "\n", trim((string) $text));
+        if ($text === '') {
+            return [];
+        }
+
+        $lines = preg_split("/\n/u", $text) ?: [];
+        $out = [];
+        foreach ($lines as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+            if (preg_match('/^\s*source\s*:/i', $line) !== 1) {
+                continue;
+            }
+            if (preg_match('/https?:\/\/\S+/i', $line, $m) === 1) {
+                $out[] = rtrim((string) $m[0], '|');
+            }
+        }
+
+        return array_values(array_unique(array_filter(array_map('trim', $out))));
+    }
+
+    private function filterAccessibleSources(array $sources, int $max = 8): array
+    {
+        $picked = [];
+        $seen = [];
+        foreach ($sources as $raw) {
+            $url = trim((string) $raw);
+            if ($url === '' || isset($seen[$url])) {
+                continue;
+            }
+            $seen[$url] = true;
+            if ($this->isAccessibleTrustedUrl($url)) {
+                $picked[] = $url;
+                if (count($picked) >= $max) {
+                    break;
+                }
+            }
+        }
+        return $picked;
+    }
+
+    private function isAccessibleTrustedUrl(string $url): bool
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return false;
+        }
+
+        try {
+            $resp = Http::timeout(4)
+                ->withHeaders([
+                    'Accept' => 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8',
+                    'User-Agent' => 'Mozilla/5.0 (compatible; GABAY-Lex/1.0)',
+                ])
+                ->get($url);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        if (! $resp->successful()) {
+            return false;
+        }
+
+        $ct = mb_strtolower((string) ($resp->header('Content-Type') ?? ''));
+        if ($ct !== '' && !str_contains($ct, 'text/html') && !str_contains($ct, 'application/pdf') && !str_contains($ct, 'text/plain') && !str_contains($ct, 'application/octet-stream')) {
+            return false;
+        }
+
+        if (str_contains($ct, 'text/html')) {
+            $body = (string) $resp->body();
+            $snippet = mb_strtolower(mb_substr($body, 0, 2500));
+            if ($snippet !== '' && (str_contains($snippet, 'page not found') || str_contains($snippet, '404') || str_contains($snippet, 'not found'))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function generateConclusionFromGeneralInfo(string $prompt, string $generalInfo, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string

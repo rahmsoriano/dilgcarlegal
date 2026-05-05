@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ConversationController extends Controller
 {
     public function storePublic(Request $request)
     {
-        $conversation = $this->publicCreateConversation($request);
+        $validated = $request->validate([
+            'title_seed' => ['nullable', 'string', 'max:80'],
+        ]);
+
+        $conversation = $this->publicCreateConversation($request, $validated['title_seed'] ?? null);
 
         $payload = [
             'id' => $conversation['id'],
@@ -163,9 +168,17 @@ class ConversationController extends Controller
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'title_seed' => ['nullable', 'string', 'max:80'],
+        ]);
+
+        $seed = trim((string) ($validated['title_seed'] ?? ''));
+        $seed = (string) preg_replace('/\s+/', ' ', $seed);
+        $seed = $seed === '' ? null : Str::limit($seed, 60, '');
+
         $conversation = Conversation::create([
             'user_id' => $request->user()->id,
-            'title' => null,
+            'title' => $seed,
             'last_message_at' => now(),
         ]);
 
@@ -311,15 +324,18 @@ class ConversationController extends Controller
         return redirect()->route('chat.index');
     }
 
-    private function publicCreateConversation(Request $request): array
+    private function publicCreateConversation(Request $request, ?string $titleSeed): array
     {
         $id = (int) $request->session()->get('public_next_conversation_id', 1);
         $request->session()->put('public_next_conversation_id', $id + 1);
 
         $now = now()->toIso8601String();
+        $seed = trim((string) ($titleSeed ?? ''));
+        $seed = (string) preg_replace('/\s+/', ' ', $seed);
+        $seed = $seed === '' ? null : Str::limit($seed, 60, '');
         $conversation = [
             'id' => $id,
-            'title' => null,
+            'title' => $seed,
             'is_saved' => false,
             'saved_at' => null,
             'is_pinned' => false,

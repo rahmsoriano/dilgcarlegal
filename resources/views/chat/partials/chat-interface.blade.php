@@ -729,6 +729,39 @@
         return cleaned.length > 60 ? cleaned.slice(0, 60) : cleaned;
     };
 
+    const getFirstUserMessageInCurrentChat = () => {
+        const stack = scrollEl?.querySelector('[data-message-stack="true"]');
+        if (!stack) return null;
+        const bubble = stack.querySelector('.chat-user-bubble');
+        if (!bubble) return null;
+        const contentEl = bubble.querySelector('.whitespace-pre-wrap');
+        const text = (contentEl && typeof contentEl.innerText === 'string' && contentEl.innerText.trim() !== '')
+            ? contentEl.innerText.trim()
+            : String(bubble.dataset.userMessage || '').trim();
+        return text !== '' ? text : null;
+    };
+
+    const getCurrentSidebarTitle = (conversationId) => {
+        const id = String(conversationId ?? '').trim();
+        if (!id) return null;
+
+        const adminItem = document.querySelector(`#sidebar-chats-list [data-conversation-id="${id}"]`);
+        if (adminItem) {
+            const t = adminItem.querySelector('.sidebar-chat-title')?.textContent;
+            const clean = String(t || '').trim();
+            return (clean !== '' && clean !== 'Untitled Thread') ? clean : null;
+        }
+
+        const link = sidebarList?.querySelector(`[data-conversation-id="${id}"]`);
+        if (link) {
+            const t = link.querySelector('div')?.textContent;
+            const clean = String(t || '').trim();
+            return (clean !== '' && clean !== 'Untitled Thread') ? clean : null;
+        }
+
+        return null;
+    };
+
     const renderMessage = (role, content) => {
         const container = document.createElement('div');
         container.className = 'message-enter ' + (role === 'user' ? 'ml-auto max-w-2xl' : 'mr-auto w-full');
@@ -882,7 +915,7 @@
         scrollEl.scrollTop = scrollEl.scrollHeight;
     };
 
-    const ensureConversation = async () => {
+    const ensureConversation = async (titleSeed) => {
         const existingUrl = form.dataset.activeConversationUrl;
         const existingMessagesUrl = form.dataset.messagesUrl;
         const existingId = form.dataset.conversationId;
@@ -891,7 +924,8 @@
             return { id: existingId, url: existingUrl, messagesUrl: existingMessagesUrl };
         }
 
-        const resp = await window.axios.post(form.dataset.createUrl, {}, { 
+        const seed = String(titleSeed ?? '').trim();
+        const resp = await window.axios.post(form.dataset.createUrl, { title_seed: seed === '' ? null : seed }, { 
             headers: { 
                 Accept: 'application/json',
                 'X-Loader-Skip': 'true'
@@ -925,6 +959,7 @@
 
         const prompt = (promptEl.value || '').trim();
         if (!prompt) return;
+        const seedTitle = normalizeTitle(getFirstUserMessageInCurrentChat() || prompt);
 
         sendBtn.disabled = true;
         promptEl.disabled = true;
@@ -935,7 +970,9 @@
         scrollToBottom();
 
         try {
-            const conv = await ensureConversation();
+            const conv = await ensureConversation(seedTitle);
+            const stableTitle = getCurrentSidebarTitle(conv.id) || seedTitle;
+            upsertSidebarConversation({ id: conv.id, url: conv.url, title: stableTitle, is_pinned: false });
             const resp = await window.axios.post(conv.messagesUrl, { prompt }, { 
                 headers: { 
                     Accept: 'application/json',
@@ -970,7 +1007,7 @@
                     renderMessage('assistant', content);
                 }
             }
-            upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(prompt), is_pinned: false });
+            upsertSidebarConversation({ id: conv.id, url: conv.url, title: getCurrentSidebarTitle(conv.id) || stableTitle, is_pinned: false });
             scrollToBottom();
         } catch (err) {
             if (thinkingEl && thinkingEl.dataset.thinking === 'true') thinkingEl.remove();
@@ -1129,6 +1166,8 @@
             (async () => {
                 try {
                     const conv = await ensureConversation();
+                    const fromChat = normalizeTitle(getFirstUserMessageInCurrentChat() || '');
+                    const stableTitle = getCurrentSidebarTitle(conv.id) || (fromChat ? fromChat : null);
                     const resp = await window.axios.post(conv.messagesUrl, { prompt: editedText }, {
                         headers: {
                             Accept: 'application/json',
@@ -1163,7 +1202,7 @@
                             renderMessage('assistant', content);
                         }
                     }
-                    upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(editedText), is_pinned: false });
+                    upsertSidebarConversation({ id: conv.id, url: conv.url, title: getCurrentSidebarTitle(conv.id) || stableTitle, is_pinned: false });
                     scrollToBottom();
                 } catch (err) {
                     if (thinkingEl && thinkingEl.dataset.thinking === 'true') thinkingEl.remove();
