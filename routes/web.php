@@ -64,6 +64,7 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'verified.user', 'active'])->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/new', [ChatController::class, 'create'])->name('chat.new');
     Route::get('/chat/saved', [ChatController::class, 'saved'])->name('chat.saved');
     Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
 

@@ -3,7 +3,7 @@
     :showOpinionsNav="false"
     :showProfileMenu="true"
     :showLoginButton="false"
-    newChatRoute="chat.index"
+    newChatRoute="chat.new"
     archiveRoute="chat.saved"
     chatIndexRoute="chat.index"
     chatShowRoute="chat.show"

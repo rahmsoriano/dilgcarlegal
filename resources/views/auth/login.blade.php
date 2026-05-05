@@ -1,956 +1,739 @@
 <x-guest-layout>
     @php
         $logo = asset('dilglogo.png');
-        $lexCharacter = asset('images/isay.png');
+        $hero = asset('images/login-hero-exact.png');
     @endphp
 
     <style>
         :root {
-            --gov-blue: #0f4dd8;
-            --gov-deep-blue: #0a2f8f;
-            --gov-red: #d81f3f;
-            --gov-orange: #f47d20;
-            --gov-yellow: #ffd533;
-            --gov-ink: #14213d;
-            --gov-panel: rgba(255, 255, 255, 0.94);
-            --gov-panel-line: rgba(210, 219, 236, 0.75);
-            --gov-field-bg: linear-gradient(180deg, rgba(248, 250, 255, 0.96), rgba(241, 245, 252, 0.96));
-            --gov-muted: #657392;
+            color-scheme: light;
         }
 
         html,
         body {
             min-height: 100%;
             margin: 0;
-            background:
-                radial-gradient(900px 600px at 12% 18%, rgba(59, 130, 246, 0.18), transparent 58%),
-                radial-gradient(760px 540px at 84% 24%, rgba(244, 114, 182, 0.14), transparent 56%),
-                linear-gradient(180deg, #e8edf7 0%, #d7dee9 100%);
-            background-attachment: fixed;
+            background: #b8bcc4;
         }
 
-        .gov-login-page {
-            position: relative;
+        .login-refresh-page {
             min-height: 100vh;
-            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            padding: 18px;
             font-family: 'Figtree', sans-serif;
         }
 
-        .gov-login-page::before,
-        .gov-login-page::after {
-            content: '';
-            position: fixed;
-            inset: auto;
-            width: 30rem;
-            height: 30rem;
-            border-radius: 999px;
-            filter: blur(90px);
-            pointer-events: none;
-            opacity: 0.45;
-        }
-
-        .gov-login-page::before {
-            top: -9rem;
-            left: -8rem;
-            background: rgba(59, 130, 246, 0.35);
-        }
-
-        .gov-login-page::after {
-            right: -10rem;
-            bottom: -10rem;
-            background: rgba(251, 191, 36, 0.34);
-        }
-
-        .gov-login-shell {
-            position: relative;
-            width: min(1460px, 100%);
-            min-height: min(980px, calc(100vh - 40px));
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            border-radius: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow:
-                0 40px 120px rgba(15, 23, 42, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.35);
-            backdrop-filter: blur(18px);
-        }
-
-        .gov-login-grid {
+        .login-refresh-shell {
+            width: min(1260px, calc(100vw - 36px));
+            min-height: min(860px, calc(100vh - 36px));
             display: grid;
-            grid-template-columns: minmax(0, 1.16fr) minmax(420px, 0.84fr);
-            min-height: min(980px, calc(100vh - 40px));
+            grid-template-columns: minmax(0, 1.16fr) minmax(460px, 0.84fr);
+            overflow: hidden;
+            border-radius: 42px;
+            background: #ffffff;
+            box-shadow: 0 38px 90px rgba(15, 23, 42, 0.12);
         }
 
-        .gov-brand {
+        .login-refresh-brand {
             position: relative;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            padding: 44px 42px 38px 42px;
-            color: #fff;
+            padding: 40px 40px 34px;
+            color: #ffffff;
             background:
-                radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.14), transparent 22%),
-                radial-gradient(circle at 56% 42%, rgba(255, 255, 255, 0.09), transparent 26%),
-                radial-gradient(circle at 84% 72%, rgba(255, 255, 255, 0.16), transparent 20%),
-                linear-gradient(125deg,
-                    #0e4acb 0%,
-                    #2142b6 17%,
-                    #5130a1 33%,
-                    #b51f58 53%,
-                    #eb4d20 74%,
-                    #f8bb1f 90%,
-                    #ffd73d 100%);
+                radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.12), transparent 22%),
+                linear-gradient(100deg, #33226e 0%, #3158c7 27%, #c44746 68%, #efc53d 100%);
         }
 
-        .gov-brand::before {
+        .login-refresh-brand::before {
             content: '';
             position: absolute;
-            inset: auto auto -14% -10%;
-            width: 110%;
-            height: 44%;
+            left: 32px;
+            right: 180px;
+            bottom: 26px;
+            height: 92px;
+            opacity: 0.15;
+            pointer-events: none;
             background:
-                repeating-radial-gradient(circle at 0 100%, rgba(255, 255, 255, 0.1) 0 2px, transparent 2px 16px);
-            opacity: 0.18;
-            transform: rotate(-4deg);
-            pointer-events: none;
+                radial-gradient(120% 100% at 0% 100%, transparent 58%, rgba(255,255,255,0.16) 58.5%, transparent 59.6%),
+                radial-gradient(116% 96% at 0% 100%, transparent 63%, rgba(255,255,255,0.14) 63.5%, transparent 64.6%),
+                radial-gradient(112% 92% at 0% 100%, transparent 68%, rgba(255,255,255,0.12) 68.5%, transparent 69.6%);
         }
 
-        .gov-brand::after {
-            content: '';
+        .login-refresh-dots {
             position: absolute;
-            right: -8%;
-            top: -8%;
-            width: 42%;
-            height: 42%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 62%);
-            filter: blur(12px);
+            right: 38px;
+            top: 238px;
+            width: 118px;
+            height: 118px;
+            opacity: 0.38;
             pointer-events: none;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.92) 1.3px, transparent 1.6px);
+            background-size: 24px 24px;
         }
 
-        .gov-brand__dots,
-        .gov-brand__waves {
-            position: absolute;
-            pointer-events: none;
-            opacity: 0.32;
-        }
-
-        .gov-brand__dots {
-            top: 155px;
-            right: 58px;
-            width: 106px;
-            height: 106px;
-            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.9) 1.2px, transparent 1.4px);
-            background-size: 18px 18px;
-        }
-
-        .gov-brand__waves {
-            left: -24px;
-            bottom: 42px;
-            width: 55%;
-            height: 160px;
-            background:
-                radial-gradient(120% 100% at 0% 100%, transparent 58%, rgba(255, 255, 255, 0.16) 58.5%, transparent 59.6%),
-                radial-gradient(116% 96% at 0% 100%, transparent 63%, rgba(255, 255, 255, 0.14) 63.5%, transparent 64.6%),
-                radial-gradient(112% 92% at 0% 100%, transparent 68%, rgba(255, 255, 255, 0.12) 68.5%, transparent 69.6%),
-                radial-gradient(108% 88% at 0% 100%, transparent 73%, rgba(255, 255, 255, 0.1) 73.5%, transparent 74.6%);
-        }
-
-        .gov-brand__top {
+        .login-refresh-brand-top {
             position: relative;
             z-index: 2;
             display: flex;
             align-items: flex-start;
-            gap: 18px;
+            gap: 16px;
         }
 
-        .gov-brand__seal {
-            width: 82px;
-            height: 82px;
+        .login-refresh-brand-seal {
+            width: 74px;
+            height: 74px;
             flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 999px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.14);
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.35),
-                0 18px 42px rgba(5, 17, 55, 0.22);
-            backdrop-filter: blur(14px);
+                inset 0 1px 0 rgba(255,255,255,0.28),
+                0 16px 34px rgba(9, 19, 61, 0.2);
         }
 
-        .gov-brand__seal img,
-        .gov-panel__logo img {
+        .login-refresh-brand-seal img,
+        .login-refresh-panel-logo img {
             width: 100%;
             height: 100%;
             object-fit: contain;
             display: block;
         }
 
-        .gov-brand__agency {
-            max-width: 430px;
+        .login-refresh-brand-heading {
+            max-width: 520px;
         }
 
-        .gov-brand__agency-title {
-            font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+        .login-refresh-brand-title {
+            margin: 0;
+            font-size: clamp(1.45rem, 1.25rem + 0.82vw, 2rem);
+            line-height: 1.1;
             font-weight: 800;
-            line-height: 1.08;
             letter-spacing: -0.03em;
             text-transform: uppercase;
         }
 
-        .gov-brand__agency-subtitle {
-            margin-top: 10px;
-            font-size: 0.95rem;
+        .login-refresh-brand-region {
+            margin-top: 8px;
+            font-size: 0.84rem;
+            line-height: 1.5;
             font-weight: 600;
-            letter-spacing: 0.38em;
+            letter-spacing: 0.36em;
             text-transform: uppercase;
             color: rgba(255, 255, 255, 0.88);
         }
 
-        .gov-brand__agency-motto {
+        .login-refresh-brand-motto {
             margin-top: 8px;
-            font-size: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
             font-style: italic;
             color: rgba(255, 255, 255, 0.82);
         }
 
-        .gov-brand__content {
+        .login-refresh-brand-main {
             position: relative;
             z-index: 2;
+            height: calc(100% - 120px);
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            max-width: 420px;
+            align-items: flex-end;
         }
 
-        .gov-brand__main {
-            position: relative;
-            z-index: 2;
-            flex: 1;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
-            align-items: end;
-            gap: 14px;
-            padding-top: 76px;
+        .login-refresh-brand-copy {
+            width: min(360px, 54%);
+            padding-top: 150px;
         }
 
-        .gov-brand__product {
-            display: inline-flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 18px 22px;
-            width: fit-content;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.09);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.22),
-                0 20px 44px rgba(9, 19, 61, 0.16);
-            backdrop-filter: blur(18px);
-        }
-
-        .gov-brand__product-name {
-            font-size: 0.92rem;
-            font-weight: 800;
-            letter-spacing: 0.32em;
-            text-transform: uppercase;
-            color: #cde4ff;
-        }
-
-        .gov-brand__product-copy {
-            max-width: 260px;
+        .login-refresh-brand-product {
+            margin: 0;
             font-size: 0.98rem;
-            line-height: 1.65;
-            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+            font-weight: 700;
+            letter-spacing: 0.34em;
+            text-transform: uppercase;
+            color: #cce5ff;
         }
 
-        .gov-brand__headline {
-            margin-top: 28px;
-            font-size: clamp(3rem, 2rem + 2vw, 4.5rem);
+        .login-refresh-brand-product-copy {
+            margin-top: 18px;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .login-refresh-brand-headline {
+            margin: 28px 0 0;
+            font-size: clamp(2.35rem, 1.7rem + 1.55vw, 4.2rem);
+            line-height: 1.06;
             font-weight: 800;
-            line-height: 1.04;
             letter-spacing: -0.05em;
+            color: #ffffff;
             text-wrap: balance;
         }
 
-        .gov-brand__subtitle {
-            margin-top: 20px;
-            max-width: 390px;
-            font-size: 1.22rem;
-            line-height: 1.65;
-            color: rgba(255, 255, 255, 0.9);
+        .login-refresh-brand-subtitle {
+            margin: 26px 0 0;
+            font-size: 1rem;
+            line-height: 1.75;
+            color: rgba(255, 255, 255, 0.92);
         }
 
-        .gov-hero {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 390px;
-            justify-self: end;
-            align-self: end;
-            margin-right: -8px;
-            pointer-events: none;
-            animation: gov-hero-float 5.4s ease-in-out infinite;
-        }
-
-        .gov-hero__glow {
-            position: absolute;
-            left: 50%;
-            bottom: 12px;
-            width: 68%;
-            height: 30px;
-            border-radius: 999px;
-            background: radial-gradient(circle, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.14) 46%, rgba(15, 23, 42, 0) 78%);
-            transform: translateX(-50%);
-            filter: blur(10px);
-        }
-
-        .gov-hero__stage {
-            position: relative;
-            width: 100%;
-            height: 620px;|
-        }
-
-        .gov-hero__character {
-            position: absolute;
-            left: 0;
-            bottom: 22px;
-            display: block;
-            width: 270px;
-            height: auto;
-            z-index: 2;
-            filter: drop-shadow(0 30px 40px rgba(15, 23, 42, 0.26;))
-            /* filter: drop-shadow(0 30px 40px rgba(15, 23, 42, 0.26;)) */
-            
-        }
-
-        .gov-hero__scale {
+        .login-refresh-hero {
             position: absolute;
             right: 0;
-            top: 180px;
-            width: 190px;
-            height: auto;
-            z-index: 3;
-            filter: drop-shadow(0 18px 28px rgba(77, 28, 5, 0.24));
+            bottom: 28px;
+            width: min(410px, 55%);
+            pointer-events: none;
+            filter: drop-shadow(0 24px 40px rgba(15, 23, 42, 0.22));
         }
 
-        .gov-panel {
+        .login-refresh-hero img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .login-refresh-panel {
             position: relative;
+            background: linear-gradient(180deg, #ffffff 0%, #fdfdff 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 48px 34px;
-            background:
-                radial-gradient(circle at 16% 14%, rgba(30, 64, 175, 0.06), transparent 26%),
-                radial-gradient(circle at 84% 78%, rgba(251, 191, 36, 0.08), transparent 22%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 251, 255, 0.94) 100%);
+            padding: 34px 34px 28px;
         }
 
-        .gov-panel::before {
+        .login-refresh-panel::before {
             content: '';
             position: absolute;
-            inset: 20px;
+            inset: 22px;
             border-radius: 34px;
-            border: 1px solid rgba(222, 229, 241, 0.55);
+            border: 1px solid rgba(226, 232, 240, 0.82);
             pointer-events: none;
         }
 
-        .gov-panel__close {
+        .login-refresh-close {
             position: absolute;
-            top: 26px;
-            right: 26px;
+            top: 28px;
+            right: 28px;
+            z-index: 2;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 64px;
-            height: 64px;
+            width: 54px;
+            height: 54px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.82);
-            border: 1px solid rgba(222, 229, 241, 0.8);
-            box-shadow:
-                0 18px 32px rgba(15, 23, 42, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
             color: #6b7280;
-            backdrop-filter: blur(10px);
-            transition: transform 180ms ease, box-shadow 180ms ease, color 180ms ease;
+            transition: transform 180ms ease, color 180ms ease, box-shadow 180ms ease;
         }
 
-        .gov-panel__close:hover {
-            color: #1f2937;
+        .login-refresh-close:hover {
             transform: translateY(-1px);
-            box-shadow:
-                0 22px 38px rgba(15, 23, 42, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.88);
+            color: #111827;
+            box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
         }
 
-        .gov-panel__card {
+        .login-refresh-card {
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 510px;
-            padding: 22px 28px 18px;
+            max-width: 410px;
+            padding: 20px 0 10px;
         }
 
-        .gov-panel__logo {
-            width: 108px;
-            height: 108px;
+        .login-refresh-panel-logo {
+            width: 92px;
+            height: 92px;
             margin: 0 auto;
-            padding: 12px;
+            padding: 8px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.84);
-            box-shadow:
-                0 24px 48px rgba(15, 23, 42, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
         }
 
-        .gov-panel__title {
-            margin-top: 24px;
+        .login-refresh-title {
+            margin: 26px 0 0;
             text-align: center;
-            font-size: clamp(2.5rem, 2rem + 1vw, 3.6rem);
+            font-size: clamp(2rem, 1.7rem + 0.7vw, 3rem);
+            line-height: 1.06;
             font-weight: 800;
-            line-height: 1.05;
-            letter-spacing: -0.05em;
-            color: var(--gov-ink);
+            letter-spacing: -0.04em;
+            color: #162447;
         }
 
-        .gov-panel__subtitle {
+        .login-refresh-subtitle {
             margin: 14px auto 0;
-            max-width: 430px;
+            max-width: 360px;
             text-align: center;
-            font-size: 1.15rem;
+            font-size: 1.02rem;
             line-height: 1.7;
-            color: var(--gov-muted);
+            color: #6b7a93;
         }
 
-        .gov-feedback {
-            margin-top: 26px;
-            border-radius: 22px;
+        .login-refresh-status,
+        .login-refresh-errors {
+            margin-top: 24px;
+            border-radius: 20px;
             padding: 14px 18px;
-            font-size: 0.94rem;
-            line-height: 1.6;
+            font-size: 0.92rem;
+            line-height: 1.55;
         }
 
-        .gov-feedback--status {
-            border: 1px solid rgba(16, 185, 129, 0.18);
+        .login-refresh-status {
+            border: 1px solid rgba(16, 185, 129, 0.2);
             background: rgba(16, 185, 129, 0.08);
             color: #047857;
         }
 
-        .gov-feedback--error {
-            border: 1px solid rgba(239, 68, 68, 0.16);
+        .login-refresh-errors {
+            border: 1px solid rgba(239, 68, 68, 0.18);
             background: rgba(239, 68, 68, 0.08);
             color: #b91c1c;
         }
 
-        .gov-login-form {
-            margin-top: 34px;
+        .login-refresh-errors ul {
+            margin: 0;
+            padding-left: 1.2rem;
         }
 
-        .gov-form-grid {
-            display: grid;
-            gap: 26px;
+        .login-refresh-form {
+            margin-top: 30px;
         }
 
-        .gov-field__label {
+        .login-refresh-field + .login-refresh-field {
+            margin-top: 22px;
+        }
+
+        .login-refresh-label {
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-size: 0.96rem;
             font-weight: 700;
-            color: #334155;
+            color: #2f3f5d;
         }
 
-        .gov-field__control {
+        .login-refresh-control {
             display: flex;
             align-items: center;
             gap: 14px;
+            min-height: 62px;
             padding: 0 22px;
-            min-height: 72px;
             border-radius: 999px;
-            border: 1px solid rgba(226, 232, 240, 0.92);
-            background: var(--gov-field-bg);
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.94),
-                inset 0 -10px 22px rgba(15, 23, 42, 0.02),
-                0 14px 26px rgba(15, 23, 42, 0.04);
+                inset 0 1px 0 rgba(255,255,255,0.94),
+                0 10px 24px rgba(15, 23, 42, 0.04);
             transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
         }
 
-        .gov-field__control:focus-within {
-            border-color: rgba(37, 99, 235, 0.32);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.98),
-                0 0 0 5px rgba(37, 99, 235, 0.08),
-                0 16px 30px rgba(15, 23, 42, 0.06);
+        .login-refresh-control:focus-within {
             transform: translateY(-1px);
-        }
-
-        .gov-field__control.is-invalid {
-            border-color: rgba(239, 68, 68, 0.36);
+            border-color: rgba(37, 99, 235, 0.3);
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.94),
-                0 0 0 5px rgba(239, 68, 68, 0.08);
+                inset 0 1px 0 rgba(255,255,255,0.98),
+                0 0 0 4px rgba(37, 99, 235, 0.08),
+                0 14px 28px rgba(15, 23, 42, 0.06);
         }
 
-        .gov-field__icon {
-            width: 24px;
-            height: 24px;
+        .login-refresh-control.is-invalid {
+            border-color: rgba(239, 68, 68, 0.34);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.07);
+        }
+
+        .login-refresh-icon {
+            width: 22px;
+            height: 22px;
             flex: 0 0 auto;
             color: #94a3b8;
         }
 
-        .gov-field__input {
+        .login-refresh-input {
             width: 100%;
             border: 0;
-            background: transparent;
             padding: 0;
-            font-size: 1.02rem;
+            background: transparent;
+            font-size: 0.98rem;
             line-height: 1.4;
             color: #0f172a;
             outline: none;
             box-shadow: none;
         }
 
-        .gov-field__input::placeholder {
+        .login-refresh-input::placeholder {
             color: #94a3b8;
         }
 
-        .gov-field__error {
+        .login-refresh-error {
             margin-top: 10px;
             padding-left: 10px;
-            font-size: 0.85rem;
+            font-size: 0.86rem;
             color: #dc2626;
         }
 
-        .gov-login-meta {
+        .login-refresh-meta {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 18px;
+            gap: 16px;
             margin-top: 22px;
-            color: var(--gov-muted);
+            font-size: 0.94rem;
+            color: #64748b;
         }
 
-        .gov-check {
+        .login-refresh-check {
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            font-size: 0.98rem;
             font-weight: 600;
             color: #475569;
         }
 
-        .gov-check input {
+        .login-refresh-check input {
             appearance: none;
             width: 24px;
             height: 24px;
             margin: 0;
             border-radius: 8px;
-            border: 1.5px solid #d1d9e7;
+            border: 1.5px solid #d8deea;
             background: linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.9),
-                0 8px 18px rgba(148, 163, 184, 0.18);
+                inset 0 1px 0 rgba(255,255,255,0.92),
+                0 8px 18px rgba(148, 163, 184, 0.16);
             display: grid;
             place-items: center;
             cursor: pointer;
         }
 
-        .gov-check input::after {
+        .login-refresh-check input::after {
             content: '';
             width: 12px;
             height: 12px;
             border-radius: 4px;
-            background: linear-gradient(135deg, var(--gov-blue), var(--gov-red), var(--gov-yellow));
+            background: linear-gradient(135deg, #2f4bd7 0%, #7f379c 45%, #ea5f28 78%, #f5c63d 100%);
             transform: scale(0);
             transition: transform 180ms ease;
         }
 
-        .gov-check input:checked::after {
+        .login-refresh-check input:checked::after {
             transform: scale(1);
         }
 
-        .gov-login-link {
-            font-size: 0.98rem;
+        .login-refresh-link {
             font-weight: 700;
             color: #5b6a88;
             transition: color 180ms ease;
         }
 
-        .gov-login-link:hover {
-            color: #1e40af;
+        .login-refresh-link:hover {
+            color: #2248c7;
         }
 
-        .gov-login-button {
+        .login-refresh-submit {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 100%;
-            min-height: 70px;
-            margin-top: 32px;
+            min-height: 58px;
+            margin-top: 30px;
             border: 0;
             border-radius: 999px;
-            background: linear-gradient(90deg, #1249c9 0%, #254fcb 20%, #8c2d96 47%, #e2332b 68%, #f49c1a 86%, #ffd239 100%);
+            background: linear-gradient(90deg, #2a2474 0%, #2d56c6 24%, #be3d48 58%, #df8625 82%, #efca43 100%);
             box-shadow:
-                0 20px 40px rgba(28, 78, 216, 0.22),
-                0 16px 24px rgba(248, 187, 28, 0.12),
-                inset 0 1px 0 rgba(255, 255, 255, 0.18);
+                0 20px 40px rgba(46, 77, 200, 0.22),
+                0 14px 26px rgba(239, 202, 67, 0.14);
             color: #ffffff;
-            font-size: 1.18rem;
+            font-size: 1rem;
             font-weight: 800;
-            letter-spacing: 0.45em;
+            letter-spacing: 0.42em;
             text-transform: uppercase;
             transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
         }
 
-        .gov-login-button:hover {
+        .login-refresh-submit:hover {
             transform: translateY(-2px);
-            box-shadow:
-                0 26px 48px rgba(28, 78, 216, 0.28),
-                0 18px 28px rgba(248, 187, 28, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.24);
             filter: saturate(1.03);
+            box-shadow:
+                0 24px 48px rgba(46, 77, 200, 0.26),
+                0 18px 30px rgba(239, 202, 67, 0.18);
         }
 
-        .gov-login-button:focus-visible {
+        .login-refresh-submit:focus-visible {
             outline: none;
             box-shadow:
-                0 0 0 6px rgba(37, 99, 235, 0.14),
-                0 26px 48px rgba(28, 78, 216, 0.28);
+                0 0 0 5px rgba(37, 99, 235, 0.12),
+                0 24px 48px rgba(46, 77, 200, 0.26);
         }
 
-        .gov-panel__footer {
-            margin-top: 28px;
+        .login-refresh-footer {
+            margin-top: 20px;
             text-align: center;
-            font-size: 1rem;
-            color: var(--gov-muted);
+            font-size: 0.98rem;
+            color: #64748b;
         }
 
-        .gov-panel__footer a {
+        .login-refresh-footer a {
             font-weight: 800;
-            color: #0f172a;
-        }
-
-        @keyframes gov-hero-float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
+            color: #162447;
         }
 
         @media (max-width: 1180px) {
-            .gov-login-grid {
+            .login-refresh-shell {
                 grid-template-columns: 1fr;
+                min-height: auto;
             }
 
-            .gov-brand {
-                min-height: 760px;
+            .login-refresh-brand {
+                min-height: 620px;
             }
 
-            .gov-brand__main {
-                grid-template-columns: 1fr;
-                justify-items: center;
-                padding-top: 52px;
-                gap: 28px;
+            .login-refresh-brand-main {
+                height: auto;
+                min-height: 500px;
             }
 
-            .gov-brand__content {
-                max-width: 560px;
-                justify-self: start;
+            .login-refresh-brand-copy {
+                width: min(420px, 100%);
+                padding-top: 92px;
             }
 
-            .gov-hero {
-                width: min(440px, 80vw);
-                max-width: none;
-                margin-right: 0;
-                justify-self: center;
+            .login-refresh-hero {
+                width: min(360px, 54%);
             }
 
-            .gov-hero__stage {
-                height: 620px;
-                
-            }
-
-            .gov-panel {
-                padding-top: 96px;
+            .login-refresh-panel {
+                padding: 90px 22px 30px;
             }
         }
 
         @media (max-width: 760px) {
-            .gov-login-page {
-                padding: 12px;
+            .login-refresh-page {
+                padding: 10px;
             }
 
-            .gov-login-shell,
-            .gov-login-grid {
-                min-height: calc(100vh - 24px);
-                border-radius: 30px;
+            .login-refresh-shell {
+                width: calc(100vw - 20px);
+                border-radius: 28px;
             }
 
-            .gov-brand {
-                padding: 28px 22px 280px;
+            .login-refresh-brand {
+                padding: 24px 20px 240px;
             }
 
-            .gov-brand__top {
-                gap: 14px;
-            }
-
-            .gov-brand__seal {
-                width: 68px;
-                height: 68px;
-            }
-
-            .gov-brand__agency-title {
+            .login-refresh-brand-title {
                 font-size: 1.12rem;
             }
 
-            .gov-brand__agency-subtitle {
+            .login-refresh-brand-region {
                 font-size: 0.72rem;
-                letter-spacing: 0.26em;
+                letter-spacing: 0.24em;
             }
 
-            .gov-brand__agency-motto {
+            .login-refresh-brand-motto {
+                font-size: 0.84rem;
+            }
+
+            .login-refresh-brand-copy {
+                width: 100%;
+                padding-top: 48px;
+            }
+
+            .login-refresh-brand-product {
                 font-size: 0.88rem;
+                letter-spacing: 0.22em;
             }
 
-            .gov-brand__content {
-                max-width: 100%;
+            .login-refresh-brand-product-copy {
+                font-size: 0.92rem;
             }
 
-            .gov-brand__product {
-                padding: 14px 16px;
+            .login-refresh-brand-headline {
+                margin-top: 18px;
+                font-size: 2.55rem;
             }
 
-            .gov-brand__headline {
-                margin-top: 20px;
-                font-size: 2.45rem;
+            .login-refresh-brand-subtitle {
+                margin-top: 18px;
+                font-size: 0.94rem;
             }
 
-            .gov-brand__subtitle {
-                font-size: 1rem;
-            }
-
-            .gov-brand__dots {
-                top: 128px;
-                right: 22px;
-                transform: scale(0.78);
+            .login-refresh-dots {
+                top: 212px;
+                right: 20px;
+                transform: scale(0.82);
                 transform-origin: top right;
             }
 
-            .gov-brand__waves {
-                width: 78%;
-                bottom: 28px;
+            .login-refresh-hero {
+                right: 8px;
+                width: min(290px, 74%);
             }
 
-            .gov-brand__main {
-                padding-top: 38px;
-                gap: 20px;
+            .login-refresh-panel {
+                padding: 82px 16px 24px;
             }
 
-            .gov-hero {
-                width: min(360px, 84vw);
+            .login-refresh-panel::before {
+                inset: 12px;
+                border-radius: 26px;
             }
 
-            .gov-hero__stage {
-                height: 560px;
-                
+            .login-refresh-close {
+                top: 16px;
+                right: 16px;
+                width: 48px;
+                height: 48px;
             }
 
-            .gov-hero__character {
-                width: min(248px, 68vw);
-                left: 8px;
-                bottom: 20px;
-               
+            .login-refresh-card {
+                max-width: 100%;
+                padding: 0 8px 6px;
             }
 
-            .gov-hero__scale {
-                width: min(168px, 43vw);
-                right: 2px;
-                top: 165px;
+            .login-refresh-panel-logo {
+                width: 82px;
+                height: 82px;
             }
 
-            .gov-panel {
-                padding: 84px 18px 32px;
+            .login-refresh-title {
+                margin-top: 22px;
+                font-size: 2.2rem;
             }
 
-            .gov-panel__close {
-                top: 18px;
-                right: 18px;
-                width: 54px;
-                height: 54px;
+            .login-refresh-subtitle {
+                font-size: 0.96rem;
             }
 
-            .gov-panel__card {
-                padding: 10px 4px 0;
-            }
-
-            .gov-panel__logo {
-                width: 84px;
-                height: 84px;
-            }
-
-            .gov-panel__subtitle {
-                font-size: 1rem;
-            }
-
-            .gov-field__control {
-                min-height: 64px;
+            .login-refresh-control {
+                min-height: 58px;
                 padding: 0 18px;
             }
 
-            .gov-login-meta {
+            .login-refresh-meta {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
-            .gov-login-button {
-                min-height: 62px;
-                font-size: 1rem;
-                letter-spacing: 0.32em;
+            .login-refresh-submit {
+                min-height: 56px;
+                letter-spacing: 0.3em;
+                font-size: 0.94rem;
             }
         }
     </style>
 
-    <div class="gov-login-page">
-        <div class="gov-login-shell">
-            <div class="gov-login-grid">
-                <section class="gov-brand">
-                    <div class="gov-brand__dots" aria-hidden="true"></div>
-                    <div class="gov-brand__waves" aria-hidden="true"></div>
+    <div class="login-refresh-page">
+        <div class="login-refresh-shell">
+            <section class="login-refresh-brand">
+                <div class="login-refresh-dots" aria-hidden="true"></div>
 
-                    <div class="gov-brand__top">
-                        <div class="gov-brand__seal">
-                            <img src="{{ $logo }}" alt="DILG Logo">
-                        </div>
-
-                        <div class="gov-brand__agency">
-                            <div class="gov-brand__agency-title">Department of the Interior and Local Government</div>
-                            <div class="gov-brand__agency-subtitle">Cordillera Administrative Region</div>
-                            <div class="gov-brand__agency-motto">Matino. Mahusay. at Maaasahan.</div>
-                        </div>
+                <div class="login-refresh-brand-top">
+                    <div class="login-refresh-brand-seal">
+                        <img src="{{ $logo }}" alt="DILG Logo">
                     </div>
 
-                    <div class="gov-brand__main">
-                        <div class="gov-brand__content">
-                            <div class="gov-brand__product">
-                                <div class="gov-brand__product-name">GABAY-Lex</div>
-                                <div class="gov-brand__product-copy">Guidance and Advisory for Better Administration in Law</div>
-                            </div>
+                    <div class="login-refresh-brand-heading">
+                        <div class="login-refresh-brand-title">Department of the Interior and Local Government</div>
+                        <div class="login-refresh-brand-region">Cordillera Administrative Region</div>
+                        <div class="login-refresh-brand-motto">Matino. Mahusay. at Maaasahan.</div>
+                    </div>
+                </div>
 
-                            <h1 class="gov-brand__headline">Smart legal support for efficient public service.</h1>
-                            <p class="gov-brand__subtitle">Instant help, document assistance, and reliable guidance all in one place.</p>
+                <div class="login-refresh-brand-main">
+                    <div class="login-refresh-brand-copy">
+                        <div class="login-refresh-brand-product">GABAY-LEX</div>
+                        <div class="login-refresh-brand-product-copy">Guidance and Advisory for Better Administration in Law</div>
+
+                        <h1 class="login-refresh-brand-headline">Smart legal support for efficient public service.</h1>
+                        <p class="login-refresh-brand-subtitle">Instant help, document assistance, and reliable guidance all in one place.</p>
+                    </div>
+
+                    <div class="login-refresh-hero" aria-hidden="true">
+                        <img src="{{ $hero }}" alt="">
+                    </div>
+                </div>
+            </section>
+
+            <section class="login-refresh-panel">
+                <a href="{{ url('/') }}" class="login-refresh-close" aria-label="Close login">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                    </svg>
+                </a>
+
+                <div class="login-refresh-card">
+                    <div class="login-refresh-panel-logo">
+                        <img src="{{ $logo }}" alt="DILG Logo">
+                    </div>
+
+                    <h2 class="login-refresh-title">Welcome Back</h2>
+                    <p class="login-refresh-subtitle">Sign in to access your saved legal conversations.</p>
+
+                    <x-auth-session-status class="login-refresh-status" :status="session('status')" />
+
+                    @if ($errors->any())
+                        <div class="login-refresh-errors">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                         </div>
+                    @endif
 
-                        <div class="gov-hero" aria-hidden="true">
-                            <div class="gov-hero__glow"></div>
-                            <div class="gov-hero__stage">
-                                <img src="{{ $lexCharacter }}" alt="" class="gov-hero__character">
-                                <svg class="gov-hero__scale" viewBox="0 0 220 250" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <defs>
-                                        <linearGradient id="scaleGold" x1="110" y1="18" x2="110" y2="228" gradientUnits="userSpaceOnUse">
-                                            <stop stop-color="#FFD76B"/>
-                                            <stop offset="0.32" stop-color="#F8B83B"/>
-                                            <stop offset="0.66" stop-color="#D68A14"/>
-                                            <stop offset="1" stop-color="#B66C0A"/>
-                                        </linearGradient>
-                                    </defs>
-                                    <path d="M109 28C118 28 125 35 125 44C125 50 121 55 116 58V79L161 108C165 111 168 116 168 121V179H175C181 179 186 184 186 190C186 196 181 201 175 201H130L143 214C147 218 147 225 143 229C139 233 132 233 128 229L109 210L90 229C86 233 79 233 75 229C71 225 71 218 75 214L88 201H43C37 201 32 196 32 190C32 184 37 179 43 179H50V121C50 116 53 111 57 108L102 79V58C97 55 93 50 93 44C93 35 100 28 109 28Z" fill="url(#scaleGold)"/>
-                                    <path d="M109 7C117 7 124 14 124 22C124 30 117 37 109 37C101 37 94 30 94 22C94 14 101 7 109 7Z" fill="url(#scaleGold)"/>
-                                    <path d="M109 48V184" stroke="#8A4E06" stroke-width="4" stroke-linecap="round"/>
-                                    <path d="M59 108H159" stroke="#8A4E06" stroke-width="4" stroke-linecap="round"/>
-                                    <path d="M77 108L53 146" stroke="#8A4E06" stroke-width="4" stroke-linecap="round"/>
-                                    <path d="M141 108L165 146" stroke="#8A4E06" stroke-width="4" stroke-linecap="round"/>
-                                    <path d="M42 146H88C88 166 78 178 65 178C52 178 42 166 42 146Z" fill="url(#scaleGold)" stroke="#8A4E06" stroke-width="4"/>
-                                    <path d="M130 146H176C176 166 166 178 153 178C140 178 130 166 130 146Z" fill="url(#scaleGold)" stroke="#8A4E06" stroke-width="4"/>
-                                    <path d="M109 184C127 184 142 192 145 201H73C76 192 91 184 109 184Z" fill="url(#scaleGold)" stroke="#8A4E06" stroke-width="4"/>
-                                    <path d="M85 201H133V212H85V201Z" fill="#B66C0A"/>
+                    <form method="POST" action="{{ route('login') }}" class="login-refresh-form">
+                        @csrf
+
+                        <div class="login-refresh-field">
+                            <label for="email" class="login-refresh-label">Email address</label>
+                            <div @class(['login-refresh-control', 'is-invalid' => $errors->has('email')])>
+                                <svg class="login-refresh-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 7.75C4 6.23122 5.23122 5 6.75 5H17.25C18.7688 5 20 6.23122 20 7.75V16.25C20 17.7688 18.7688 19 17.25 19H6.75C5.23122 19 4 17.7688 4 16.25V7.75Z" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M5 7L11.0593 11.5445C11.6184 11.9638 12.3816 11.9638 12.9407 11.5445L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
+                                <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="login-refresh-input" placeholder="Enter your email">
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="gov-panel">
-                    <a href="{{ url('/') }}" class="gov-panel__close" aria-label="Close login">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-                        </svg>
-                    </a>
-
-                    <div class="gov-panel__card">
-                        <div class="gov-panel__logo">
-                            <img src="{{ $logo }}" alt="DILG Logo">
+                            <x-input-error :messages="$errors->get('email')" class="login-refresh-error" />
                         </div>
 
-                        <h2 class="gov-panel__title">Welcome Back</h2>
-                        <p class="gov-panel__subtitle">Sign in to access your saved legal conversations.</p>
-
-                        <x-auth-session-status class="gov-feedback gov-feedback--status" :status="session('status')" />
-
-                        @if ($errors->any())
-                            <div class="gov-feedback gov-feedback--error">
-                                <ul class="list-disc pl-5">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
+                        <div class="login-refresh-field">
+                            <label for="password" class="login-refresh-label">Password</label>
+                            <div @class(['login-refresh-control', 'is-invalid' => $errors->has('password')])>
+                                <svg class="login-refresh-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M8 10V8.75C8 6.67893 9.67893 5 11.75 5H12.25C14.3211 5 16 6.67893 16 8.75V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M6.75 10H17.25C18.2165 10 19 10.7835 19 11.75V17.25C19 18.2165 18.2165 19 17.25 19H6.75C5.7835 19 5 18.2165 5 17.25V11.75C5 10.7835 5.7835 10 6.75 10Z" stroke="currentColor" stroke-width="1.8"/>
+                                </svg>
+                                <input id="password" name="password" type="password" required autocomplete="current-password" class="login-refresh-input" placeholder="Enter your password">
                             </div>
-                        @endif
+                            <x-input-error :messages="$errors->get('password')" class="login-refresh-error" />
+                        </div>
 
-                        <form method="POST" action="{{ route('login') }}" class="gov-login-form">
-                            @csrf
+                        <div class="login-refresh-meta">
+                            <label class="login-refresh-check" for="remember_me">
+                                <input id="remember_me" type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                                <span>Remember me</span>
+                            </label>
 
-                            <div class="gov-form-grid">
-                                <div class="gov-field">
-                                    <label for="email" class="gov-field__label">Email address</label>
-                                    <div @class(['gov-field__control', 'is-invalid' => $errors->has('email')])>
-                                        <svg class="gov-field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M4 7.75C4 6.23122 5.23122 5 6.75 5H17.25C18.7688 5 20 6.23122 20 7.75V16.25C20 17.7688 18.7688 19 17.25 19H6.75C5.23122 19 4 17.7688 4 16.25V7.75Z" stroke="currentColor" stroke-width="1.8"/>
-                                            <path d="M5 7L11.0593 11.5445C11.6184 11.9638 12.3816 11.9638 12.9407 11.5445L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                        </svg>
-                                        <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="gov-field__input" placeholder="Enter your email">
-                                    </div>
-                                    <x-input-error :messages="$errors->get('email')" class="gov-field__error" />
-                                </div>
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" class="login-refresh-link">Forgot password?</a>
+                            @endif
+                        </div>
 
-                                <div class="gov-field">
-                                    <label for="password" class="gov-field__label">Password</label>
-                                    <div @class(['gov-field__control', 'is-invalid' => $errors->has('password')])>
-                                        <svg class="gov-field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M8 10V8.75C8 6.67893 9.67893 5 11.75 5H12.25C14.3211 5 16 6.67893 16 8.75V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                            <path d="M6.75 10H17.25C18.2165 10 19 10.7835 19 11.75V17.25C19 18.2165 18.2165 19 17.25 19H6.75C5.7835 19 5 18.2165 5 17.25V11.75C5 10.7835 5.7835 10 6.75 10Z" stroke="currentColor" stroke-width="1.8"/>
-                                        </svg>
-                                        <input id="password" name="password" type="password" required autocomplete="current-password" class="gov-field__input" placeholder="Enter your password">
-                                    </div>
-                                    <x-input-error :messages="$errors->get('password')" class="gov-field__error" />
-                                </div>
-                            </div>
+                        <button type="submit" class="login-refresh-submit">Log In</button>
+                    </form>
 
-                            <div class="gov-login-meta">
-                                <label class="gov-check" for="remember_me">
-                                    <input id="remember_me" type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
-                                    <span>Remember me</span>
-                                </label>
-
-                                @if (Route::has('password.request'))
-                                    <a href="{{ route('password.request') }}" class="gov-login-link">Forgot password?</a>
-                                @endif
-                            </div>
-
-                            <button type="submit" class="gov-login-button">Log In</button>
-                        </form>
-
-                        @if (Route::has('register'))
-                            <p class="gov-panel__footer">
-                                Don't have an account? <a href="{{ route('register') }}">Sign Up</a>
-                            </p>
-                        @endif
-                    </div>
-                </section>
-            </div>
+                    @if (Route::has('register'))
+                        <p class="login-refresh-footer">
+                            Don’t have an account? <a href="{{ route('register') }}">Sign Up</a>
+                        </p>
+                    @endif
+                </div>
+            </section>
         </div>
     </div>
 </x-guest-layout>

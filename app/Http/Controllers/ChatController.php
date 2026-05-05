@@ -113,6 +113,28 @@ class ChatController extends Controller
         ]);
     }
 
+    public function create(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->is_admin) {
+            return redirect()->route('admin.legal.ai.new');
+        }
+
+        $conversations = $user->conversations()
+            ->orderByDesc('last_message_at')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get();
+
+        return view('chat.index', [
+            'conversations' => $conversations,
+            'activeConversation' => null,
+            'messages' => collect(),
+            'mode' => 'all',
+        ]);
+    }
+
     public function show(Request $request, Conversation $conversation)
     {
         $user = $request->user();
