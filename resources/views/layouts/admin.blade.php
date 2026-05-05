@@ -609,6 +609,15 @@
                                         </div>
                                         <span class="sidebar-nav-label text-sm font-semibold">FAQ Response Manager</span>
                                     </a>
+
+                                    <a href="{{ route('admin.users.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.users.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                        <div class="sidebar-nav-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a8.966 8.966 0 0 0 3-6.72 9 9 0 1 0-18 0 8.966 8.966 0 0 0 3 6.72m12 0A13.949 13.949 0 0 1 12 21c-2.331 0-4.53-.572-6-1.28m12 0a13.987 13.987 0 0 0-3.75-2.16M6 18.72a13.987 13.987 0 0 1 3.75-2.16m0 0a3.75 3.75 0 1 1 4.5 0m-4.5 0a3.75 3.75 0 0 0 4.5 0" />
+                                            </svg>
+                                        </div>
+                                        <span class="sidebar-nav-label text-sm font-semibold">User Management</span>
+                                    </a>
                                 @endif
                             @endif
 
@@ -835,6 +844,16 @@
                                             </p>
 
                                             <x-auth-session-status class="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-700" :status="session('status')" />
+
+                                            @if ($errors->any())
+                                                <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                                                    <ul class="list-disc pl-5">
+                                                        @foreach ($errors->all() as $error)
+                                                            <li>{{ $error }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
 
                                             <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-3.5">
                                                 @csrf
