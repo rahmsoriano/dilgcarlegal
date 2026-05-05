@@ -1269,12 +1269,15 @@ Strict rules:
                 if (trim($summary) === '') {
                     $summary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
                 }
-                $out .= '<div class="ref-accordion" data-ref-toggle role="button" tabindex="0" aria-expanded="false">';
+                $out .= '<div class="ref-accordion">';
                 $out .= '<div class="ref-accordion-head">';
                 $out .= '<span class="ref-accordion-arrow">↳</span>';
                 $out .= '<div class="ref-accordion-title">'.$citation.'</div>';
+                $out .= '<button type="button" class="ref-accordion-toggle" data-ref-toggle aria-expanded="false" aria-label="Toggle reference">';
+                $out .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="ref-accordion-chevron"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/></svg>';
+                $out .= '</button>';
                 $out .= '</div>';
-                $out .= '<div class="ref-accordion-body">'.htmlspecialchars($summary, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
+                $out .= '<div class="ref-accordion-body" hidden>'.htmlspecialchars($summary, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
                 $out .= "</div>\n";
             }
             $out .= "\n";
@@ -1345,12 +1348,15 @@ Strict rules:
                 }
                 $citation = $this->buildOpinionCitationHtml($op, true);
                 $excerpt = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
-                $out .= '<div class="ref-accordion" data-ref-toggle role="button" tabindex="0" aria-expanded="false">';
+                $out .= '<div class="ref-accordion">';
                 $out .= '<div class="ref-accordion-head">';
                 $out .= '<span class="ref-accordion-arrow">↳</span>';
                 $out .= '<div class="ref-accordion-title">'.$citation.'</div>';
+                $out .= '<button type="button" class="ref-accordion-toggle" data-ref-toggle aria-expanded="false" aria-label="Toggle reference">';
+                $out .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="ref-accordion-chevron"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/></svg>';
+                $out .= '</button>';
                 $out .= '</div>';
-                $out .= '<div class="ref-accordion-body">'.htmlspecialchars($excerpt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
+                $out .= '<div class="ref-accordion-body" hidden>'.htmlspecialchars($excerpt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
                 $out .= "</div>\n";
             }
             $out .= "\n";
