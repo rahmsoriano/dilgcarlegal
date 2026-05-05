@@ -1,16 +1,16 @@
 <x-admin-layout>
+    <style>
+        .user-delete-modal[hidden] {
+            display: none !important;
+        }
+    </style>
+
     <div class="space-y-8">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
             <div>
                 <h2 class="text-3xl font-bold tracking-tight text-slate-900">User Management</h2>
                 <p class="mt-2 text-slate-600">Review verification, update roles, manage account status, and safely control user access.</p>
             </div>
-            <a href="{{ route('admin.users.create') }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all duration-300 hover:bg-blue-500">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="mr-2 h-5 w-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Create User
-            </a>
         </div>
 
         @if (session('status'))
@@ -28,60 +28,6 @@
                 </ul>
             </div>
         @endif
-
-        <div class="rounded-[2rem] bg-white/80 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 backdrop-blur-xl">
-            <form method="GET" action="{{ route('admin.users.index') }}" class="grid gap-4 lg:grid-cols-[minmax(0,2.3fr)_repeat(3,minmax(0,1fr))_auto] lg:items-end">
-                <div>
-                    <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Search</label>
-                    <div class="relative">
-                        <div class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                                <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 104.473 8.708l2.41 2.409a.75.75 0 101.06-1.06l-2.409-2.41A5.5 5.5 0 009 3.5zM4.5 9a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <input type="search" name="search" value="{{ $filters['search'] }}" placeholder="Search by name or email"
-                            class="w-full rounded-2xl border-slate-900/10 bg-white/80 py-3.5 pl-14 pr-5 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-blue-500/40 focus:ring-blue-500/15">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Role</label>
-                    <select name="role" class="w-full rounded-2xl border border-slate-900/10 bg-white/80 px-4 py-3.5 text-sm text-slate-900 transition-all focus:border-blue-500/40 focus:ring-blue-500/15">
-                        <option value="">All Roles</option>
-                        <option value="admin" @selected($filters['role'] === 'admin')>Admin</option>
-                        <option value="staff" @selected($filters['role'] === 'staff')>Staff</option>
-                        <option value="user" @selected($filters['role'] === 'user')>User</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Status</label>
-                    <select name="status" class="w-full rounded-2xl border border-slate-900/10 bg-white/80 px-4 py-3.5 text-sm text-slate-900 transition-all focus:border-blue-500/40 focus:ring-blue-500/15">
-                        <option value="">All Statuses</option>
-                        <option value="active" @selected($filters['status'] === 'active')>Active</option>
-                        <option value="inactive" @selected($filters['status'] === 'inactive')>Inactive</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Verification</label>
-                    <select name="verification" class="w-full rounded-2xl border border-slate-900/10 bg-white/80 px-4 py-3.5 text-sm text-slate-900 transition-all focus:border-blue-500/40 focus:ring-blue-500/15">
-                        <option value="">All Users</option>
-                        <option value="verified" @selected($filters['verification'] === 'verified')>Verified</option>
-                        <option value="not_verified" @selected($filters['verification'] === 'not_verified')>Not Verified</option>
-                    </select>
-                </div>
-
-                <div class="flex gap-3">
-                    <button type="submit" class="inline-flex h-[52px] items-center justify-center rounded-2xl bg-white/80 px-6 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-900/10 transition-all hover:bg-white hover:text-slate-900">
-                        Apply
-                    </button>
-                    <a href="{{ route('admin.users.index') }}" class="inline-flex h-[52px] items-center justify-center rounded-2xl bg-slate-100 px-6 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900">
-                        Reset
-                    </a>
-                </div>
-            </form>
-        </div>
 
         <div class="overflow-hidden rounded-[2rem] bg-white/80 shadow-[0_24px_70px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 backdrop-blur-xl">
             <div class="overflow-x-auto">
@@ -103,7 +49,6 @@
                             <tr class="hover:bg-slate-900/[0.02] transition-colors">
                                 <td class="px-6 py-5 align-top">
                                     <div class="text-sm font-bold text-slate-900">{{ $user->full_name }}</div>
-                                    <div class="mt-1 text-xs font-medium text-slate-500">#{{ $user->id }}</div>
                                 </td>
                                 <td class="px-6 py-5 align-top text-sm font-semibold text-slate-700">{{ $user->email }}</td>
                                 <td class="px-6 py-5 align-top text-sm text-slate-700">
@@ -156,15 +101,14 @@
                                             </button>
                                         </form>
 
-                                        <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Delete this user account?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                @disabled(auth()->id() === $user->id)
-                                                class="inline-flex items-center rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold uppercase tracking-wide text-rose-700 shadow-sm ring-1 ring-rose-200 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                            data-delete-trigger
+                                            data-delete-action="{{ route('admin.users.destroy', $user) }}"
+                                            data-delete-name="{{ $user->full_name }}"
+                                            @disabled(auth()->id() === $user->id)
+                                            class="inline-flex items-center rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold uppercase tracking-wide text-rose-700 shadow-sm ring-1 ring-rose-200 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50">
+                                            Delete
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -185,5 +129,88 @@
                 </div>
             @endif
         </div>
+
+        <div id="delete-user-modal" class="user-delete-modal fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm" hidden aria-hidden="true">
+            <div class="w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-[0_32px_80px_rgba(15,23,42,0.24)] ring-1 ring-slate-900/10">
+                <div class="px-10 py-8">
+                    <h3 class="text-2xl font-black tracking-tight text-slate-900">Confirm</h3>
+                    <p id="delete-user-modal-text" class="mt-3 text-lg text-slate-600">Delete this user account?</p>
+
+                    <div class="mt-8 flex items-center justify-end gap-3">
+                        <button type="button" id="delete-user-cancel" class="inline-flex min-w-[146px] items-center justify-center rounded-[1.35rem] border border-slate-200 bg-white px-8 py-3.5 text-sm font-black uppercase tracking-[0.28em] text-slate-700 transition hover:bg-slate-50 hover:text-slate-900">
+                            Cancel
+                        </button>
+
+                        <form id="delete-user-form" method="POST" data-confirm-skip>
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="inline-flex min-w-[146px] items-center justify-center rounded-[1.35rem] bg-rose-600 px-8 py-3.5 text-sm font-black uppercase tracking-[0.28em] text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-500">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        (() => {
+            const modal = document.getElementById('delete-user-modal');
+            const form = document.getElementById('delete-user-form');
+            const text = document.getElementById('delete-user-modal-text');
+            const cancelButton = document.getElementById('delete-user-cancel');
+            const triggers = document.querySelectorAll('[data-delete-trigger]');
+
+            if (!modal || !form || !text || !cancelButton || !triggers.length) {
+                return;
+            }
+
+            let activeTrigger = null;
+
+            const closeModal = () => {
+                modal.hidden = true;
+                modal.setAttribute('aria-hidden', 'true');
+
+                if (activeTrigger) {
+                    activeTrigger.focus();
+                    activeTrigger = null;
+                }
+            };
+
+            const openModal = (trigger) => {
+                const action = trigger.getAttribute('data-delete-action');
+                const name = trigger.getAttribute('data-delete-name') || 'this user';
+
+                if (!action) {
+                    return;
+                }
+
+                activeTrigger = trigger;
+                form.setAttribute('action', action);
+                text.textContent = `Delete ${name}'s user account?`;
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                cancelButton.focus();
+            };
+
+            triggers.forEach((trigger) => {
+                trigger.addEventListener('click', () => openModal(trigger));
+            });
+
+            cancelButton.addEventListener('click', closeModal);
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !modal.hidden) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
 </x-admin-layout>
