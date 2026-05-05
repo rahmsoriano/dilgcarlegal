@@ -176,9 +176,21 @@
     }
 
     .ref-accordion {
-        margin-top: 4px;
-        padding-top: 4px;
+        margin-top: 1px;
+        padding: 6px 10px;
         border-top: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: 14px;
+        cursor: pointer;
+        outline: none;
+    }
+
+    .ref-accordion:hover {
+        background: rgba(0, 44, 118, 0.06);
+    }
+
+    .ref-accordion:focus-visible {
+        background: rgba(0, 44, 118, 0.06);
+        box-shadow: 0 0 0 4px rgba(0, 44, 118, 0.14);
     }
 
     .ref-accordion-head {
@@ -200,44 +212,46 @@
         white-space: nowrap;
     }
 
-    .ref-accordion-toggle {
-        flex: 0 0 auto;
-        width: 24px;
-        height: 24px;
-        border-radius: 8px;
-        border: 1px solid rgba(15, 23, 42, 0.10);
-        background: rgba(255, 255, 255, 0.75);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 220ms ease-in-out, background-color 220ms ease-in-out, border-color 220ms ease-in-out;
-        padding: 0;
-    }
-
-    .ref-accordion-toggle:hover {
-        background: rgba(15, 23, 42, 0.04);
-        border-color: rgba(15, 23, 42, 0.16);
-    }
-
+    .ref-accordion-toggle,
     .ref-accordion-chevron {
-        width: 14px;
-        height: 14px;
-        color: rgba(15, 23, 42, 0.70);
-        transition: transform 220ms ease-in-out;
-    }
-
-    .ref-accordion.is-open .ref-accordion-chevron {
-        transform: rotate(180deg);
+        display: none !important;
     }
 
     .ref-accordion-body {
-        margin-top: 6px;
-        padding: 8px 10px;
-        border-radius: 14px;
-        background: rgba(15, 23, 42, 0.03);
-        border: 1px solid rgba(15, 23, 42, 0.08);
+        margin-top: 4px;
         white-space: normal;
+        color: rgba(15, 23, 42, 0.82);
+        line-height: 1.35;
+        overflow: hidden;
+        max-height: calc(1 * 1.35em);
+        transition: max-height 260ms ease-in-out;
+        position: relative;
+    }
+
+    .ref-accordion:not(.is-open) .ref-accordion-body {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        -webkit-mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 1) 28%,
+            rgba(0, 0, 0, 0.4) 52%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 1) 28%,
+            rgba(0, 0, 0, 0.4) 52%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
+
+    .ref-accordion.is-open .ref-accordion-body {
+        max-height: 1200px;
+        white-space: normal;
+        -webkit-mask-image: none;
+        mask-image: none;
     }
 
     .external-source-link {
@@ -245,6 +259,12 @@
         color: #2563eb;
         text-decoration: underline;
         word-break: break-all;
+    }
+
+    hr.chat-section-divider {
+        border: 0;
+        border-top: 1px solid rgba(15, 23, 42, 0.10);
+        margin: 14px 0;
     }
 
     @keyframes chat-fade-in {
@@ -319,7 +339,7 @@
     }
 
     .lex-safe-zone {
-        padding-right: clamp(0rem, 0vw, 0rem);
+        padding-right: 0;
     }
 
     .lex-assistant {
@@ -457,9 +477,7 @@
     }
 
     @media (min-width: 1280px) {
-        .lex-safe-zone {
-            padding-right: 18rem;
-        }
+        .lex-safe-zone { padding-right: 0; }
     }
 
     @media (max-width: 1024px) {
@@ -469,9 +487,7 @@
             bottom: 6rem;
         }
 
-        .lex-safe-zone {
-            padding-right: 12rem;
-        }
+        .lex-safe-zone { padding-right: 0; }
     }
 
     @media (max-width: 768px) {
@@ -487,9 +503,7 @@
             padding: 0.9rem 0.9rem 0.82rem;
         }
 
-        .lex-safe-zone {
-            padding-right: 0;
-        }
+        .lex-safe-zone { padding-right: 0; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -520,7 +534,7 @@
             <div class="flex flex-1 min-h-0 flex-col">
                 <div class="h-2"></div>
 
-            <div id="chat-scroll" class="chat-scrollbar lex-safe-zone flex-1 overflow-y-auto p-8">
+            <div id="chat-scroll" class="chat-scrollbar flex-1 overflow-y-auto p-8">
                 @if ($messages->isEmpty())
                     <div class="flex h-full flex-col items-center justify-center text-center">
                         <div class="relative mb-8">
@@ -606,27 +620,6 @@
         </section>
     </div>
 
-    <div class="lex-assistant" aria-live="polite">
-        <div id="lex-assistant-bubble" class="lex-assistant__bubble" role="status"><strong>Hi, I'm Lex &#128075;</strong><br>How can I help you today?</div>
-        <button
-            id="lex-assistant-trigger"
-            type="button"
-            class="lex-assistant__button"
-            aria-label="Talk to Lex"
-            aria-controls="lex-assistant-bubble"
-            aria-expanded="false"
-        >
-            <div class="lex-assistant__figure">
-                <img
-                    src="{{ asset('images/isay.png') }}"
-                    alt="Lex AI assistant"
-                    class="lex-assistant__image"
-                >
-            </div>
-        </button>
-        <div class="lex-assistant__shadow" aria-hidden="true"></div>
-    </div>
-
     <!-- Opinion Viewer Modal -->
     <div id="opinion-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 sm:p-6" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[6px] transition-opacity" id="opinion-modal-overlay"></div>
@@ -666,49 +659,6 @@
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
-    const lexTrigger = document.getElementById('lex-assistant-trigger');
-    const lexBubble = document.getElementById('lex-assistant-bubble');
-    let lexBubbleTimer = null;
-    let lexIdleTimer = null;
-
-    const showLexBubble = () => {
-        if (!lexBubble || !lexTrigger) return;
-
-        lexBubble.classList.add('is-visible');
-        lexTrigger.setAttribute('aria-expanded', 'true');
-
-        if (lexBubbleTimer) {
-            window.clearTimeout(lexBubbleTimer);
-        }
-
-        lexBubbleTimer = window.setTimeout(() => {
-            lexBubble.classList.remove('is-visible');
-            lexTrigger.setAttribute('aria-expanded', 'false');
-        }, 3000);
-    };
-
-    const triggerLexIdle = () => {
-        if (!lexTrigger) return;
-
-        lexTrigger.classList.remove('is-idle');
-        void lexTrigger.offsetWidth;
-        lexTrigger.classList.add('is-idle');
-
-        window.setTimeout(() => {
-            lexTrigger.classList.remove('is-idle');
-        }, 900);
-    };
-
-    if (lexTrigger) {
-        lexTrigger.addEventListener('click', showLexBubble);
-        lexTrigger.addEventListener('mouseenter', () => {
-            triggerLexIdle();
-        });
-
-        lexIdleTimer = window.setInterval(() => {
-            triggerLexIdle();
-        }, 5000);
-    }
 
     const upsertSidebarConversation = ({ id, url, title, is_pinned, update_url, toggle_pin_url, toggle_save_url, delete_url }) => {
         if (window.__adminSidebarUpsertConversation) {
@@ -718,6 +668,7 @@
         if (!sidebarList || !id || !url) return null;
 
         const displayTitle = (title && String(title).trim()) ? String(title).trim() : 'Untitled Thread';
+        const incomingMeaningful = displayTitle !== 'Untitled Thread';
         const selector = `[data-conversation-id="${id}"]`;
         let link = sidebarList.querySelector(selector);
 
@@ -733,11 +684,36 @@
             const text = document.createElement('div');
             text.className = 'truncate text-sm font-semibold tracking-tight';
             link.appendChild(text);
+            link.dataset.fixedTitle = incomingMeaningful ? '1' : '0';
+            if (incomingMeaningful) link.dataset.fixedTitleText = displayTitle;
             sidebarList.prepend(link);
         }
 
         const textEl = link.querySelector('div');
-        if (textEl) textEl.textContent = displayTitle;
+        if (textEl) {
+            const currentTitle = String(textEl.textContent || '').trim();
+            const currentMeaningful = currentTitle !== '' && currentTitle !== 'Untitled Thread';
+            const isFixed = link.dataset.fixedTitle === '1' || currentMeaningful;
+
+            if (currentMeaningful && link.dataset.fixedTitle !== '1') {
+                link.dataset.fixedTitle = '1';
+                link.dataset.fixedTitleText = currentTitle;
+            }
+
+            if (!isFixed) {
+                textEl.textContent = displayTitle;
+                if (incomingMeaningful) {
+                    link.dataset.fixedTitle = '1';
+                    link.dataset.fixedTitleText = displayTitle;
+                }
+            } else if (!currentMeaningful) {
+                textEl.textContent = displayTitle;
+                if (incomingMeaningful) {
+                    link.dataset.fixedTitle = '1';
+                    link.dataset.fixedTitleText = displayTitle;
+                }
+            }
+        }
 
         if (sidebarEmpty) sidebarEmpty.remove();
 
@@ -845,10 +821,61 @@
         const el = renderMessage('assistant', 'Thinking');
         const body = el.querySelector('.whitespace-pre-wrap');
         if (body) {
-            body.innerHTML = 'Thinking<span class="chat-thinking-dots"><span>.</span><span>.</span><span>.</span></span>';
+            body.innerHTML = '<span class="chat-thinking-dots" aria-label="Lex is typing"><span>.</span><span>.</span><span>.</span></span>';
         }
         el.dataset.thinking = 'true';
         return el;
+    };
+
+    const assistantHtmlToPlainText = (html) => {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = String(html ?? '');
+        const text = (tmp.innerText || tmp.textContent || '').replace(/\r\n/g, '\n');
+        return text.trimEnd();
+    };
+
+    const isNearBottom = (el, threshold = 140) => {
+        if (!el) return true;
+        return (el.scrollHeight - el.scrollTop - el.clientHeight) < threshold;
+    };
+
+    const typeAssistantResponse = (bodyEl, html) => {
+        const fullText = assistantHtmlToPlainText(html);
+        const cutMatch = fullText.match(/(?:^|\n)\s*Other Related References That Might Help:\s*/i);
+        const typedText = cutMatch ? fullText.slice(0, Math.max(0, cutMatch.index ?? 0)).trimEnd() : fullText;
+        const safeText = typedText === '' ? ' ' : typedText;
+        const length = safeText.length;
+
+        const msPerChar = length > 900 ? 3 : (length > 400 ? 4 : 6);
+        const minDuration = 320;
+        const maxDuration = 5200;
+        const duration = Math.min(maxDuration, Math.max(minDuration, length * msPerChar));
+        const autoScroll = isNearBottom(scrollEl);
+
+        bodyEl.classList.remove('chat-reply-fade-in');
+        bodyEl.textContent = '';
+
+        return new Promise((resolve) => {
+            const start = performance.now();
+            const tick = (now) => {
+                const elapsed = now - start;
+                const progress = Math.min(1, elapsed / duration);
+                const chars = Math.max(1, Math.min(length, Math.floor(elapsed / msPerChar)));
+                bodyEl.textContent = safeText.slice(0, chars) + (progress < 1 ? '▍' : '');
+                if (autoScroll) scrollToBottom();
+                if (progress < 1 && chars < length) {
+                    requestAnimationFrame(tick);
+                    return;
+                }
+                resolve();
+            };
+            requestAnimationFrame(tick);
+        }).then(() => {
+            bodyEl.innerHTML = String(html ?? '');
+            void bodyEl.offsetWidth;
+            bodyEl.classList.add('chat-reply-fade-in');
+            if (autoScroll) scrollToBottom();
+        });
     };
 
     const scrollToBottom = () => {
@@ -920,20 +947,27 @@
             if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
                 const body = thinkingEl.querySelector('.whitespace-pre-wrap');
                 if (body) {
-                    body.innerHTML = content;
-                    body.classList.remove('chat-reply-fade-in');
-                    void body.offsetWidth;
-                    body.classList.add('chat-reply-fade-in');
+                    await typeAssistantResponse(body, content);
                 } else {
                     thinkingEl.remove();
-                    renderMessage('assistant', content);
+                    const el = renderMessage('assistant', '');
+                    const body2 = el.querySelector('.whitespace-pre-wrap');
+                    if (body2) {
+                        await typeAssistantResponse(body2, content);
+                    } else {
+                        el.remove();
+                        renderMessage('assistant', content);
+                    }
                 }
                 delete thinkingEl.dataset.thinking;
             } else {
-                const el = renderMessage('assistant', content);
+                const el = renderMessage('assistant', '');
                 const body = el.querySelector('.whitespace-pre-wrap');
                 if (body) {
-                    body.classList.add('chat-reply-fade-in');
+                    await typeAssistantResponse(body, content);
+                } else {
+                    el.remove();
+                    renderMessage('assistant', content);
                 }
             }
             upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(prompt), is_pinned: false });
@@ -1106,17 +1140,28 @@
                     if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
                         const body = thinkingEl.querySelector('.whitespace-pre-wrap');
                         if (body) {
-                            body.innerHTML = content;
-                            body.classList.remove('chat-reply-fade-in');
-                            void body.offsetWidth;
-                            body.classList.add('chat-reply-fade-in');
+                            await typeAssistantResponse(body, content);
                         } else {
                             thinkingEl.remove();
-                            renderMessage('assistant', content);
+                            const el = renderMessage('assistant', '');
+                            const body2 = el.querySelector('.whitespace-pre-wrap');
+                            if (body2) {
+                                await typeAssistantResponse(body2, content);
+                            } else {
+                                el.remove();
+                                renderMessage('assistant', content);
+                            }
                         }
                         delete thinkingEl.dataset.thinking;
                     } else {
-                        renderMessage('assistant', content);
+                        const el = renderMessage('assistant', '');
+                        const body = el.querySelector('.whitespace-pre-wrap');
+                        if (body) {
+                            await typeAssistantResponse(body, content);
+                        } else {
+                            el.remove();
+                            renderMessage('assistant', content);
+                        }
                     }
                     upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(editedText), is_pinned: false });
                     scrollToBottom();
@@ -1135,23 +1180,41 @@
             return;
         }
 
-        const toggle = e.target.closest('[data-ref-toggle]');
-        if (!toggle) return;
-        const item = toggle.closest('.ref-accordion');
-        if (!item) return;
-        const body = item.querySelector('.ref-accordion-body');
+        const refItem = e.target.closest('.ref-accordion');
+        if (!refItem) return;
+        if (e.target.closest('a')) return;
+
+        const body = refItem.querySelector('.ref-accordion-body');
         if (!body) return;
 
-        const isHidden = body.hasAttribute('hidden');
-        if (isHidden) {
-            body.removeAttribute('hidden');
-            item.classList.add('is-open');
-            toggle.setAttribute('aria-expanded', 'true');
+        body.removeAttribute('hidden');
+        const willOpen = !refItem.classList.contains('is-open');
+        if (willOpen) {
+            refItem.classList.add('is-open');
+            refItem.setAttribute('aria-expanded', 'true');
         } else {
-            body.setAttribute('hidden', '');
-            item.classList.remove('is-open');
-            toggle.setAttribute('aria-expanded', 'false');
+            refItem.classList.remove('is-open');
+            refItem.setAttribute('aria-expanded', 'false');
         }
+    });
+
+    document.querySelectorAll('.ref-accordion').forEach((item) => {
+        if (!item.hasAttribute('tabindex')) item.setAttribute('tabindex', '0');
+        if (!item.hasAttribute('role')) item.setAttribute('role', 'button');
+        if (!item.hasAttribute('aria-expanded')) item.setAttribute('aria-expanded', 'false');
+    });
+
+    document.querySelectorAll('.ref-accordion-body[hidden]').forEach((el) => {
+        el.removeAttribute('hidden');
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.classList.contains('ref-accordion')) return;
+        e.preventDefault();
+        target.click();
     });
 
     scrollToBottom();

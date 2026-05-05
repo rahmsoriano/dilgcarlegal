@@ -1546,6 +1546,15 @@
 
                     nextLink.appendChild(div);
                     container.replaceWith(nextLink);
+
+                    const finalTitle = String(text || '').trim();
+                    if (finalTitle !== '' && finalTitle !== 'Untitled Thread') {
+                        item.dataset.fixedTitle = '1';
+                        item.dataset.fixedTitleText = finalTitle;
+                    } else {
+                        item.dataset.fixedTitle = '0';
+                        delete item.dataset.fixedTitleText;
+                    }
                 };
 
                 const commit = async () => {
@@ -1582,6 +1591,7 @@
                 const selector = `[data-conversation-id="${id}"]`;
                 let item = chatsList.querySelector(selector);
                 const displayTitle = (title && String(title).trim()) ? String(title).trim() : 'Untitled Thread';
+                const incomingMeaningful = displayTitle !== 'Untitled Thread';
 
                 if (!item) {
                     item = document.createElement('div');
@@ -1594,6 +1604,8 @@
                     item.dataset.togglePinUrl = toggle_pin_url || `/conversations/${id}/toggle-pin`;
                     item.dataset.toggleSaveUrl = toggle_save_url || `/conversations/${id}/toggle-save`;
                     item.dataset.deleteUrl = delete_url || `/conversations/${id}`;
+                    item.dataset.fixedTitle = incomingMeaningful ? '1' : '0';
+                    if (incomingMeaningful) item.dataset.fixedTitleText = displayTitle;
                     const isActive = activeConversationId && String(activeConversationId) === String(id);
                     item.className = `sidebar-chat-item group relative flex items-center gap-2 border transition-all w-full overflow-hidden${isActive ? ' is-active' : ''}`;
 
@@ -1650,7 +1662,30 @@
                 if (is_pinned !== undefined) item.dataset.isPinned = is_pinned ? '1' : '0';
 
                 const titleEl = item.querySelector('.sidebar-chat-title');
-                if (titleEl) titleEl.textContent = displayTitle;
+                if (titleEl) {
+                    const currentTitle = String(titleEl.textContent || '').trim();
+                    const currentMeaningful = currentTitle !== '' && currentTitle !== 'Untitled Thread';
+                    const isFixed = item.dataset.fixedTitle === '1' || currentMeaningful;
+
+                    if (currentMeaningful && item.dataset.fixedTitle !== '1') {
+                        item.dataset.fixedTitle = '1';
+                        item.dataset.fixedTitleText = currentTitle;
+                    }
+
+                    if (!isFixed) {
+                        titleEl.textContent = displayTitle;
+                        if (incomingMeaningful) {
+                            item.dataset.fixedTitle = '1';
+                            item.dataset.fixedTitleText = displayTitle;
+                        }
+                    } else if (!currentMeaningful) {
+                        titleEl.textContent = displayTitle;
+                        if (incomingMeaningful) {
+                            item.dataset.fixedTitle = '1';
+                            item.dataset.fixedTitleText = displayTitle;
+                        }
+                    }
+                }
 
                 updateMenuLabels(item);
                 moveForPinned(item);
@@ -1659,6 +1694,14 @@
             };
 
             if (chatsList) {
+                chatsList.querySelectorAll('.sidebar-chat-item').forEach((item) => {
+                    const titleEl = item.querySelector('.sidebar-chat-title');
+                    const t = String(titleEl?.textContent || '').trim();
+                    if (t !== '' && t !== 'Untitled Thread') {
+                        item.dataset.fixedTitle = '1';
+                        item.dataset.fixedTitleText = t;
+                    }
+                });
                 chatsList.querySelectorAll('.sidebar-chat-item').forEach(updateMenuLabels);
                 updateBulkSelectionUI();
             }
