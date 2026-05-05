@@ -4,15 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class RegisteredUserController extends Controller
 {
@@ -45,13 +44,27 @@ class RegisteredUserController extends Controller
             'last_name' => $request->last_name,
             'birthday' => $request->birthday,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
+            'role' => 'user',
+            'status' => 'active',
         ]);
 
-        event(new Registered($user));
+        $status = 'verification-link-sent';
+
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (Throwable $e) {
+            Log::warning('Email verification send failed during registration.', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'message' => $e->getMessage(),
+            ]);
+
+            $status = 'verification-link-fallback';
+        }
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        return redirect()->route('verification.notice')->with('status', $status);
     }
 }

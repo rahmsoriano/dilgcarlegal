@@ -3,6 +3,8 @@
 namespace App\Http;
 
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\EnsureUserEmailIsVerified;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -82,10 +84,12 @@ class Kernel extends HttpKernel
         'cache.headers' => SetCacheHeaders::class,
         'can' => Authorize::class,
         'guest' => RedirectIfAuthenticated::class,
+        'active' => EnsureUserIsActive::class,
         'password.confirm' => RequirePassword::class,
         'precognitive' => HandlePrecognitiveRequests::class,
         'signed' => ValidateSignature::class,
         'throttle' => ThrottleRequests::class,
+        'verified.user' => EnsureUserEmailIsVerified::class,
         'verified' => EnsureEmailIsVerified::class,
     ];
 }

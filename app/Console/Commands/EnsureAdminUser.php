@@ -36,12 +36,16 @@ class EnsureAdminUser extends Command
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'password' => Hash::make($password),
+                'role' => 'admin',
+                'status' => 'active',
                 'is_admin' => true,
             ]
         );
 
-        if (!$user->is_admin) {
+        if (! $user->is_admin || $user->role !== 'admin' || $user->status !== 'active') {
             $user->is_admin = true;
+            $user->role = 'admin';
+            $user->status = 'active';
             $user->save();
         }
 

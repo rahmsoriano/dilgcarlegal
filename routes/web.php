@@ -6,7 +6,7 @@ use App\Http\Controllers\Admin\FaqResponsesController as AdminFaqResponsesContro
 use App\Http\Controllers\Admin\LawController as AdminLawController;
 use App\Http\Controllers\Admin\OpinionsController as AdminOpinionsController;
 use App\Http\Controllers\Admin\UsageController as AdminUsageController;
-use App\Http\Controllers\Admin\UsersController as AdminUsersController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\MessageController;
@@ -60,9 +60,9 @@ Route::get('/dashboard', function () {
     }
 
     return redirect()->route('chat.index');
-})->middleware(['auth'])->name('dashboard');
+})->middleware(['auth', 'active'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified.user', 'active'])->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/saved', [ChatController::class, 'saved'])->name('chat.saved');
     Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
@@ -76,14 +76,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store'])->middleware('throttle:20,1')->name('messages.store');
 });
 
-Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'active', 'can:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/legal-ai', [AdminChatController::class, 'index'])->name('legal.ai');
     Route::get('/legal-ai/new', [AdminChatController::class, 'create'])->name('legal.ai.new');
     Route::get('/legal-ai/saved', [AdminChatController::class, 'saved'])->name('legal.ai.saved');
     Route::get('/legal-ai/{conversation}', [AdminChatController::class, 'show'])->name('legal.ai.show');
-    Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
-    Route::patch('/users/{user}', [AdminUsersController::class, 'update'])->name('users.update');
+    Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
     Route::get('/usage', [AdminUsageController::class, 'index'])->name('usage.index');
     Route::post('/opinions/extract', [AdminOpinionsController::class, 'extract'])->name('opinions.extract');
     Route::resource('opinions', AdminOpinionsController::class);
@@ -92,7 +97,7 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::resource('laws', AdminLawController::class);
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified.user', 'active'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

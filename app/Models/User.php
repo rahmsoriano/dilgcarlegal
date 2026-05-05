@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -25,6 +25,8 @@ class User extends Authenticatable
         'birthday',
         'email',
         'password',
+        'role',
+        'status',
         'is_admin',
     ];
 
@@ -49,6 +51,34 @@ class User extends Authenticatable
         'is_admin' => 'boolean',
         'birthday' => 'date',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $user): void {
+            $fullName = trim(implode(' ', array_filter([
+                $user->first_name,
+                $user->last_name,
+            ])));
+
+            if ($fullName !== '') {
+                $user->name = $fullName;
+            }
+
+            $user->role = $user->role ?: 'user';
+            $user->status = $user->status ?: 'active';
+            $user->is_admin = $user->role === 'admin';
+        });
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        $fullName = trim(implode(' ', array_filter([
+            $this->first_name,
+            $this->last_name,
+        ])));
+
+        return $fullName !== '' ? $fullName : ($this->name ?: $this->email);
+    }
 
     public function conversations(): HasMany
     {
