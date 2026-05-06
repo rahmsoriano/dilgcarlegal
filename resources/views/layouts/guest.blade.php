@@ -18,7 +18,9 @@
     </head>
     <body class="font-sans text-gray-900 antialiased">
         @php
-            $immersiveAuth = request()->routeIs('login');
+            $immersiveAuth = request()->routeIs('login')
+                || request()->routeIs('password.request')
+                || request()->routeIs('password.reset');
         @endphp
 
         @if ($immersiveAuth)
