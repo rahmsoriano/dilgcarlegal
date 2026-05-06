@@ -13,6 +13,8 @@ use App\Services\OpenAiChatClient;
 use App\Services\GroqChatClient;
 use App\Services\OpinionRetriever;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class MessageController extends Controller
@@ -911,7 +913,7 @@ class MessageController extends Controller
         $generalBlock = $this->buildGeneralInfoWithSources($prompt, $openai, $gemini, $groq);
         $general = $this->limitToSentences((string) ($generalBlock['paragraph'] ?? ''), 3);
         $sources = (array) ($generalBlock['sources'] ?? []);
-        $maxSources = 8;
+        $maxSources = 3;
 
         $conclusion = $this->generateConclusionFromGeneralInfo($prompt, $general, $openai, $gemini, $groq);
         $conclusion = $this->limitToSentences($conclusion, 2);
@@ -920,18 +922,24 @@ class MessageController extends Controller
         }
 
         $divider = "\n<hr class=\"chat-section-divider\" />\n\n";
-        $out = "Direct Answer:\nNo legal opinion in the Opinion Library directly addresses your exact question. Below is general information from external sources.\n";
+        $out = "No legal opinion in the Opinion Library directly addresses your exact question. Below is general information from external sources.\n";
         $out .= $divider;
         $out .= "Conclusion:\n".$conclusion."\n";
         $out .= $divider;
         $out .= "General Information:\n".$general."\n";
-        foreach (array_slice(array_values(array_filter(array_map('trim', $sources))), 0, $maxSources) as $src) {
-            if ($src === '') {
-                continue;
+        $out .= $divider;
+        $sources = array_slice(array_values(array_filter(array_map('trim', $sources))), 0, $maxSources);
+        if (count($sources) === 0) {
+            $out .= "No reliable or accessible source found for this information.\n";
+        } else {
+            foreach ($sources as $src) {
+                if ($src === '') {
+                    continue;
+                }
+                $href = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $label = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $out .= 'Source: <a class="external-source-link" href="'.$href.'" target="_blank" rel="noopener noreferrer">'.$label."</a>\n";
             }
-            $href = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $label = htmlspecialchars($src, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $out .= 'Source: <a class="external-source-link" href="'.$href.'" target="_blank" rel="noopener noreferrer">'.$label."</a>\n";
         }
         $out .= "\n";
 
@@ -983,11 +991,11 @@ Strict rules:
 - This must be general legal information outside the stored DILG opinion library.
 - Do not cite or invent any DILG opinion numbers, circular numbers, case names, or exact dates.
 - Write 2–3 sentences only for the explanation.
-- After the explanation, add 2–8 source lines in the exact format:
+- After the explanation, you MAY add source lines in the exact format:
 Source: https://example.com
 - Only use HTTPS URLs from these legitimate Philippine sources (choose the most relevant):
   - https://www.officialgazette.gov.ph/
-  - https://lawphil.net/
+  - https://lawphil.net/ (PRIORITY: prefer direct LawPhil statute/rule pages when applicable)
   - https://senate.gov.ph/
   - https://www.congress.gov.ph/
   - https://dilg.gov.ph/
@@ -995,7 +1003,8 @@ Source: https://example.com
   - https://www.csc.gov.ph/
   - https://ombudsman.gov.ph/
   - https://sc.judiciary.gov.ph/
-- Use a direct page URL that actually covers the topic (avoid generic homepages when possible).
+- Use a direct page URL that actually covers the topic (avoid generic homepages).
+- Do NOT invent URLs. If you cannot provide reliable, accessible, direct-page URLs, output ZERO source lines.
 
 Output only the explanation + source lines (no extra headers).';
 
@@ -1011,9 +1020,7 @@ Output only the explanation + source lines (no extra headers).';
             );
             $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
         } catch (\Throwable $e) {
-            $text = 'General guidance is available, but I could not reach the AI provider to generate it at the moment.'."\n".
-                'Source: https://www.officialgazette.gov.ph/'."\n".
-                'Source: https://lawphil.net/';
+            $text = 'General guidance is available, but I could not reach the AI provider to generate it at the moment.';
         }
 
         $text = str_replace(["\r\n", "\r"], "\n", trim((string) $text));
@@ -1054,19 +1061,50 @@ Output only the explanation + source lines (no extra headers).';
         $paragraph = trim((string) preg_replace('/\s+/u', ' ', implode(' ', $paragraphLines)));
         $paragraph = $this->limitToSentences($paragraph, 3);
 
-        $sources = array_values(array_unique(array_filter(array_map('trim', $sources))));
-        $sources = $this->filterTrustedSources($sources, $prompt);
+        $seeded = $this->seedKnownSourcesFromText($paragraph.' '.$prompt);
+        $sources = array_values(array_unique(array_filter(array_map('trim', array_merge($sources, $seeded)))));
+        $sources = $this->filterTrustedSources($sources, $prompt, 6);
+        $sources = $this->filterAccessibleSources($sources, 3);
         if (count($sources) === 0) {
-            $sources = [
-                'https://www.officialgazette.gov.ph/',
-                'https://lawphil.net/',
-            ];
+            $lawphil = $this->generateLawphilSourcesOnly($prompt, $openai, $gemini, $groq);
+            $lawphil = $this->filterTrustedSources($lawphil, $prompt, 6);
+            $lawphil = $this->filterAccessibleSources($lawphil, 3);
+            $sources = $lawphil;
         }
 
         return [
             'paragraph' => $paragraph,
-            'sources' => array_slice($sources, 0, 8),
+            'sources' => array_slice($sources, 0, 3),
         ];
+    }
+
+    private function seedKnownSourcesFromText(string $text): array
+    {
+        $t = mb_strtolower($text);
+        $out = [];
+
+        if (preg_match('/\bra\s*10175\b/i', $text) === 1 || str_contains($t, 'cybercrime prevention act')) {
+            $out[] = 'https://lawphil.net/statutes/repacts/ra2012/ra_10175_2012.html';
+        }
+
+        if (preg_match('/\bra\s*4200\b/i', $text) === 1 || str_contains($t, 'anti-wiretapping') || str_contains($t, 'wiretapping law')) {
+            $out[] = 'https://lawphil.net/statutes/repacts/ra1972/ra_4200_1972.html';
+            $out[] = 'https://www.officialgazette.gov.ph/1972/05/14/republic-act-no-4200/';
+        }
+
+        if (str_contains($t, 'revised penal code') || preg_match('/\bact\s*no\.?\s*3815\b/i', $text) === 1) {
+            $out[] = 'https://lawphil.net/statutes/acts/act_3815_1930.html';
+        }
+
+        if (preg_match('/\bart(?:icle)?\s*353\b/i', $text) === 1 || str_contains($t, 'libel')) {
+            $out[] = 'https://lawphil.net/statutes/acts/act_3815_1930.html#art353';
+        }
+
+        if (str_contains($t, 'rules of court') || str_contains($t, 'rules of criminal procedure') || str_contains($t, 'rule 113')) {
+            $out[] = 'https://lawphil.net/courts/rules/crimproc/2000/rules_crimprc_2000.html';
+        }
+
+        return array_values(array_unique(array_filter(array_map('trim', $out))));
     }
 
     private function filterTrustedSources(array $sources, string $prompt, int $max = 8): array
@@ -1143,12 +1181,15 @@ Output only the explanation + source lines (no extra headers).';
         $query = (string) ($parts['query'] ?? '');
 
         $isGeneric = ($path === '' || $path === '/') && $query === '';
+        if ($isGeneric) {
+            return null;
+        }
 
         $score = 0;
-        if (! $isGeneric) {
-            $score += 10;
-        } else {
-            $score -= 5;
+        $score += 10;
+
+        if ($host === 'lawphil.net' || str_ends_with($host, '.lawphil.net')) {
+            $score += 8;
         }
 
         $lurl = mb_strtolower($url);
@@ -1172,6 +1213,160 @@ Output only the explanation + source lines (no extra headers).';
         $score += min(8, $hits * 2);
 
         return $score;
+    }
+
+    private function generateLawphilSourcesOnly(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): array
+    {
+        $instruction = 'You are Lex, the GABAY-Lex AI.
+
+Task:
+Provide 1–3 LawPhil source links relevant to the user question.
+
+Strict rules:
+- Output ONLY lines in this exact format (no other text):
+Source: https://lawphil.net/...
+- Use only LawPhil direct pages (avoid https://lawphil.net/ homepage).
+- Do NOT invent or guess URLs. If you are not confident the exact URL exists, output ZERO lines.';
+
+        try {
+            $resp = $this->chatWithFallback(
+                [
+                    ['role' => 'system', 'content' => $instruction],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                $openai,
+                $gemini,
+                $groq
+            );
+            $text = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $text = str_replace(["\r\n", "\r"], "\n", trim((string) $text));
+        if ($text === '') {
+            return [];
+        }
+
+        $lines = preg_split("/\n/u", $text) ?: [];
+        $out = [];
+        foreach ($lines as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+            if (preg_match('/^\s*source\s*:/i', $line) !== 1) {
+                continue;
+            }
+            if (preg_match('/https?:\/\/\S+/i', $line, $m) === 1) {
+                $out[] = rtrim((string) $m[0], '|');
+            }
+        }
+
+        return array_values(array_unique(array_filter(array_map('trim', $out))));
+    }
+
+    private function filterAccessibleSources(array $sources, int $max = 3): array
+    {
+        $verified = [];
+        $unknown = [];
+        $seen = [];
+        foreach ($sources as $raw) {
+            $url = trim((string) $raw);
+            if ($url === '' || isset($seen[$url])) {
+                continue;
+            }
+            $seen[$url] = true;
+            $status = $this->isAccessibleTrustedUrl($url);
+            if ($status === true) {
+                $verified[] = $url;
+            } elseif ($status === null) {
+                $unknown[] = $url;
+            }
+        }
+
+        if (count($verified) > 0) {
+            return array_slice($verified, 0, $max);
+        }
+
+        return array_slice($unknown, 0, $max);
+    }
+
+    private function isAccessibleTrustedUrl(string $url): ?bool
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return false;
+        }
+
+        $cacheKey = 'gabylex:url_accessible:'.sha1($url);
+        $cached = Cache::get($cacheKey);
+        if ($cached === true) {
+            return true;
+        }
+        if ($cached === false) {
+            return false;
+        }
+
+        try {
+            $head = Http::retry(2, 150)
+                ->timeout(4)
+                ->withHeaders([
+                    'Accept' => 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8',
+                    'User-Agent' => 'Mozilla/5.0 (compatible; GABAY-Lex/1.0)',
+                ])
+                ->head($url);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (! $head->successful()) {
+            $code = (int) $head->status();
+            if (!in_array($code, [405, 501], true)) {
+                Cache::put($cacheKey, false, now()->addHours(12));
+                return false;
+            }
+        }
+
+        $ct = mb_strtolower((string) ($head->header('Content-Type') ?? ''));
+        if ($ct !== '' && !str_contains($ct, 'text/html') && !str_contains($ct, 'application/pdf') && !str_contains($ct, 'text/plain') && !str_contains($ct, 'application/octet-stream')) {
+            Cache::put($cacheKey, false, now()->addHours(12));
+            return false;
+        }
+
+        if ($head->successful() && !str_contains($ct, 'text/html')) {
+            Cache::put($cacheKey, true, now()->addDays(14));
+            return true;
+        }
+
+        try {
+            $resp = Http::retry(1, 150)
+                ->timeout(5)
+                ->withHeaders([
+                    'Accept' => 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8',
+                    'User-Agent' => 'Mozilla/5.0 (compatible; GABAY-Lex/1.0)',
+                ])
+                ->get($url);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (! $resp->successful()) {
+            Cache::put($cacheKey, false, now()->addHours(12));
+            return false;
+        }
+
+        $body = (string) $resp->body();
+        if ($body !== '') {
+            $snippet = mb_strtolower(mb_substr($body, 0, 2500));
+            if ($snippet !== '' && (str_contains($snippet, 'page not found') || str_contains($snippet, '404') || str_contains($snippet, 'not found'))) {
+                Cache::put($cacheKey, false, now()->addHours(12));
+                return false;
+            }
+        }
+
+        Cache::put($cacheKey, true, now()->addDays(14));
+        return true;
     }
 
     private function generateConclusionFromGeneralInfo(string $prompt, string $generalInfo, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
@@ -1256,7 +1451,7 @@ Strict rules:
         }
 
         $divider = "\n<hr class=\"chat-section-divider\" />\n\n";
-        $out = "Direct Answer:\n".$direct."\n";
+        $out = $direct."\n";
         $out .= $divider;
         $out .= "Legal Basis / Supporting Reference:\n".$mainCitation."\n".$mainSummary."\n";
         $out .= $divider;
@@ -1333,7 +1528,7 @@ Strict rules:
     {
         $main = $opinions[0] ?? null;
         if (!is_array($main)) {
-            return "Direct Answer:\nI could not generate an AI explanation at the moment.\n<hr class=\"chat-section-divider\" />\n\nLegal Basis / Supporting Reference:\n(No DILG legal opinion reference available)\n<hr class=\"chat-section-divider\" />\n\nConclusion:\nPlease try again.\n<hr class=\"chat-section-divider\" />\n\nOther Related References That Might Help:\n- (None)";
+            return "I could not generate an AI explanation at the moment.\n<hr class=\"chat-section-divider\" />\n\nLegal Basis / Supporting Reference:\n(No DILG legal opinion reference available)\n<hr class=\"chat-section-divider\" />\n\nConclusion:\nPlease try again.\n<hr class=\"chat-section-divider\" />\n\nOther Related References That Might Help:\n- (None)";
         }
 
         $tokens = $this->tokenizeOpinionListTopic($prompt);
@@ -1341,7 +1536,7 @@ Strict rules:
         $mainExcerpt = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
 
         $divider = "\n<hr class=\"chat-section-divider\" />\n\n";
-        $out = "Direct Answer:\nA directly relevant DILG legal opinion is available; please see the main reference below.\n";
+        $out = "A directly relevant DILG legal opinion is available; please see the main reference below.\n";
         $out .= $divider;
         $out .= "Legal Basis / Supporting Reference:\n".$mainCitation."\n".$mainExcerpt."\n";
         $out .= $divider;
@@ -2152,38 +2347,56 @@ OUTPUT: Return only the corrected (or original) response text. Do not add any me
 
     private function isSmallTalk(string $text): bool
     {
-        $t = trim($text);
-        if ($t === '') {
+        $raw = trim($text);
+        if ($raw === '') {
             return true;
         }
 
-        if (mb_strlen($t) > 120) {
+        if (mb_strlen($raw) > 140) {
             return false;
         }
 
-        // Exact matches for common phrases
-        $exactPhrases = [
-            'hi', 'hello', 'hey', 'yo', 'sup', 'kamusta', 'kumusta', 'hello ai', 'hi ai',
-            'good morning', 'good afternoon', 'good evening', 'good day',
-            'how are you', 'how r u', 'how are u', 'whats up', 'what is up',
-            'thank you', 'thanks', 'ty', 'salamat', 'thank u',
-            'love you', 'i love you', 'haha', 'lol',
-            'who are you', 'what are you', 'who r u', 'what can you do', 'what can u do',
-            'bye', 'goodbye', 'see you', 'cya',
-        ];
+        $lowerRaw = mb_strtolower($raw);
+        $normalized = (string) preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $lowerRaw);
+        $normalized = trim((string) preg_replace('/\s+/u', ' ', $normalized));
 
-        $lowerT = mb_strtolower($t);
-        foreach ($exactPhrases as $phrase) {
-            if ($lowerT === $phrase || preg_match('/^' . preg_quote($phrase, '/') . '[!.\\s]*$/i', $t)) {
-                return true;
+        $legalSignals = [
+            'ra ', 'republic act', 'section', 'sec', 'article', 'art', 'penal', 'criminal', 'civil',
+            'juris', 'supreme court', 'sc ', 'law', 'ordinance', 'case', 'circular', 'memorandum',
+            'resolution', 'policy', 'procedure', 'complaint', 'affidavit', 'punishable', 'imprisonment',
+            'fine', 'warrant', 'arrest', 'dilg', 'comelec', 'ombudsman', 'csc',
+        ];
+        foreach ($legalSignals as $sig) {
+            if ($sig !== '' && str_contains($normalized, $sig)) {
+                return false;
             }
         }
 
+        if (
+            preg_match('/^(hi|hello|hey|yo|sup)(\s+lex|\s+ai)?$/iu', $normalized) === 1 ||
+            preg_match('/^good\s+(morning|afternoon|evening|day)$/iu', $normalized) === 1 ||
+            preg_match('/^(how\s+are\s+(you|u)\b.*)$/iu', $normalized) === 1 ||
+            preg_match('/^(how\s+r\s+u\b.*)$/iu', $normalized) === 1 ||
+            preg_match('/^(how\s+(is|s)\s+it\s+going\b.*)$/iu', $normalized) === 1 ||
+            preg_match('/^(how\s+are\s+things\b.*)$/iu', $normalized) === 1 ||
+            preg_match('/^(whats\s+up\b.*|what\s+is\s+up\b.*)$/iu', $normalized) === 1 ||
+            preg_match('/^(are|r)\s+you\s+(ok|okay)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(you)\s+(ok|okay)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(ok|okay|ayos)\s+ka(\s+ba)?\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(kumusta|kamusta|musta)(\s+ka)?\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(thank\s+you|thanks|thank\s+u|ty|salamat)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(bye|goodbye|see\s+you|cya)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(who\s+r\s+u|who\s+are\s+you|what\s+are\s+you|what\s+can\s+(you|u)\s+do)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(haha|lol)\b.*$/iu', $normalized) === 1
+        ) {
+            return true;
+        }
+
         // Keyword based matches for very short messages
-        if (mb_strlen($t) < 30) {
-            $keywords = ['hello', 'hi', 'hey', 'kumusta', 'kamusta', 'thanks', 'salamat', 'who are you', 'who r u'];
+        if (mb_strlen($normalized) < 40) {
+            $keywords = ['hello', 'hi', 'hey', 'kumusta', 'kamusta', 'thanks', 'salamat', 'ok', 'okay', 'ayos'];
             foreach ($keywords as $kw) {
-                if (str_contains($lowerT, $kw)) {
+                if (str_contains($normalized, $kw)) {
                     return true;
                 }
             }
@@ -2194,10 +2407,25 @@ OUTPUT: Return only the corrected (or original) response text. Do not add any me
 
     private function fallbackChatReply(string $prompt): string
     {
-        $t = mb_strtolower(trim($prompt));
+        $raw = trim((string) $prompt);
+        $t = mb_strtolower($raw);
+        $normalized = (string) preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $t);
+        $normalized = trim((string) preg_replace('/\s+/u', ' ', $normalized));
 
-        if ($t === '') {
+        if ($normalized === '') {
             return "Hi! What can I help you with?";
+        }
+
+        if (
+            preg_match('/^(are|r)\s+you\s+(ok|okay)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(you)\s+(ok|okay)\b.*$/iu', $normalized) === 1 ||
+            preg_match('/^(ok|okay|ayos)\s+ka(\s+ba)?\b.*$/iu', $normalized) === 1
+        ) {
+            return "Okay ako—salamat sa pag-check. Ano kailangan mo?";
+        }
+
+        if (preg_match('/^(how\s+are\s+(you|u)\b.*|how\s+r\s+u\b.*|how\s+(is|s)\s+it\s+going\b.*)$/iu', $normalized) === 1 || preg_match('/^(kumusta|kamusta|musta)(\s+ka)?\b.*$/iu', $normalized) === 1) {
+            return "Okay naman ako. Ikaw, kumusta? Ano gusto mong pag-usapan?";
         }
 
         if (preg_match('/\\b(i\\s+love\\s+you|love\\s+you)\\b/i', $prompt)) {
