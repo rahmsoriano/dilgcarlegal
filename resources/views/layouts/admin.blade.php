@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -365,16 +365,16 @@
             }
 
             .sidebar-nav-list {
-                background: rgba(255, 255, 255, 0.35);
-                border: 1px solid rgba(15, 23, 42, 0.08);
-                border-radius: 1.25rem;
-                overflow: hidden;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                overflow: visible;
             }
 
             .sidebar-nav-icon {
-                width: 34px;
-                height: 34px;
-                border-radius: 0.8rem;
+                width: 30px;
+                height: 30px;
+                border-radius: 0.75rem;
                 background-color: #002C76;
                 color: #ffffff;
                 display: flex;
@@ -392,20 +392,48 @@
                 color: #0f172a !important;
                 width: 100%;
                 border-radius: 0 !important;
-                border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+                border-bottom: 0;
                 background: transparent !important;
-            }
-
-            .sidebar-nav-link:last-child {
-                border-bottom: none;
             }
 
             .sidebar-nav-link:hover {
                 background: rgba(0, 44, 118, 0.06) !important;
+                border-radius: 14px !important;
             }
 
             .sidebar-nav-link.active-link {
                 background: rgba(0, 44, 118, 0.10) !important;
+                border-radius: 14px !important;
+            }
+
+            .sidebar-kb-panel {
+                overflow: hidden;
+                max-height: 0;
+                opacity: 0;
+                transition: max-height 220ms ease, opacity 200ms ease;
+            }
+
+            .sidebar-kb.is-open .sidebar-kb-panel {
+                max-height: 220px;
+                opacity: 1;
+            }
+
+            .sidebar-kb-panel .sidebar-nav-link {
+                padding-left: 2.5rem;
+            }
+
+            .sidebar-kb-chevron {
+                margin-left: auto;
+                transition: transform 200ms ease;
+                color: rgba(15, 23, 42, 0.55);
+            }
+
+            .sidebar-kb.is-open .sidebar-kb-chevron {
+                transform: rotate(180deg);
+            }
+
+            .sidebar-collapsed .sidebar-kb-panel {
+                display: none !important;
             }
 
             .sidebar-collapsed .sidebar-nav-link:hover .sidebar-icon-box,
@@ -461,16 +489,16 @@
             }
 
             .sidebar-nav-list {
-                background: #ffffff;
-                border: 1px solid rgba(15, 23, 42, 0.10);
-                border-radius: 1.25rem;
-                overflow: hidden;
-                box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                overflow: visible;
+                box-shadow: none;
             }
 
             .sidebar-nav-icon {
                 background-color: var(--brand-ink);
-                box-shadow: 0 10px 22px rgba(0, 44, 118, 0.24);
+                box-shadow: none;
             }
 
             .sidebar-chat-item {
@@ -581,7 +609,7 @@
 
                         <div id="sidebar-primary" class="sidebar-search-fade">
                             <nav class="shrink-0 sidebar-nav-list">
-                            <a href="{{ route($newChatRoute) }}" class="sidebar-nav-link {{ request()->routeIs($newChatRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                            <a href="{{ route($newChatRoute) }}" class="sidebar-nav-link {{ request()->routeIs($newChatRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
                                 <div class="sidebar-nav-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="h-5 w-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -591,26 +619,51 @@
                             </a>
 
                             @if ($showOpinionsNav && auth()->check() && auth()->user()->is_admin)
-                                <a href="{{ route('admin.opinions.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.opinions.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
-                                    <div class="sidebar-nav-icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5-3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                        </svg>
-                                    </div>
-                                    <span class="sidebar-nav-label text-sm font-semibold">Opinions Library</span>
-                                </a>
-
-                                @if (auth()->check() && auth()->user()->is_admin)
-                                    <a href="{{ route('admin.faq-responses.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.faq-responses.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                @php
+                                    $kbActive = request()->routeIs('admin.opinions.*') || request()->routeIs('admin.faq-responses.*');
+                                @endphp
+                                <div class="sidebar-kb {{ $kbActive ? 'is-open' : '' }}">
+                                    <a
+                                        href="#"
+                                        data-kb-trigger="true"
+                                        data-loader-skip
+                                        aria-expanded="{{ $kbActive ? 'true' : 'false' }}"
+                                        class="sidebar-nav-link {{ $kbActive ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all"
+                                    >
                                         <div class="sidebar-nav-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 1.354-.784 2.535-1.917 3.091-.806.393-1.333 1.19-1.333 2.084v.225m0 3.75h.008v.008H12v-.008z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v14m-7-2.5V6.75A2.25 2.25 0 0 1 7.25 4.5h9.5A2.25 2.25 0 0 1 19 6.75V17.5A2.25 2.25 0 0 1 16.75 19.75h-9.5A2.25 2.25 0 0 1 5 17.5Z" />
                                             </svg>
                                         </div>
-                                        <span class="sidebar-nav-label text-sm font-semibold">FAQ Response Manager</span>
+                                        <span class="sidebar-nav-label text-sm font-semibold">Knowledge Base</span>
+                                        <svg class="sidebar-kb-chevron h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                        </svg>
                                     </a>
 
-                                    <a href="{{ route('admin.users.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.users.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                                    <div class="sidebar-kb-panel">
+                                        <a href="{{ route('admin.opinions.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.opinions.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
+                                            <div class="sidebar-nav-icon" style="background-color: rgba(0, 44, 118, 0.82);">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5-3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                </svg>
+                                            </div>
+                                            <span class="sidebar-nav-label text-sm font-semibold">Opinions Library</span>
+                                        </a>
+
+                                @if (auth()->check() && auth()->user()->is_admin)
+                                        <a href="{{ route('admin.faq-responses.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.faq-responses.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
+                                            <div class="sidebar-nav-icon" style="background-color: rgba(0, 44, 118, 0.82);">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 1.354-.784 2.535-1.917 3.091-.806.393-1.333 1.19-1.333 2.084v.225m0 3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                            </div>
+                                            <span class="sidebar-nav-label text-sm font-semibold">FAQ Response Manager</span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                    <a href="{{ route('admin.users.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.users.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
                                         <div class="sidebar-nav-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a8.966 8.966 0 0 0 3-6.72 9 9 0 1 0-18 0 8.966 8.966 0 0 0 3 6.72m12 0A13.949 13.949 0 0 1 12 21c-2.331 0-4.53-.572-6-1.28m12 0a13.987 13.987 0 0 0-3.75-2.16M6 18.72a13.987 13.987 0 0 1 3.75-2.16m0 0a3.75 3.75 0 1 1 4.5 0m-4.5 0a3.75 3.75 0 0 0 4.5 0" />
@@ -621,7 +674,7 @@
                                 @endif
                             @endif
 
-                            <a href="{{ route($archiveRoute) }}" class="sidebar-nav-link {{ request()->routeIs($archiveRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-3 transition-all">
+                            <a href="{{ route($archiveRoute) }}" class="sidebar-nav-link {{ request()->routeIs($archiveRoute) ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
                                 <div class="sidebar-nav-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
@@ -870,6 +923,24 @@
                         }
                     });
                     ro.observe(wrapper);
+                }
+            }
+
+            const kbTrigger = document.querySelector('[data-kb-trigger="true"]');
+            if (kbTrigger) {
+                const kbWrap = kbTrigger.closest('.sidebar-kb');
+                if (kbWrap) {
+                    let open = kbWrap.classList.contains('is-open');
+                    const setOpen = (next) => {
+                        open = next;
+                        kbWrap.classList.toggle('is-open', open);
+                        kbTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    };
+
+                    kbTrigger.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        setOpen(!open);
+                    });
                 }
             }
 
