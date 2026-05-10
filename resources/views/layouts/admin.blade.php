@@ -8,7 +8,7 @@
         <title>{{ config('app.name', 'GABAY-Lex') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
         @if (file_exists(public_path('hot')) || file_exists(public_path('build/manifest.json')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -27,6 +27,11 @@
                 --card-border: rgba(15, 23, 42, 0.10);
                 --shadow-soft: 0 18px 60px rgba(15, 23, 42, 0.10);
                 --shadow-mid: 0 16px 46px rgba(15, 23, 42, 0.16);
+                --app-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            }
+
+            html, body {
+                font-family: var(--app-font) !important;
             }
 
             .admin-header {
@@ -102,9 +107,9 @@
                 }
 
                 .admin-sidebar {
-                    width: 390px;
-                    min-width: 390px;
-                    flex: 0 0 390px;
+                    width: 330px;
+                    min-width: 330px;
+                    flex: 0 0 330px;
                     zoom: 1.15;
                     height: 100%; /* Ensure it fills the vertical space of the grid */
                 }
@@ -136,12 +141,44 @@
                 padding: 1rem !important;
             }
 
-            .sidebar-toggle-btn svg {
-                transition: transform 750ms ease-in-out;
+            .sidebar-toggle-btn {
+                position: relative;
+                border: 0;
+                outline: none;
+                box-shadow: none;
             }
 
-            .sidebar-collapsed .sidebar-toggle-btn svg {
-                transform: rotate(180deg);
+            .sidebar-toggle-btn:focus,
+            .sidebar-toggle-btn:focus-visible {
+                outline: none;
+                box-shadow: none;
+            }
+
+            .sidebar-toggle-btn svg {
+                transition: opacity 180ms ease;
+            }
+
+            .sidebar-toggle-btn[data-tooltip]::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                right: 100%;
+                top: 50%;
+                transform: translateY(-50%);
+                margin-right: 10px;
+                background: rgba(15, 23, 42, 0.95);
+                color: #ffffff;
+                font-size: 12px;
+                font-weight: 700;
+                padding: 6px 10px;
+                border-radius: 10px;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 160ms ease;
+            }
+
+            .sidebar-toggle-btn:hover::after {
+                opacity: 1;
             }
 
             .sidebar-collapsed .sidebar-nav-label,
@@ -167,6 +204,13 @@
                 transform: translateX(0);
                 max-width: 260px;
                 transition: opacity 520ms ease-in-out, transform 520ms ease-in-out, max-width 750ms ease-in-out;
+            }
+
+            .sidebar-nav-label {
+                font-size: 15px !important;
+                line-height: 1.2;
+                font-weight: 400 !important;
+                letter-spacing: -0.01em !important;
             }
 
             .sidebar-collapsed .sidebar-nav-link {
@@ -291,6 +335,10 @@
                 text-overflow: ellipsis;
                 max-width: 100%;
                 display: block;
+                font-size: 15px;
+                line-height: 1.2;
+                font-weight: 400 !important;
+                letter-spacing: -0.01em !important;
             }
 
             .sidebar-history {
@@ -364,6 +412,18 @@
                 flex-shrink: 0;
             }
 
+            .sidebar-nav-link .sidebar-icon-box,
+            .sidebar-nav-link .sidebar-icon-box-plain,
+            .sidebar-nav-link .sidebar-icon-box-yellow {
+                margin-left: 4px;
+            }
+
+            .sidebar-collapsed .sidebar-nav-link .sidebar-icon-box,
+            .sidebar-collapsed .sidebar-nav-link .sidebar-icon-box-plain,
+            .sidebar-collapsed .sidebar-nav-link .sidebar-icon-box-yellow {
+                margin-left: 0;
+            }
+
             .sidebar-nav-list {
                 background: transparent;
                 border: 0;
@@ -387,6 +447,23 @@
                 color: #ffffff;
             }
 
+            .sidebar-toggle-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 0.9rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: transparent;
+                color: #002C76;
+            }
+
+            .sidebar-collapsed .sidebar-top-actions {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
+
             .sidebar-nav-link {
                 position: relative;
                 color: #0f172a !important;
@@ -394,6 +471,8 @@
                 border-radius: 0 !important;
                 border-bottom: 0;
                 background: transparent !important;
+                font-size: 15px;
+                line-height: 1.2;
             }
 
             .sidebar-nav-link:hover {
@@ -444,20 +523,20 @@
             }
 
             .sidebar-chat-item {
-                background-color: #ffffff !important;
-                border-color: rgba(15, 23, 42, 0.08) !important;
-                border-radius: 1.1rem !important;
-                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+                background-color: transparent !important;
+                border-color: transparent !important;
+                border-radius: 0.50rem !important;
+                box-shadow: none !important;
                 color: #0f172a !important;
                 transform: none !important;
             }
 
             .sidebar-chat-item:hover {
-                background-color: rgba(255, 255, 255, 0.92) !important;
+                background-color: rgba(0, 44, 118, 0.06) !important;
             }
 
             .sidebar-chat-item.is-active {
-                border-color: rgba(0, 44, 118, 0.55) !important;
+                border-color: transparent !important;
             }
 
             .admin-content {
@@ -466,6 +545,10 @@
                 margin: 0;
                 padding: 22px 26px 30px;
                 box-sizing: border-box;
+            }
+
+            .admin-content.admin-content--flush {
+                padding: 0 !important;
             }
 
             @media (max-width: 1023px) {
@@ -480,11 +563,16 @@
                 }
             }
 
+            .admin-grid.admin-grid--flush {
+                gap: 0 !important;
+            }
+
             .admin-sidebar {
                 background: #ffffff !important;
-                border: 1px solid var(--shell-border);
-                border-radius: 26px;
-                box-shadow: var(--shadow-soft);
+                border: 0;
+                border-right: 1px solid rgba(15, 23, 42, 0.10);
+                border-radius: 0;
+                box-shadow: none;
                 padding: 18px !important;
             }
 
@@ -502,13 +590,13 @@
             }
 
             .sidebar-chat-item {
-                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 14px 26px rgba(15, 23, 42, 0.06) !important;
+                box-shadow: none !important;
             }
 
             .sidebar-chat-item.is-active {
-                background-color: rgba(0, 44, 118, 0.06) !important;
-                border-color: rgba(0, 44, 118, 0.45) !important;
-                box-shadow: 0 1px 2px rgba(0, 44, 118, 0.12), 0 18px 44px rgba(15, 23, 42, 0.10) !important;
+                background-color: rgba(0, 44, 118, 0.10) !important;
+                border-color: transparent !important;
+                box-shadow: none !important;
             }
 
             .sidebar-chats-scroll::-webkit-scrollbar-thumb {
@@ -542,9 +630,13 @@
                 </div>
             </header>
 
-            <div class="admin-content flex flex-1 min-h-0 w-full max-w-none flex-col px-0 py-0">
+            @php
+                $isChatScreen = request()->routeIs('admin.legal.ai*') || request()->routeIs('legal.ai') || request()->routeIs('legal.ai.show') || request()->routeIs('chat.*');
+            @endphp
 
-                <div class="admin-grid grid flex-1 min-h-0 grid-cols-1 gap-6 lg:gap-8 h-full">
+            <div class="admin-content {{ $isChatScreen ? 'admin-content--flush' : '' }} flex flex-1 min-h-0 w-full max-w-none flex-col px-0 py-0">
+
+                <div class="admin-grid {{ $isChatScreen ? 'admin-grid--flush' : '' }} grid flex-1 min-h-0 grid-cols-1 gap-6 lg:gap-8 h-full">
                     <aside id="app-sidebar" class="admin-sidebar relative flex h-full min-h-0 flex-col overflow-visible">
                         @php
                             $routeConversation = request()->route('conversation');
@@ -583,14 +675,8 @@
                                     ->get();
                             }
                         @endphp
-                        <div class="mb-4">
-                            <button id="sidebar-chat-search-collapsed" type="button" aria-label="Search chats" class="sidebar-search-collapsed sidebar-icon-box-plain mx-auto transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 104.473 8.708l2.41 2.409a.75.75 0 101.06-1.06l-2.409-2.41A5.5 5.5 0 009 3.5zM4.5 9a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-
-                            <div class="sidebar-search-expanded px-4">
+                        <div class="sidebar-top-actions mb-4 flex items-center gap-3 px-4">
+                            <div class="sidebar-search-expanded flex-1">
                                 <div class="relative">
                                     <div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
@@ -605,6 +691,13 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <button id="sidebar-collapse-toggle" type="button" data-tooltip="Close sidebar" data-loader-skip class="sidebar-toggle-btn sidebar-toggle-icon shrink-0 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.4" stroke="currentColor" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5A2.25 2.25 0 0 1 19.5 6.75v10.5A2.25 2.25 0 0 1 17.25 19.5H6.75A2.25 2.25 0 0 1 4.5 17.25V6.75Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15" />
+                                </svg>
+                            </button>
                         </div>
 
                         <div id="sidebar-primary" class="sidebar-search-fade">
@@ -685,12 +778,6 @@
                             </nav>
                         </div>
 
-                        <button id="sidebar-collapse-toggle" type="button" class="sidebar-toggle-btn absolute -right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full shadow-md hover:shadow-lg transition" style="background-color: white !important; border: 1px solid #e2e8f0 !important;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" style="color: #000 !important;">
-                                <path fill-rule="evenodd" d="M12.53 4.47a.75.75 0 010 1.06L8.06 10l4.47 4.47a.75.75 0 11-1.06 1.06l-5-5a.75.75 0 010-1.06l5-5a.75.75 0 011.06 0z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-
                         <div class="sidebar-history mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
                             <div class="sidebar-history-inner flex min-h-0 flex-1 flex-col">
                                 <button id="sidebar-chats-toggle" type="button" class="flex items-center justify-between px-4 py-2 text-left w-full">
@@ -718,7 +805,7 @@
 
                                 <div id="sidebar-chats-panel" class="mt-3 min-h-0 flex-1 overflow-hidden">
                                     <div id="sidebar-chats-scroll" class="sidebar-chats-scroll h-full overflow-y-auto px-2 pr-1">
-                                        <div id="sidebar-chats-list" class="space-y-1.5">
+                                        <div id="sidebar-chats-list" class="space-y-1">
                                             @forelse ($sidebarChats as $conversation)
                                                 <div
                                                     data-conversation-id="{{ $conversation->id }}"
@@ -732,16 +819,16 @@
                                                     data-delete-url="{{ route($sidebarDeleteRoute, $conversation->id) }}"
                                                     class="sidebar-chat-item group relative flex items-center gap-2 border transition-all w-full overflow-hidden {{ (string) $activeConversationId === (string) $conversation->id ? 'is-active' : '' }}"
                                                 >
-                                                    <div class="px-4 py-3 flex items-center shrink-0">
+                                                    <div class="px-4 py-2 flex items-center shrink-0">
                                                         <input type="checkbox" class="sidebar-chat-select h-4 w-4 rounded border-slate-300 text-[#002C76] focus:ring-0 focus:ring-offset-0 outline-none" />
                                                     </div>
-                                                    <a href="{{ route($chatShowRoute, $conversation->id) }}" class="min-w-0 flex-1 pr-4 py-3">
+                                                    <a href="{{ route($chatShowRoute, $conversation->id) }}" class="min-w-0 flex-1 pr-4 py-2">
                                                         <div class="sidebar-chat-title truncate text-sm font-semibold tracking-tight">
                                                             {{ $conversation->title ?: 'Untitled Thread' }}
                                                         </div>
                                                     </a>
 
-                                                    <div class="sidebar-pin-indicator pointer-events-none absolute right-10 top-2 z-10 {{ $conversation->is_pinned ? '' : 'hidden' }}" aria-hidden="true">
+                                                    <div class="sidebar-pin-indicator pointer-events-none absolute right-10 top-1 z-10 {{ $conversation->is_pinned ? '' : 'hidden' }}" aria-hidden="true">
                                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4">
                                                             <circle cx="12" cy="6.5" r="3.25" class="text-rose-400" fill="currentColor" />
                                                             <path d="M12 10v10" class="text-slate-700" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -873,6 +960,7 @@
                 document.body.classList.toggle('sidebar-collapsed', collapsed);
                 if (sidebarCollapseBtn) {
                     sidebarCollapseBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                    sidebarCollapseBtn.setAttribute('data-tooltip', collapsed ? 'Open sidebar' : 'Close sidebar');
                 }
             };
 
@@ -1499,7 +1587,7 @@
                     item.className = `sidebar-chat-item group relative flex items-center gap-2 border transition-all w-full overflow-hidden${isActive ? ' is-active' : ''}`;
 
                     const selectWrap = document.createElement('div');
-                    selectWrap.className = 'px-4 py-3 flex items-center shrink-0';
+                    selectWrap.className = 'px-4 py-2 flex items-center shrink-0';
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.className = 'sidebar-chat-select h-4 w-4 rounded border-slate-300 text-[#002C76] focus:ring-0 focus:ring-offset-0 outline-none';
@@ -1507,7 +1595,7 @@
 
                     const a = document.createElement('a');
                     a.href = url;
-                    a.className = 'min-w-0 flex-1 pr-4 py-3';
+                    a.className = 'min-w-0 flex-1 pr-4 py-2';
                     const t = document.createElement('div');
                     t.className = 'sidebar-chat-title truncate text-sm font-semibold tracking-tight';
                     a.appendChild(t);
@@ -1532,7 +1620,7 @@
                     item.appendChild(selectWrap);
                     item.appendChild(a);
                     const pin = document.createElement('div');
-                    pin.className = 'sidebar-pin-indicator pointer-events-none absolute right-10 top-2 z-10' + (is_pinned ? '' : ' hidden');
+                    pin.className = 'sidebar-pin-indicator pointer-events-none absolute right-10 top-1 z-10' + (is_pinned ? '' : ' hidden');
                     pin.innerHTML = `
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4">
                             <circle cx="12" cy="6.5" r="3.25" class="text-rose-400" fill="currentColor" />

@@ -13,10 +13,10 @@
     }
 
     .chat-panel {
-        backdrop-filter: blur(24px);
-        background: {{ $isPro ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.82)' }};
-        box-shadow: {{ $isPro ? '0 24px 70px rgba(15, 23, 42, 0.08)' : '0 24px 80px rgba(15, 23, 42, 0.08)' }};
-        border: {{ $isPro ? '1px solid rgba(15, 23, 42, 0.08)' : '1px solid rgba(255, 255, 255, 0.7)' }};
+        backdrop-filter: none;
+        background: #ffffff;
+        box-shadow: none;
+        border: 0;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -265,6 +265,48 @@
         border: 0;
         border-top: 1px solid rgba(15, 23, 42, 0.10);
         margin: 14px 0;
+    }
+
+    .chat-scroll-bottom-btn {
+        position: fixed;
+        left: 50%;
+        bottom: 98px;
+        transform: translateX(-50%) translateY(10px);
+        z-index: 80;
+        width: 44px;
+        height: 44px;
+        border-radius: 9999px;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.95);
+        color: rgba(15, 23, 42, 0.82);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 260ms ease, background-color 180ms ease, border-color 180ms ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .chat-scroll-bottom-btn.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .chat-scroll-bottom-btn:hover {
+        background: rgba(255, 255, 255, 1);
+        border-color: rgba(0, 44, 118, 0.25);
+    }
+
+    .chat-scroll-bottom-btn:active {
+        transform: translateX(-50%) translateY(1px);
+    }
+
+    .chat-scroll-bottom-btn svg {
+        width: 20px;
+        height: 20px;
+        display: block;
     }
 
     @keyframes chat-fade-in {
@@ -530,7 +572,7 @@
 
 <div class="chat-shell chat-shell-with-lex h-full min-h-0 {{ $isPro ? '' : 'px-4 py-4 sm:px-6 lg:px-8' }}">
     <div class="mx-auto flex h-full min-h-0 w-full {{ $isPro ? 'max-w-full' : 'max-w-[1700px]' }}">
-        <section class="chat-panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[2.5rem]">
+        <section class="chat-panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-none">
             <div class="flex flex-1 min-h-0 flex-col">
                 <div class="h-2"></div>
 
@@ -548,7 +590,7 @@
                             </div>
                         </div>
                         <h3 class="text-3xl font-black tracking-tight {{ $isPro ? 'text-slate-900' : 'text-slate-950' }}">What can Lex assist you today?</h3>
-                        <p class="mt-4 max-w-md text-lg text-slate-500 font-medium leading-relaxed">Ask about legal opinions.</p>
+                        <p class="mt-4 max-w-md text-lg text-slate-500 font-normal leading-relaxed">Ask about legal opinions.</p>
                     </div>
                 @else
                     <div data-message-stack="true" class="mx-auto flex w-full max-w-6xl flex-col gap-10">
@@ -580,13 +622,19 @@
                                             </button>
                                         </div>
                                     @endif
-                                    <div class="whitespace-pre-wrap leading-relaxed font-medium tracking-wide" style="font-size: 20px;">{!! $message->content !!}</div>
+                                    <div class="whitespace-pre-wrap leading-relaxed font-normal tracking-wide" style="font-size: 20px;">{!! $message->content !!}</div>
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 @endif
             </div>
+
+            <button type="button" id="chat-scroll-bottom-btn" class="chat-scroll-bottom-btn" aria-label="Go to latest" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 14.75a.75.75 0 0 1-.53-.22l-5-5a.75.75 0 1 1 1.06-1.06L10 12.94l4.47-4.47a.75.75 0 1 1 1.06 1.06l-5 5a.75.75 0 0 1-.53.22Z" clip-rule="evenodd" />
+                </svg>
+            </button>
 
             <div class="border-t {{ $isPro ? 'border-slate-900/[0.03] bg-white/50' : 'border-slate-200/50 bg-white/70' }} px-6 py-4 sm:px-8 sm:py-5">
                 <form
@@ -603,7 +651,7 @@
                             <textarea
                                 id="chat-prompt"
                                 rows="1"
-                                class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-medium leading-6 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
+                                class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-normal leading-6 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
                                 placeholder="Type your legal inquiry here..."
                             ></textarea>
                             <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-10 items-center justify-center rounded-xl bg-[#002C76] text-[#FFDE15] shadow-md shadow-slate-900/10 transition-all duration-200 hover:bg-[#002C76]/95" style="background-color: #002C76 !important; color: #FFDE15 !important;">
@@ -642,7 +690,7 @@
                     </div>
 
                     <div class="prose prose-slate max-w-none">
-                        <div id="opinion-modal-body" class="whitespace-pre-wrap text-base leading-relaxed text-slate-700 font-medium"></div>
+                        <div id="opinion-modal-body" class="whitespace-pre-wrap text-base leading-relaxed text-slate-700 font-normal"></div>
                     </div>
                 </div>
             </div>
@@ -656,6 +704,7 @@
     const sendBtn = document.getElementById('chat-send');
     const scrollEl = document.getElementById('chat-scroll');
     const errorEl = document.getElementById('chat-error');
+    const scrollBottomBtn = document.getElementById('chat-scroll-bottom-btn');
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
@@ -792,7 +841,7 @@
         }
 
         const body = document.createElement('div');
-        body.className = 'whitespace-pre-wrap leading-relaxed font-medium tracking-wide';
+        body.className = 'whitespace-pre-wrap leading-relaxed font-normal tracking-wide';
         body.style.fontSize = '20px';
         if (role === 'user') {
             body.textContent = content;
@@ -839,6 +888,13 @@
         return (el.scrollHeight - el.scrollTop - el.clientHeight) < threshold;
     };
 
+    const updateScrollBottomBtn = () => {
+        if (!scrollEl || !scrollBottomBtn) return;
+        const near = isNearBottom(scrollEl, 140);
+        scrollBottomBtn.classList.toggle('is-visible', !near);
+        scrollBottomBtn.setAttribute('aria-hidden', near ? 'true' : 'false');
+    };
+
     const typeAssistantResponse = (bodyEl, html) => {
         const fullText = assistantHtmlToPlainText(html);
         const cutMatch = fullText.match(/(?:^|\n)\s*Other Related References That Might Help:\s*/i);
@@ -880,7 +936,26 @@
 
     const scrollToBottom = () => {
         scrollEl.scrollTop = scrollEl.scrollHeight;
+        updateScrollBottomBtn();
     };
+
+    if (scrollEl) {
+        let raf = 0;
+        scrollEl.addEventListener('scroll', () => {
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+                raf = 0;
+                updateScrollBottomBtn();
+            });
+        }, { passive: true });
+    }
+
+    if (scrollBottomBtn) {
+        scrollBottomBtn.addEventListener('click', () => {
+            if (!scrollEl) return;
+            scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+        });
+    }
 
     const ensureConversation = async () => {
         const existingUrl = form.dataset.activeConversationUrl;
@@ -1047,7 +1122,7 @@
             }
 
             const textarea = document.createElement('textarea');
-            textarea.className = 'chat-edit-textarea whitespace-pre-wrap leading-relaxed font-medium tracking-wide';
+            textarea.className = 'chat-edit-textarea whitespace-pre-wrap leading-relaxed font-normal tracking-wide';
             textarea.value = originalText;
             textarea.style.fontSize = '20px';
             textarea.rows = 3;
