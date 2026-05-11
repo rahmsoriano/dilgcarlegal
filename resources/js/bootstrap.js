@@ -38,7 +38,7 @@ const globalLoaderStart = (options = {}) => {
 
     if (globalLoader.showTimer) clearTimeout(globalLoader.showTimer);
     const immediate = options && options.immediate === true;
-    const delay = immediate ? 0 : 160;
+    const delay = immediate ? 0 : 80;
 
     globalLoader.showTimer = setTimeout(() => {
         globalLoader.shownAt = Date.now();
@@ -55,7 +55,7 @@ const globalLoaderStop = () => {
         globalLoader.showTimer = null;
     }
 
-    const minVisibleMs = 220;
+    const minVisibleMs = 90;
     const elapsed = globalLoader.shownAt ? Date.now() - globalLoader.shownAt : 0;
     const delay = globalLoader.shownAt ? Math.max(0, minVisibleMs - elapsed) : 0;
 
@@ -274,6 +274,20 @@ document.addEventListener('click', (e) => {
     try {
         const linkUrl = new URL(link.href, window.location.href);
         if (linkUrl.origin !== window.location.origin) return;
+        const currentUrl = new URL(window.location.href);
+        const isSameDocument =
+            linkUrl.pathname === currentUrl.pathname &&
+            linkUrl.search === currentUrl.search;
+
+        // Do not show the global loader for in-page anchor navigation.
+        if (isSameDocument && linkUrl.hash && linkUrl.hash !== currentUrl.hash) {
+            return;
+        }
+
+        if (isSameDocument && linkUrl.hash === currentUrl.hash) {
+            return;
+        }
+
         if (link.closest('#opinions-results') && linkUrl.pathname === window.location.pathname && linkUrl.searchParams.has('page')) {
             return;
         }
@@ -420,6 +434,7 @@ document.addEventListener('click', (e) => {
     }
 }, true);
 
+<<<<<<< Updated upstream
 const openAuthModalFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('auth');
@@ -447,6 +462,15 @@ if (document.readyState === 'loading') {
 } else {
     openAuthModalFromUrl();
 }
+=======
+document.addEventListener('DOMContentLoaded', () => {
+    const { el } = getAuthModalEls();
+    if (!el) return;
+    if (el.getAttribute('data-auto-open') !== 'true') return;
+
+    openAuthModal();
+});
+>>>>>>> Stashed changes
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

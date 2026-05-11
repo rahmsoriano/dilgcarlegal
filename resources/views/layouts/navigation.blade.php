@@ -1,4 +1,7 @@
-<nav x-data="{ open: false }" class="border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,222,21,0.14),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_45%),linear-gradient(90deg,#002C76_0%,#083b8f_45%,#002C76_100%)]">
+<nav x-data="{ open: false }" class="border-b border-white/10 shadow-[0_10px_30px_rgba(0,44,118,0.22)]" style="background:
+    radial-gradient(circle at top left, rgba(255, 222, 21, 0.14), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 45%),
+    linear-gradient(90deg, #002C76 0%, #083B8F 45%, #002C76 100%);">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between py-3">

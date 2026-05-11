@@ -5,6 +5,7 @@ namespace App\Http\Requests\Auth;
 use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -52,7 +53,7 @@ class LoginRequest extends FormRequest
 
                 throw ValidationException::withMessages([
                     'email' => 'Your account is inactive. Please contact administrator.',
-                ]);
+                ])->redirectTo($this->getRedirectUrl());
             }
 
             if ($user->role !== 'admin' && ! $user->is_admin && ! $user->hasVerifiedEmail()) {
@@ -60,7 +61,7 @@ class LoginRequest extends FormRequest
 
                 throw ValidationException::withMessages([
                     'email' => 'Please verify your email before logging in.',
-                ]);
+                ])->redirectTo($this->getRedirectUrl());
             }
         }
 
@@ -69,7 +70,7 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
-            ]);
+            ])->redirectTo($this->getRedirectUrl());
         }
 
         RateLimiter::clear($this->throttleKey());
@@ -95,7 +96,7 @@ class LoginRequest extends FormRequest
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
-        ]);
+        ])->redirectTo($this->getRedirectUrl());
     }
 
     /**
@@ -104,5 +105,15 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        $response = $this->redirector->to($this->getRedirectUrl())
+            ->withInput($this->except('password'))
+            ->withErrors($validator)
+            ->with('auth_mode', 'login');
+
+        throw new ValidationException($validator, $response);
     }
 }
