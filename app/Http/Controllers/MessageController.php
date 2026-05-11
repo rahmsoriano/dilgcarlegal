@@ -2498,7 +2498,8 @@ OUTPUT: Return only the corrected (or original) response text. Do not add any me
         if (mb_strlen($normalized) < 40) {
             $keywords = ['hello', 'hi', 'hey', 'kumusta', 'kamusta', 'thanks', 'salamat', 'ok', 'okay', 'ayos'];
             foreach ($keywords as $kw) {
-                if (str_contains($normalized, $kw)) {
+                $quoted = preg_quote($kw, '/');
+                if (preg_match('/\b' . $quoted . '\b/iu', $normalized) === 1) {
                     return true;
                 }
             }
