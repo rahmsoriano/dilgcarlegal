@@ -577,8 +577,8 @@ class MessageController extends Controller
                 $content = $this->buildRelatedOnlyAnswer($prompt, $retrievedOpinions, $openai, $gemini, $groq);
                 return [
                     'content' => $this->sanitizeAssistantText($content),
-                    'model' => 'library_related_only',
-                    'provider' => 'opinion_retriever',
+                    'model' => 'general_info_no_direct_library',
+                    'provider' => 'ai_fallback_general_info',
                 ];
             }
         }
@@ -948,109 +948,7 @@ class MessageController extends Controller
 
     private function buildRelatedOnlyAnswer(string $prompt, array $opinions, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string
     {
-        $main = $opinions[0] ?? null;
-        if (!is_array($main)) {
-            return $this->buildNoLibraryGeneralInfoAnswer($prompt, $openai, $gemini, $groq);
-        }
-
-        $tokens = $this->tokenizeOpinionListTopic($prompt);
-        $mainCitation = $this->buildOpinionCitationHtml($main, true);
-        $mainExcerptRaw = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($main, $tokens), 3);
-
-        $others = array_slice($opinions, 1, 3);
-        $refs = [
-            ['label' => 'Main', 'excerpt' => $mainExcerptRaw],
-        ];
-        foreach ($others as $idx => $op) {
-            if (!is_array($op)) {
-                continue;
-            }
-            $refs[] = [
-                'label' => 'Other'.($idx + 1),
-                'excerpt' => $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3),
-            ];
-        }
-
-        $summaries = $this->summarizeReferenceExcerpts($prompt, $refs, $openai, $gemini, $groq);
-        $mainSummary = $this->limitToSentences((string) ($summaries['Main'] ?? $mainExcerptRaw), 3);
-
-        $relatedAnswer = '';
-        $instruction = 'You are Lex, the GABAY-Lex AI.
-
-You will be given a USER QUESTION and excerpts from DILG legal opinions.
-The excerpts may be only partially related to the question.
-
-Write 1–2 sentences for the best possible answer based ONLY on the excerpts.
-If the excerpts do not directly answer the question, SAY THAT explicitly, then state the closest relevant guidance from the excerpts.
-
-Strict rules:
-- Use ONLY the excerpt content. Do not add outside laws or general information.
-- No headings. No bullets. No markdown. No asterisks.
-- Output the answer text only.';
-
-        $body = "USER QUESTION:\n".$prompt."\n\n";
-        foreach ($refs as $r) {
-            $label = (string) ($r['label'] ?? '');
-            $excerpt = (string) ($r['excerpt'] ?? '');
-            if (trim($label) === '' || trim($excerpt) === '') {
-                continue;
-            }
-            $body .= $label." EXCERPT:\n".$excerpt."\n\n";
-        }
-
-        try {
-            $resp = $this->chatWithFallback(
-                [
-                    ['role' => 'system', 'content' => $instruction],
-                    ['role' => 'user', 'content' => $body],
-                ],
-                $openai,
-                $gemini,
-                $groq
-            );
-            $relatedAnswer = $this->sanitizeAssistantText((string) ($resp['content'] ?? ''));
-        } catch (\Throwable $e) {
-            $relatedAnswer = '';
-        }
-
-        $relatedAnswer = $this->limitToSentences(trim((string) $relatedAnswer), 2);
-        if ($relatedAnswer === '') {
-            $relatedAnswer = 'A DILG legal opinion may be related to your question, but the excerpt does not directly answer it; please refer to the supporting reference below.';
-        }
-
-        $divider = "\n<hr class=\"chat-section-divider\" />\n\n";
-        $out = '<strong>'.htmlspecialchars($relatedAnswer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')."</strong>\n";
-        $out .= $divider;
-        $out .= "Legal Basis / Supporting Reference:\n".$mainCitation."\n".$mainSummary."\n";
-        $out .= $divider;
-        $out .= "Other Related References That Might Help:\n";
-
-        if (count($others) === 0) {
-            $out .= "- No other related DILG legal opinions found.\n\n";
-        } else {
-            foreach ($others as $idx => $op) {
-                if (!is_array($op)) {
-                    continue;
-                }
-                $citation = $this->buildOpinionCitationHtml($op, true);
-                $key = 'Other'.($idx + 1);
-                $summary = $this->limitToSentences((string) ($summaries[$key] ?? ''), 3);
-                if (trim($summary) === '') {
-                    $summary = $this->limitToSentences($this->extractRelevantExcerptFromOpinion($op, $tokens), 3);
-                }
-                $out .= '<div class="ref-accordion" role="button" tabindex="0" aria-expanded="false">';
-                $out .= '<div class="ref-accordion-head">';
-                $out .= '<span class="ref-accordion-arrow">↳</span>';
-                $out .= '<div class="ref-accordion-title">'.$citation.'</div>';
-                $out .= '</div>';
-                $out .= '<div class="ref-accordion-body">'.htmlspecialchars($summary, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</div>';
-                $out .= "</div>\n";
-            }
-            $out .= "\n";
-        }
-
-        $out = rtrim($out);
-        return trim($out);
+        return $this->buildNoLibraryGeneralInfoAnswer($prompt, $openai, $gemini, $groq);
     }
 
     private function buildGeneralInfoParagraph(string $prompt, OpenAiChatClient $openai, GeminiChatClient $gemini, GroqChatClient $groq): string

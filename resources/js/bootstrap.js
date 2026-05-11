@@ -420,6 +420,34 @@ document.addEventListener('click', (e) => {
     }
 }, true);
 
+const openAuthModalFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('auth');
+    if (mode !== 'login' && mode !== 'register') {
+        return;
+    }
+
+    const { el } = getAuthModalEls();
+    if (!el) return;
+
+    el.querySelectorAll('[data-auth-views-root]').forEach((root) => {
+        root.setAttribute('data-initial-mode', mode);
+    });
+
+    openAuthModal();
+
+    params.delete('auth');
+    const query = params.toString();
+    const nextUrl = window.location.pathname + (query ? `?${query}` : '') + window.location.hash;
+    window.history.replaceState({}, '', nextUrl);
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', openAuthModalFromUrl);
+} else {
+    openAuthModalFromUrl();
+}
+
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
  * for events that are broadcast by Laravel. Echo and event broadcasting
