@@ -495,6 +495,100 @@
         pointer-events: none;
     }
 
+    .opinion-modal-overlay {
+        background: radial-gradient(circle at 18% 20%, rgba(59, 130, 246, 0.22), transparent 45%),
+            radial-gradient(circle at 84% 18%, rgba(99, 102, 241, 0.22), transparent 48%),
+            rgba(15, 23, 42, 0.52);
+        backdrop-filter: blur(10px);
+    }
+
+    .opinion-modal-panel {
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 40px 100px rgba(15, 23, 42, 0.30);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    .opinion-modal-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 18px 20px 14px;
+        background: rgba(255, 255, 255, 0.90);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .opinion-modal-number {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #1d4ed8;
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(37, 99, 235, 0.16);
+    }
+
+    .opinion-modal-title {
+        margin-top: 10px;
+        font-size: 26px;
+        line-height: 1.15;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+    }
+
+    .opinion-modal-date {
+        margin-top: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(15, 23, 42, 0.58);
+    }
+
+    .opinion-modal-close {
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        color: rgba(15, 23, 42, 0.65);
+        transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .opinion-modal-close:hover {
+        background: rgba(15, 23, 42, 0.10);
+        color: rgba(15, 23, 42, 0.78);
+        transform: translateY(-1px);
+    }
+
+    .opinion-modal-close:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(0, 44, 118, 0.18);
+    }
+
+    .opinion-modal-scroll {
+        padding: 18px 20px 22px;
+    }
+
+    @media (min-width: 640px) {
+        .opinion-modal-header {
+            padding: 22px 26px 16px;
+        }
+
+        .opinion-modal-scroll {
+            padding: 22px 26px 28px;
+        }
+    }
+
     @keyframes lex-float {
         0%, 100% { transform: translate3d(0, 0, 0); }
         50% { transform: translate3d(0, -10px, 0); }
@@ -670,25 +764,26 @@
 
     <!-- Opinion Viewer Modal -->
     <div id="opinion-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 sm:p-6" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[6px] transition-opacity" id="opinion-modal-overlay"></div>
+        <div class="opinion-modal-overlay fixed inset-0 transition-opacity" id="opinion-modal-overlay"></div>
 
-        <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col transform overflow-hidden rounded-[2.5rem] bg-white ring-1 ring-slate-900/10 shadow-[0_24px_70px_rgba(15,23,42,0.18)] transition-all">
-            <div class="absolute right-6 top-6 z-10">
-                <button type="button" id="close-opinion-modal" class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+        <div class="opinion-modal-panel relative w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2rem] transition-all">
+            <div class="opinion-modal-header">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <div id="opinion-modal-number" class="opinion-modal-number"></div>
+                        <h2 id="opinion-modal-title" class="opinion-modal-title"></h2>
+                        <div id="opinion-modal-date" class="opinion-modal-date"></div>
+                    </div>
+                    <button type="button" id="close-opinion-modal" class="opinion-modal-close" aria-label="Close">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-8 pb-10 pt-12 sm:px-12 sm:pb-12 sm:pt-16 chat-scrollbar">
+            <div class="opinion-modal-scroll flex-1 overflow-y-auto chat-scrollbar">
                 <div id="opinion-modal-content" class="opacity-0 transition-opacity duration-300">
-                    <div class="mb-8">
-                        <div id="opinion-modal-number" class="inline-flex rounded-full bg-indigo-50 px-4 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-indigo-600 ring-1 ring-indigo-500/10 mb-4"></div>
-                        <h2 id="opinion-modal-title" class="text-3xl font-black tracking-tight text-slate-900 leading-tight"></h2>
-                        <div id="opinion-modal-date" class="mt-3 text-sm font-bold text-slate-500 uppercase tracking-widest"></div>
-                    </div>
-
                     <div class="prose prose-slate max-w-none">
                         <div id="opinion-modal-body" class="whitespace-pre-wrap text-base leading-relaxed text-slate-700 font-normal"></div>
                     </div>
