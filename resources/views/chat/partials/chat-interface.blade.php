@@ -309,6 +309,12 @@
         display: block;
     }
 
+    body.opinion-modal-open .chat-scroll-bottom-btn {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateX(-50%) translateY(10px) !important;
+    }
+
     @keyframes chat-fade-in {
         from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
@@ -506,6 +512,64 @@
         background: rgba(255, 255, 255, 0.92);
         box-shadow: 0 40px 100px rgba(15, 23, 42, 0.30);
         border: 1px solid rgba(15, 23, 42, 0.10);
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+        contain: layout paint;
+    }
+
+    #opinion-modal {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+    }
+
+    #opinion-modal.is-open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #opinion-modal.is-closing {
+        opacity: 1;
+        pointer-events: none;
+    }
+
+    #opinion-modal .opinion-modal-overlay {
+        opacity: 0;
+        transition: opacity 220ms ease;
+    }
+
+    #opinion-modal.is-open .opinion-modal-overlay {
+        opacity: 1;
+    }
+
+    #opinion-modal .opinion-modal-panel {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+        transition: opacity 240ms ease, transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    #opinion-modal.is-open .opinion-modal-panel {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    #opinion-modal.is-closing .opinion-modal-overlay,
+    #opinion-modal.is-closing .opinion-modal-panel {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #opinion-modal,
+        #opinion-modal .opinion-modal-overlay,
+        #opinion-modal .opinion-modal-panel {
+            transition: none !important;
+        }
+
+        #opinion-modal .opinion-modal-panel {
+            transform: none !important;
+        }
     }
 
     .opinion-modal-header {
@@ -1394,14 +1458,64 @@
     const opinionModalContent = document.getElementById('opinion-modal-content');
     const closeOpinionModalBtn = document.getElementById('close-opinion-modal');
     const opinionModalOverlay = document.getElementById('opinion-modal-overlay');
+    let opinionModalCloseTimer = null;
+    const opinionModalPanel = opinionModal?.querySelector('.opinion-modal-panel');
+    let lastOpinionDockPoint = null;
+    let opinionCloseAnimToken = 0;
+    let opinionPanelAnim = null;
+    let opinionOverlayAnim = null;
+    const resetOpinionModalAnimationState = () => {
+        if (opinionModalCloseTimer) {
+            clearTimeout(opinionModalCloseTimer);
+            opinionModalCloseTimer = null;
+        }
+
+        if (opinionPanelAnim) {
+            try { opinionPanelAnim.cancel(); } catch (_) {}
+            opinionPanelAnim = null;
+        }
+        if (opinionOverlayAnim) {
+            try { opinionOverlayAnim.cancel(); } catch (_) {}
+            opinionOverlayAnim = null;
+        }
+
+        if (opinionModalPanel) {
+            opinionModalPanel.getAnimations().forEach((a) => a.cancel());
+            opinionModalPanel.style.transformOrigin = '';
+            opinionModalPanel.style.transition = '';
+            opinionModalPanel.style.transform = '';
+            opinionModalPanel.style.opacity = '';
+            opinionModalPanel.style.clipPath = '';
+            opinionModalPanel.style.filter = '';
+        }
+
+        if (opinionModalOverlay) {
+            opinionModalOverlay.getAnimations().forEach((a) => a.cancel());
+            opinionModalOverlay.style.transition = '';
+            opinionModalOverlay.style.opacity = '';
+        }
+
+        if (opinionModal) {
+            opinionModal.getAnimations().forEach((a) => a.cancel());
+        }
+
+        opinionModal?.classList.remove('is-closing');
+    };
 
     const openOpinionModal = async (opinionId) => {
         // Force hide global loader if it's stuck
         if (window.__globalLoaderStop) window.__globalLoaderStop();
-        
+
+        resetOpinionModalAnimationState();
+
         opinionModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            opinionModal.classList.add('is-open');
+            opinionModal.classList.remove('is-closing');
+        });
         opinionModalContent.classList.add('opacity-0');
         document.body.classList.add('overflow-hidden');
+        document.body.classList.add('opinion-modal-open');
 
         try {
             const resp = await window.axios.get(`/api/opinions/${opinionId}`, {
@@ -1422,8 +1536,77 @@
     };
 
     const closeOpinionModal = () => {
-        opinionModal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
+        opinionCloseAnimToken++;
+        const token = opinionCloseAnimToken;
+        const duration = 520;
+
+        if (opinionModal.classList.contains('is-closing')) {
+            return;
+        }
+
+        opinionModal.classList.add('is-closing');
+
+        if (opinionModalPanel) {
+            const rect = opinionModalPanel.getBoundingClientRect();
+            const fromX = rect.left + rect.width / 2;
+            const fromY = rect.top + rect.height / 2;
+            const target = lastOpinionDockPoint || { x: 96, y: window.innerHeight - 56 };
+            const dx = target.x - fromX;
+            const dy = target.y - fromY;
+            const ox = dx * 1.06;
+            const oy = dy * 1.06;
+
+            opinionModalPanel.getAnimations().forEach((a) => a.cancel());
+            opinionModalPanel.style.transformOrigin = '50% 0%';
+            opinionModalPanel.style.transition = 'none';
+
+            opinionPanelAnim = opinionModalPanel.animate(
+                [
+                    {
+                        transform: 'translate3d(0px, 0px, 0) scale3d(1, 1, 1) skewX(0deg)',
+                        opacity: 1,
+                        offset: 0,
+                    },
+                    {
+                        transform: `translate3d(${dx * 0.55}px, ${dy * 0.55}px, 0) scale3d(1.06, 0.78, 1) skewX(-6deg)`,
+                        opacity: 1,
+                        offset: 0.55,
+                        easing: 'cubic-bezier(0.2, 0.9, 0.2, 1)',
+                    },
+                    {
+                        transform: `translate3d(${ox}px, ${oy}px, 0) scale3d(0.22, 0.12, 1) skewX(10deg)`,
+                        opacity: 0.85,
+                        offset: 0.88,
+                        easing: 'cubic-bezier(0.12, 0.85, 0.2, 1.2)',
+                    },
+                    {
+                        transform: `translate3d(${dx}px, ${dy}px, 0) scale3d(0.05, 0.05, 1) skewX(0deg)`,
+                        opacity: 0,
+                        offset: 1,
+                        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+                    },
+                ],
+                { duration, fill: 'forwards' }
+            );
+        }
+
+        if (opinionModalOverlay) {
+            opinionModalOverlay.getAnimations().forEach((a) => a.cancel());
+            opinionModalOverlay.style.transition = 'none';
+            opinionOverlayAnim = opinionModalOverlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: duration - 80, fill: 'forwards', easing: 'ease-in' });
+        }
+
+        if (opinionModalCloseTimer) clearTimeout(opinionModalCloseTimer);
+        opinionModalCloseTimer = setTimeout(() => {
+            if (token !== opinionCloseAnimToken) return;
+            opinionModal.classList.remove('is-open');
+            opinionModal.classList.remove('is-closing');
+            opinionModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            document.body.classList.remove('opinion-modal-open');
+            opinionModalCloseTimer = null;
+            resetOpinionModalAnimationState();
+        }, duration);
     };
 
     if (closeOpinionModalBtn) closeOpinionModalBtn.addEventListener('click', closeOpinionModal);
@@ -1439,6 +1622,8 @@
             e.preventDefault();
             e.stopPropagation(); // Stop event bubbling
             const opinionId = link.dataset.opinionId;
+            const r = link.getBoundingClientRect();
+            lastOpinionDockPoint = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
             openOpinionModal(opinionId);
             return false;
         }

@@ -798,7 +798,7 @@
                         <h2 class="auth-exact-title">Create Account</h2>
                         <p class="auth-exact-subcopy">Sign up to start your legal research workspace.</p>
                     @else
-                        <h2 class="auth-exact-title">Welcome Back</h2>
+                        <h2 class="auth-exact-title">Welcome!</h2>
                         <p class="auth-exact-subcopy">Sign in to access your saved legal conversations.</p>
                     @endif
 

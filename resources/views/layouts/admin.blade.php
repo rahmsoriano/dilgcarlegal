@@ -134,7 +134,14 @@
             }
 
             .admin-sidebar {
-                transition: width 750ms ease-in-out, padding 750ms ease-in-out, border-radius 750ms ease-in-out;
+                transition: width 750ms ease-in-out, padding 750ms ease-in-out, border-radius 750ms ease-in-out, filter 220ms ease, opacity 220ms ease;
+            }
+
+            body.opinion-modal-open .admin-sidebar {
+                filter: blur(8px);
+                opacity: 0.55;
+                pointer-events: none;
+                user-select: none;
             }
 
             .sidebar-collapsed .admin-sidebar {
@@ -175,10 +182,22 @@
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 160ms ease;
+                z-index: 9999;
+            }
+
+            .sidebar-collapsed .sidebar-toggle-btn[data-tooltip]::after {
+                right: auto;
+                left: 100%;
+                margin-right: 0;
+                margin-left: 10px;
             }
 
             .sidebar-toggle-btn:hover::after {
                 opacity: 1;
+            }
+
+            .admin-sidebar {
+                z-index: 40;
             }
 
             .sidebar-collapsed .sidebar-nav-label,
@@ -675,7 +694,7 @@
                                     ->get();
                             }
                         @endphp
-                        <div class="sidebar-top-actions mb-4 flex items-center gap-3 px-4">
+                        <div class="sidebar-top-actions mb-4 flex items-center gap-3 pl-4 pr-1">
                             <div class="sidebar-search-expanded flex-1">
                                 <div class="relative">
                                     <div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
