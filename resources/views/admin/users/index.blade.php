@@ -179,7 +179,33 @@
                 </div>
             @endif
 
+            @php
+                $roleLabels = [
+                    '' => 'All Roles',
+                    'admin' => 'Admin',
+                    'staff' => 'Staff',
+                    'user' => 'User',
+                ];
+
+                $statusLabels = [
+                    '' => 'All Statuses',
+                    'active' => 'Active',
+                    'inactive' => 'Inactive',
+                ];
+
+                $verificationLabels = [
+                    '' => 'All Verification',
+                    'verified' => 'Verified',
+                    'not_verified' => 'Not Verified',
+                ];
+            @endphp
+
             <div class="users-toolbar-card p-5 sm:p-6">
+                <form id="users-filter-form" method="GET" action="{{ route('admin.users.index') }}">
+                    <input id="users-role-input" type="hidden" name="role" value="{{ $filters['role'] }}">
+                    <input id="users-status-input" type="hidden" name="status" value="{{ $filters['status'] }}">
+                    <input id="users-verification-input" type="hidden" name="verification" value="{{ $filters['verification'] }}">
+
                 <div class="users-toolbar-grid">
                     <label class="users-search-wrap relative block">
                         <span class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[#7084ad]">
@@ -187,18 +213,18 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
-                        <input id="users-search" type="search" placeholder="Search users..." class="h-[58px] w-full rounded-full border border-[#e3eaf6] bg-white pl-14 pr-4 text-[15px] font-medium text-[#1c274b] shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-[#8193b6] focus:border-[#b9d0fb] focus:ring-4 focus:ring-[#e8f1ff]" />
+                        <input id="users-search" name="search" type="search" value="{{ $filters['search'] }}" placeholder="Search users..." class="h-[58px] w-full rounded-full border border-[#e3eaf6] bg-white pl-14 pr-4 text-[15px] font-medium text-[#1c274b] shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-[#8193b6] focus:border-[#b9d0fb] focus:ring-4 focus:ring-[#e8f1ff]" />
                     </label>
 
                     <div class="relative">
                         <button type="button" id="users-role-trigger" class="inline-flex h-[58px] w-full items-center justify-between rounded-[18px] border border-[#e3eaf6] bg-white px-6 text-[15px] font-bold text-[#1f2b4e] shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#cfdbf4]">
-                            <span id="users-role-label">All Roles</span>
+                            <span id="users-role-label">{{ $roleLabels[$filters['role']] ?? 'All Roles' }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-[#253961]">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
                         </button>
                         <div id="users-role-menu" class="absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
-                            <button type="button" data-role-filter="all" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Roles</button>
+                            <button type="button" data-role-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Roles</button>
                             <button type="button" data-role-filter="admin" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Admin</button>
                             <button type="button" data-role-filter="staff" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Staff</button>
                             <button type="button" data-role-filter="user" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">User</button>
@@ -207,13 +233,13 @@
 
                     <div class="relative">
                         <button type="button" id="users-status-trigger" class="inline-flex h-[58px] w-full items-center justify-between rounded-[18px] border border-[#e3eaf6] bg-white px-6 text-[15px] font-bold text-[#1f2b4e] shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#cfdbf4]">
-                            <span id="users-status-label">All Statuses</span>
+                            <span id="users-status-label">{{ $statusLabels[$filters['status']] ?? 'All Statuses' }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-[#253961]">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
                         </button>
                         <div id="users-status-menu" class="absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
-                            <button type="button" data-status-filter="all" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Statuses</button>
+                            <button type="button" data-status-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Statuses</button>
                             <button type="button" data-status-filter="active" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Active</button>
                             <button type="button" data-status-filter="inactive" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Inactive</button>
                         </div>
@@ -221,18 +247,19 @@
 
                     <div class="relative">
                         <button type="button" id="users-verification-trigger" class="inline-flex h-[58px] w-full items-center justify-between rounded-[18px] border border-[#e3eaf6] bg-white px-6 text-[15px] font-bold text-[#1f2b4e] shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#cfdbf4]">
-                            <span id="users-verification-label">All Verification</span>
+                            <span id="users-verification-label">{{ $verificationLabels[$filters['verification']] ?? 'All Verification' }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-[#253961]">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
                         </button>
                         <div id="users-verification-menu" class="absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
-                            <button type="button" data-verification-filter="all" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Verification</button>
+                            <button type="button" data-verification-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Verification</button>
                             <button type="button" data-verification-filter="verified" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Verified</button>
-                            <button type="button" data-verification-filter="not-verified" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Not Verified</button>
+                            <button type="button" data-verification-filter="not_verified" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Not Verified</button>
                         </div>
                     </div>
                 </div>
+                </form>
             </div>
 
             <div class="users-table-card overflow-hidden">
@@ -465,26 +492,21 @@
 
     <script>
         (() => {
+            const filterForm = document.getElementById('users-filter-form');
             const roleTrigger = document.getElementById('users-role-trigger');
             const roleMenu = document.getElementById('users-role-menu');
             const roleLabel = document.getElementById('users-role-label');
+            const roleInput = document.getElementById('users-role-input');
             const statusTrigger = document.getElementById('users-status-trigger');
             const statusMenu = document.getElementById('users-status-menu');
             const statusLabel = document.getElementById('users-status-label');
+            const statusInput = document.getElementById('users-status-input');
             const verificationTrigger = document.getElementById('users-verification-trigger');
             const verificationMenu = document.getElementById('users-verification-menu');
             const verificationLabel = document.getElementById('users-verification-label');
+            const verificationInput = document.getElementById('users-verification-input');
             const searchInput = document.getElementById('users-search');
-            const rows = Array.from(document.querySelectorAll('.user-row'));
-            const emptyFiltered = document.getElementById('users-empty-filtered');
-            const resultsText = document.getElementById('users-results-text');
-
-            const filters = {
-                search: '',
-                role: 'all',
-                status: 'all',
-                verification: 'all',
-            };
+            let searchDebounce = null;
 
             const closeMenus = () => {
                 roleMenu?.classList.add('hidden');
@@ -492,33 +514,13 @@
                 verificationMenu?.classList.add('hidden');
             };
 
-            const applyFilters = () => {
-                let visible = 0;
-
-                rows.forEach((row) => {
-                    const haystack = `${row.dataset.name || ''} ${row.dataset.email || ''}`;
-                    const matchesSearch = filters.search === '' || haystack.includes(filters.search);
-                    const matchesRole = filters.role === 'all' || row.dataset.role === filters.role;
-                    const matchesStatus = filters.status === 'all' || row.dataset.status === filters.status;
-                    const matchesVerification = filters.verification === 'all' || row.dataset.verification === filters.verification;
-                    const show = matchesSearch && matchesRole && matchesStatus && matchesVerification;
-                    row.classList.toggle('hidden', !show);
-                    if (show) visible += 1;
-                });
-
-                emptyFiltered?.classList.toggle('hidden', visible > 0);
-                if (resultsText) {
-                    resultsText.textContent = visible > 0
-                        ? `Showing 1 to ${visible} of ${rows.length} users`
-                        : `Showing 0 of ${rows.length} users`;
-                }
-            };
-
             searchInput?.addEventListener('input', (event) => {
                 const target = event.target;
                 if (!(target instanceof HTMLInputElement)) return;
-                filters.search = target.value.trim().toLowerCase();
-                applyFilters();
+                window.clearTimeout(searchDebounce);
+                searchDebounce = window.setTimeout(() => {
+                    filterForm?.requestSubmit();
+                }, 350);
             });
 
             roleTrigger?.addEventListener('click', (event) => {
@@ -544,28 +546,28 @@
 
             roleMenu?.querySelectorAll('[data-role-filter]').forEach((button) => {
                 button.addEventListener('click', () => {
-                    filters.role = String(button.getAttribute('data-role-filter') || 'all');
+                    if (roleInput) roleInput.value = String(button.getAttribute('data-role-filter') || '');
                     if (roleLabel) roleLabel.textContent = button.textContent?.trim() || 'All Roles';
                     roleMenu.classList.add('hidden');
-                    applyFilters();
+                    filterForm?.requestSubmit();
                 });
             });
 
             statusMenu?.querySelectorAll('[data-status-filter]').forEach((button) => {
                 button.addEventListener('click', () => {
-                    filters.status = String(button.getAttribute('data-status-filter') || 'all');
+                    if (statusInput) statusInput.value = String(button.getAttribute('data-status-filter') || '');
                     if (statusLabel) statusLabel.textContent = button.textContent?.trim() || 'All Statuses';
                     statusMenu.classList.add('hidden');
-                    applyFilters();
+                    filterForm?.requestSubmit();
                 });
             });
 
             verificationMenu?.querySelectorAll('[data-verification-filter]').forEach((button) => {
                 button.addEventListener('click', () => {
-                    filters.verification = String(button.getAttribute('data-verification-filter') || 'all');
+                    if (verificationInput) verificationInput.value = String(button.getAttribute('data-verification-filter') || '');
                     if (verificationLabel) verificationLabel.textContent = button.textContent?.trim() || 'All Verification';
                     verificationMenu.classList.add('hidden');
-                    applyFilters();
+                    filterForm?.requestSubmit();
                 });
             });
 

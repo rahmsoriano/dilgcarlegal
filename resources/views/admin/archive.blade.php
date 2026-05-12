@@ -2,6 +2,11 @@
     use Illuminate\Support\Str;
 
     $archiveTotal = $conversations->count();
+    $filterLabels = [
+        '' => 'All Archives',
+        'recent' => 'Recent Archives',
+        'older' => 'Older Archives',
+    ];
 @endphp
 
 <x-admin-layout>
@@ -66,6 +71,20 @@
             display: none;
         }
 
+        .archive-actions-wrap {
+            position: relative;
+            isolation: isolate;
+        }
+
+        .archive-actions-wrap.is-open {
+            z-index: 80;
+        }
+
+        .archive-table-card.has-open-menu .archive-actions-wrap:not(.is-open) .archive-actions-trigger {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .archive-menu-panel.is-open {
             display: block;
             animation: archiveMenuFade 140ms ease;
@@ -123,6 +142,9 @@
                 </div>
 
                 <div class="archive-toolbar-card p-5 sm:p-6">
+                    <form id="archive-filter-form" method="GET" action="{{ route('admin.legal.ai.saved') }}">
+                        <input id="archive-filter-input" type="hidden" name="filter" value="{{ $filters['filter'] ?? '' }}">
+
                     <div class="archive-toolbar-grid">
                         <label class="archive-search-wrap relative block">
                             <span class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[#7084ad]">
@@ -130,31 +152,20 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
-                            <input id="archive-search" type="search" placeholder="Search archived chats..." class="h-[58px] w-full rounded-[18px] border border-[#e3eaf6] bg-white pl-14 pr-4 text-[15px] font-medium text-[#1c274b] shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-[#8193b6] focus:border-[#b9d0fb] focus:ring-4 focus:ring-[#e8f1ff]" />
+                            <input id="archive-search" name="search" type="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search archived chats..." class="h-[58px] w-full rounded-[18px] border border-[#e3eaf6] bg-white pl-14 pr-4 text-[15px] font-medium text-[#1c274b] shadow-[0_8px_24px_rgba(15,23,42,0.04)] outline-none transition placeholder:text-[#8193b6] focus:border-[#b9d0fb] focus:ring-4 focus:ring-[#e8f1ff]" />
                         </label>
 
                         <div class="relative">
                             <button type="button" id="archive-filter-trigger" class="inline-flex h-[58px] w-full items-center justify-between rounded-[18px] border border-[#e3eaf6] bg-white px-6 text-[15px] font-bold text-[#1f2b4e] shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#cfdbf4]">
-                                <span id="archive-filter-label">All Archives</span>
+                                <span id="archive-filter-label">{{ $filterLabels[$filters['filter'] ?? ''] ?? 'All Archives' }}</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-[#253961]">
                                     <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                                 </svg>
                             </button>
                             <div id="archive-filter-menu" class="archive-toolbar-menu absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
-                                <button type="button" data-filter="all" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Archives</button>
+                                <button type="button" data-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Archives</button>
                                 <button type="button" data-filter="recent" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Recent Archives</button>
                                 <button type="button" data-filter="older" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Older Archives</button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <button type="button" id="archive-sort-trigger" class="inline-flex h-[58px] w-full items-center justify-between rounded-[18px] border border-[#e3eaf6] bg-white px-6 text-[15px] font-bold text-[#1f2b4e] shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#cfdbf4]">
-                                <span>Sort by</span>
-                                <span id="archive-sort-label" class="text-[#334a78]">Newest</span>
-                            </button>
-                            <div id="archive-sort-menu" class="archive-toolbar-menu absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
-                                <button type="button" data-sort="newest" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Newest</button>
-                                <button type="button" data-sort="oldest" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Oldest</button>
                             </div>
                         </div>
 
@@ -165,6 +176,7 @@
                             <span>{{ $archiveTotal }} Archived Chats</span>
                         </div>
                     </div>
+                    </form>
                 </div>
 
                 <div class="archive-table-card overflow-hidden">
@@ -192,8 +204,6 @@
                                 <article
                                     class="archive-table-row archive-row"
                                     data-title="{{ Str::lower($conversation->title ?: 'untitled thread') }}"
-                                    data-saved-at="{{ optional($conversation->saved_at)->timestamp ?? optional($conversation->created_at)->timestamp ?? 0 }}"
-                                    data-filter-group="{{ optional($conversation->saved_at)->greaterThan(now()->subDays(30)) ? 'recent' : 'older' }}"
                                 >
                                     <div class="min-w-0">
                                         <div class="truncate text-[1rem] font-black tracking-tight text-[#17234b]">
@@ -223,7 +233,7 @@
                                     </div>
 
                                     <div class="flex items-center justify-end">
-                                        <div class="relative">
+                                        <div class="archive-actions-wrap">
                                             <button type="button" class="archive-actions-trigger flex h-12 w-12 items-center justify-center rounded-[16px] border border-[#e1e8f5] bg-white text-[#4f648d] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-[#cad9f4] hover:text-[#2563eb]">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
                                                     <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 14a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
@@ -305,68 +315,34 @@
     </div>
 
     <script type="module">
-        const list = document.getElementById('archive-list');
-        const rows = Array.from(document.querySelectorAll('.archive-row'));
+        const filterForm = document.getElementById('archive-filter-form');
+        const archiveTableCard = document.querySelector('.archive-table-card');
         const searchInput = document.getElementById('archive-search');
         const filterTrigger = document.getElementById('archive-filter-trigger');
         const filterMenu = document.getElementById('archive-filter-menu');
-        const sortTrigger = document.getElementById('archive-sort-trigger');
-        const sortMenu = document.getElementById('archive-sort-menu');
+        const filterInput = document.getElementById('archive-filter-input');
         const filterLabel = document.getElementById('archive-filter-label');
-        const sortLabel = document.getElementById('archive-sort-label');
-        const countBadge = document.getElementById('archive-count-badge');
-        const resultsText = document.getElementById('archive-results-text');
-        const emptyFiltered = document.getElementById('archive-empty-filtered');
+        let searchDebounce = null;
 
-        const state = { search: '', filter: 'all', sort: 'newest' };
+        const syncArchiveMenuState = () => {
+            const hasOpenMenu = Boolean(document.querySelector('.archive-actions-wrap.is-open'));
+            archiveTableCard?.classList.toggle('has-open-menu', hasOpenMenu);
+        };
 
         const closeArchiveMenus = () => {
             document.querySelectorAll('.archive-actions-menu').forEach((el) => el.classList.remove('is-open'));
+            document.querySelectorAll('.archive-actions-wrap').forEach((el) => el.classList.remove('is-open'));
             filterMenu?.classList.add('hidden');
-            sortMenu?.classList.add('hidden');
-        };
-
-        const updateSummary = (visibleCount, totalCount) => {
-            const span = countBadge?.querySelector('span');
-            if (span) span.textContent = `${visibleCount} Archived Chats`;
-            if (resultsText) {
-                resultsText.textContent = visibleCount > 0
-                    ? `Showing 1 to ${visibleCount} of ${totalCount} archives`
-                    : `Showing 0 of ${totalCount} archives`;
-            }
-        };
-
-        const applyArchiveFilters = () => {
-            if (!list) return;
-            const visibleRows = [];
-
-            rows.forEach((row) => {
-                const title = String(row.dataset.title || '');
-                const group = String(row.dataset.filterGroup || 'older');
-                const matchesSearch = state.search === '' || title.includes(state.search);
-                const matchesFilter = state.filter === 'all' || state.filter === group;
-                const show = matchesSearch && matchesFilter;
-                row.classList.toggle('hidden', !show);
-                if (show) visibleRows.push(row);
-            });
-
-            visibleRows
-                .sort((a, b) => {
-                    const aTime = Number(a.dataset.savedAt || 0);
-                    const bTime = Number(b.dataset.savedAt || 0);
-                    return state.sort === 'oldest' ? aTime - bTime : bTime - aTime;
-                })
-                .forEach((row) => list.appendChild(row));
-
-            emptyFiltered?.classList.toggle('hidden', visibleRows.length > 0);
-            updateSummary(visibleRows.length, rows.length);
+            syncArchiveMenuState();
         };
 
         searchInput?.addEventListener('input', (e) => {
             const target = e.target;
             if (!(target instanceof HTMLInputElement)) return;
-            state.search = target.value.trim().toLowerCase();
-            applyArchiveFilters();
+            window.clearTimeout(searchDebounce);
+            searchDebounce = window.setTimeout(() => {
+                filterForm?.requestSubmit();
+            }, 350);
         });
 
         filterTrigger?.addEventListener('click', (e) => {
@@ -378,33 +354,17 @@
 
         filterMenu?.querySelectorAll('[data-filter]').forEach((btn) => {
             btn.addEventListener('click', () => {
-                state.filter = String(btn.getAttribute('data-filter') || 'all');
-                if (filterLabel) {
-                    filterLabel.textContent = state.filter === 'all' ? 'All Archives' : state.filter === 'recent' ? 'Recent Archives' : 'Older Archives';
-                }
-                filterMenu.classList.add('hidden');
-                applyArchiveFilters();
-            });
-        });
-
-        sortTrigger?.addEventListener('click', (e) => {
-            e.preventDefault();
-            const hidden = sortMenu?.classList.contains('hidden');
-            closeArchiveMenus();
-            if (hidden) sortMenu?.classList.remove('hidden');
-        });
-
-        sortMenu?.querySelectorAll('[data-sort]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                state.sort = String(btn.getAttribute('data-sort') || 'newest');
-                if (sortLabel) sortLabel.textContent = state.sort === 'oldest' ? 'Oldest' : 'Newest';
-                sortMenu.classList.add('hidden');
-                applyArchiveFilters();
+                const value = String(btn.getAttribute('data-filter') || '');
+                if (filterInput) filterInput.value = value;
+                if (filterLabel) filterLabel.textContent = btn.textContent?.trim() || 'All Archives';
+                filterMenu?.classList.add('hidden');
+                filterForm?.requestSubmit();
             });
         });
 
         document.querySelectorAll('.archive-actions-trigger').forEach((btn) => {
             const menu = btn.parentElement?.querySelector('.archive-actions-menu');
+            const wrap = btn.closest('.archive-actions-wrap');
             if (!menu) return;
 
             btn.addEventListener('click', (e) => {
@@ -412,23 +372,26 @@
                 e.stopPropagation();
                 const open = menu.classList.contains('is-open');
                 document.querySelectorAll('.archive-actions-menu').forEach((el) => el.classList.remove('is-open'));
+                document.querySelectorAll('.archive-actions-wrap').forEach((el) => el.classList.remove('is-open'));
                 filterMenu?.classList.add('hidden');
-                sortMenu?.classList.add('hidden');
-                if (!open) menu.classList.add('is-open');
+                if (!open) {
+                    menu.classList.add('is-open');
+                    wrap?.classList.add('is-open');
+                }
+
+                syncArchiveMenuState();
             });
         });
 
         document.addEventListener('click', (e) => {
             const target = e.target;
             if (!(target instanceof Element)) return;
-            if (target.closest('.archive-actions-trigger') || target.closest('.archive-actions-menu') || target.closest('#archive-filter-trigger') || target.closest('#archive-filter-menu') || target.closest('#archive-sort-trigger') || target.closest('#archive-sort-menu')) return;
+            if (target.closest('.archive-actions-trigger') || target.closest('.archive-actions-menu') || target.closest('#archive-filter-trigger') || target.closest('#archive-filter-menu')) return;
             closeArchiveMenus();
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeArchiveMenus();
         });
-
-        applyArchiveFilters();
     </script>
 </x-admin-layout>
