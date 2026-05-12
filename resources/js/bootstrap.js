@@ -434,7 +434,6 @@ document.addEventListener('click', (e) => {
     }
 }, true);
 
-<<<<<<< Updated upstream
 const openAuthModalFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('auth');
@@ -462,15 +461,20 @@ if (document.readyState === 'loading') {
 } else {
     openAuthModalFromUrl();
 }
-=======
-document.addEventListener('DOMContentLoaded', () => {
+
+const openAuthModalIfNeeded = () => {
     const { el } = getAuthModalEls();
     if (!el) return;
     if (el.getAttribute('data-auto-open') !== 'true') return;
 
     openAuthModal();
-});
->>>>>>> Stashed changes
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', openAuthModalIfNeeded);
+} else {
+    openAuthModalIfNeeded();
+}
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
