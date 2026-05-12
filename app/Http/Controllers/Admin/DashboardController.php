@@ -25,6 +25,7 @@ class DashboardController extends Controller
 
         $user = $request->user();
         $activeConversation = $user->conversations()
+            ->where('is_saved', false)
             ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->first();
