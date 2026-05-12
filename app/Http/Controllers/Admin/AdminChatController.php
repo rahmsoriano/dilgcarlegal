@@ -83,16 +83,42 @@ class AdminChatController extends Controller
     public function saved(Request $request)
     {
         $user = $request->user();
+        $filters = [
+            'search' => trim((string) $request->query('search', '')),
+            'filter' => (string) $request->query('filter', ''),
+            'sort' => (string) $request->query('sort', 'newest'),
+        ];
 
         $conversations = $user->conversations()
             ->where('is_saved', true)
-            ->orderByDesc('saved_at')
-            ->orderByDesc('id')
-             ->limit(100)
-             ->get();
+            ->when($filters['search'] !== '', function ($query) use ($filters) {
+                $query->where('title', 'like', '%'.$filters['search'].'%');
+            })
+            ->when($filters['filter'] === 'recent', function ($query) {
+                $query->where(function ($subQuery) {
+                    $subQuery
+                        ->whereNotNull('saved_at')
+                        ->where('saved_at', '>=', now()->subDays(30));
+                });
+            })
+            ->when($filters['filter'] === 'older', function ($query) {
+                $query->where(function ($subQuery) {
+                    $subQuery
+                        ->whereNull('saved_at')
+                        ->orWhere('saved_at', '<', now()->subDays(30));
+                });
+            })
+            ->when($filters['sort'] === 'oldest', function ($query) {
+                $query->orderByRaw('COALESCE(saved_at, created_at) asc')->orderBy('id');
+            }, function ($query) {
+                $query->orderByRaw('COALESCE(saved_at, created_at) desc')->orderByDesc('id');
+            })
+            ->limit(100)
+            ->get();
 
         return view('admin.archive', [
             'conversations' => $conversations,
+            'filters' => $filters,
         ]);
     }
 }
