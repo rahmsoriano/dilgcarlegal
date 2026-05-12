@@ -170,30 +170,36 @@
                 position: absolute;
                 right: 100%;
                 top: 50%;
-                transform: translateY(-50%);
-                margin-right: 10px;
+                transform: translateY(-50%) translateX(4px);
+                margin-right: 12px;
                 background: rgba(15, 23, 42, 0.95);
                 color: #ffffff;
                 font-size: 12px;
                 font-weight: 700;
-                padding: 6px 10px;
-                border-radius: 10px;
+                padding: 8px 12px;
+                border-radius: 12px;
                 white-space: nowrap;
                 opacity: 0;
+                visibility: hidden;
                 pointer-events: none;
-                transition: opacity 160ms ease;
-                z-index: 9999;
+                transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+                z-index: 10000;
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
             }
 
             .sidebar-collapsed .sidebar-toggle-btn[data-tooltip]::after {
                 right: auto;
                 left: 100%;
                 margin-right: 0;
-                margin-left: 10px;
+                margin-left: 12px;
+                transform: translateY(-50%) translateX(-4px);
             }
 
-            .sidebar-toggle-btn:hover::after {
+            .sidebar-toggle-btn:hover::after,
+            .sidebar-toggle-btn:focus-visible::after {
                 opacity: 1;
+                visibility: visible;
+                transform: translateY(-50%) translateX(0);
             }
 
             .admin-sidebar {
@@ -813,12 +819,12 @@
                                     </label>
 
                                     <div id="sidebar-bulk-actions" class="hidden items-center gap-2">
-                                        <a id="sidebar-bulk-archive" href="#" aria-disabled="true" class="text-xs font-black tracking-wide text-slate-600 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-slate-900">
+                                        <button id="sidebar-bulk-archive" type="button" aria-disabled="true" disabled class="text-xs font-black tracking-wide text-slate-600 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-slate-900">
                                             Archive
-                                        </a>
-                                        <a id="sidebar-bulk-delete" href="#" aria-disabled="true" class="text-xs font-black tracking-wide text-rose-700 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-rose-800">
+                                        </button>
+                                        <button id="sidebar-bulk-delete" type="button" aria-disabled="true" disabled class="text-xs font-black tracking-wide text-rose-700 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-rose-800">
                                             Delete
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -1278,6 +1284,53 @@
             globalMenu.className = 'fixed hidden w-52 overflow-hidden rounded-2xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.14)]';
             globalMenu.style.zIndex = '9999';
             document.body.appendChild(globalMenu);
+
+            const toastHost = document.createElement('div');
+            toastHost.id = 'sidebar-chat-toast-host';
+            toastHost.className = 'pointer-events-none fixed inset-x-0 top-5 z-[10010] flex justify-center px-4';
+            document.body.appendChild(toastHost);
+
+            let activeToastTimer = null;
+            const showSuccessToast = (message) => {
+                if (!toastHost) return;
+                if (activeToastTimer) {
+                    window.clearTimeout(activeToastTimer);
+                    activeToastTimer = null;
+                }
+
+                toastHost.innerHTML = `
+                    <div class="pointer-events-auto flex items-center gap-3 rounded-2xl border border-emerald-200/80 bg-white/95 px-4 py-3 text-sm font-semibold text-slate-800 shadow-[0_18px_45px_rgba(15,23,42,0.12)] ring-1 ring-emerald-100 backdrop-blur-xl transition-all duration-300">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
+                                <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3-3a1 1 0 111.415-1.42l2.292 2.294 6.492-6.494a1 1 0 011.416 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>${message}</div>
+                    </div>
+                `;
+
+                const toastEl = toastHost.firstElementChild;
+                if (toastEl instanceof HTMLElement) {
+                    toastEl.style.opacity = '0';
+                    toastEl.style.transform = 'translateY(-8px) scale(0.98)';
+                    requestAnimationFrame(() => {
+                        toastEl.style.opacity = '1';
+                        toastEl.style.transform = 'translateY(0) scale(1)';
+                    });
+                }
+
+                activeToastTimer = window.setTimeout(() => {
+                    const node = toastHost.firstElementChild;
+                    if (node instanceof HTMLElement) {
+                        node.style.opacity = '0';
+                        node.style.transform = 'translateY(-8px) scale(0.98)';
+                    }
+                    window.setTimeout(() => {
+                        toastHost.innerHTML = '';
+                    }, 220);
+                }, 2600);
+            };
+
             const confirmDialog = window.__confirmDialog || (({ message, title } = {}) => Promise.resolve(window.confirm(String(message || title || 'Confirm'))));
 
             let menuOpenForItem = null;
@@ -1404,6 +1457,7 @@
                 el.classList.toggle('cursor-not-allowed', !enabled);
                 el.classList.toggle('opacity-40', !enabled);
                 el.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+                if ('disabled' in el) el.disabled = !enabled;
             };
 
             const updateBulkSelectionUI = () => {
@@ -1787,6 +1841,8 @@
                     if (selectAllEl instanceof HTMLInputElement) selectAllEl.disabled = false;
                     updateBulkSelectionUI();
 
+                    showSuccessToast(`${selected.length} chat history ${selected.length === 1 ? 'was' : 'were'} deleted successfully.`);
+
                     if (deletedActive) {
                         window.location.href = @json(route($chatIndexRoute));
                     }
@@ -1864,6 +1920,7 @@
                         requestJson('delete', item.dataset.deleteUrl).then(() => {
                             item.remove();
                             ensureEmptyState();
+                            showSuccessToast('Chat history deleted successfully.');
                             if (activeConversationId && String(activeConversationId) === String(item.dataset.conversationId)) {
                                 window.location.href = @json(route($chatIndexRoute));
                             }

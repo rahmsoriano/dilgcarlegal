@@ -129,21 +129,87 @@ const ensureConfirmOverlay = () => {
 
     overlay = document.createElement('div');
     overlay.id = 'confirm-overlay';
-    overlay.className = 'fixed inset-0 hidden items-center justify-center bg-slate-900/40 px-4';
+    overlay.className = 'fixed inset-0 hidden items-center justify-center bg-slate-900/42 px-4';
     overlay.style.zIndex = '2147483300';
     overlay.innerHTML = `
-        <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-            <div class="px-8 pt-7 pb-4">
-                <div class="text-base font-black tracking-tight text-slate-900" data-confirm-title></div>
-                <div class="mt-2 text-sm font-medium text-slate-600" data-confirm-message></div>
+        <div class="w-full max-w-[44rem] overflow-hidden rounded-[2rem] bg-white/96 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+            <div class="px-8 pt-9 pb-4 sm:px-10">
+                <div class="text-[1.15rem] font-black tracking-tight text-[#14214d] sm:text-[1.2rem]" data-confirm-title></div>
+                <div class="mt-4 text-[15px] font-medium leading-8 text-[#556683]" data-confirm-message></div>
             </div>
-            <div class="flex items-center justify-end gap-2 px-8 pb-7">
-                <button type="button" class="h-10 rounded-2xl border border-slate-900/10 bg-white/60 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-700 hover:bg-white transition" data-confirm-cancel>Cancel</button>
-                <button type="button" class="h-10 rounded-2xl bg-rose-600 px-5 text-xs font-black uppercase tracking-[0.18em] text-white hover:bg-rose-500 transition" data-confirm-ok>Delete</button>
+            <div class="flex flex-col-reverse gap-3 px-8 pb-8 sm:flex-row sm:items-center sm:justify-start sm:px-10">
+                <button type="button" class="inline-flex h-[46px] items-center justify-center rounded-full border border-[#d8dce8] bg-white px-8 text-[12px] font-black uppercase tracking-[0.2em] text-[#2d3b5f] transition hover:bg-slate-50" data-confirm-cancel>Cancel</button>
+                <button type="button" class="inline-flex h-[46px] items-center justify-center rounded-full bg-[#ef1d4f] px-8 text-[12px] font-black uppercase tracking-[0.2em] text-white shadow-[0_14px_30px_rgba(239,29,79,0.28)] transition hover:bg-[#df1747]" data-confirm-ok>Delete</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
+
+    Object.assign(overlay.style, {
+        position: 'fixed',
+        inset: '0',
+        display: 'none',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        background: 'rgba(15, 23, 42, 0.42)',
+    });
+
+    const card = overlay.firstElementChild;
+    if (card instanceof HTMLElement) {
+        Object.assign(card.style, {
+            width: '100%',
+            maxWidth: '720px',
+            borderRadius: '32px',
+            background: 'rgba(255, 255, 255, 0.98)',
+            border: '1px solid rgba(15, 23, 42, 0.08)',
+            boxShadow: '0 24px 70px rgba(15,23,42,0.18)',
+        });
+    }
+
+    const titleEl = overlay.querySelector('[data-confirm-title]');
+    const messageEl = overlay.querySelector('[data-confirm-message]');
+    const cancelBtn = overlay.querySelector('[data-confirm-cancel]');
+    const okBtn = overlay.querySelector('[data-confirm-ok]');
+
+    if (titleEl instanceof HTMLElement) {
+        Object.assign(titleEl.style, {
+            color: '#14214d',
+            fontSize: '1.2rem',
+            fontWeight: '900',
+            letterSpacing: '-0.02em',
+        });
+    }
+
+    if (messageEl instanceof HTMLElement) {
+        Object.assign(messageEl.style, {
+            color: '#556683',
+            fontSize: '15px',
+            lineHeight: '1.9',
+            fontWeight: '600',
+        });
+    }
+
+    if (cancelBtn instanceof HTMLElement) {
+        Object.assign(cancelBtn.style, {
+            minWidth: '126px',
+            background: '#ffffff',
+            color: '#2d3b5f',
+            border: '1px solid #d8dce8',
+            boxShadow: '0 8px 20px rgba(15,23,42,0.05)',
+        });
+    }
+
+    if (okBtn instanceof HTMLElement) {
+        Object.assign(okBtn.style, {
+            minWidth: '126px',
+            background: '#ef1d4f',
+            color: '#ffffff',
+            border: '1px solid transparent',
+            boxShadow: '0 14px 30px rgba(239,29,79,0.28)',
+        });
+    }
+
     return overlay;
 };
 
@@ -165,6 +231,7 @@ const confirmDialog = ({ title, message, okText, cancelText } = {}) => {
 
     overlay.classList.remove('hidden');
     overlay.classList.add('flex');
+    overlay.style.display = 'flex';
 
     return new Promise((resolve) => {
         let resolved = false;
@@ -172,6 +239,7 @@ const confirmDialog = ({ title, message, okText, cancelText } = {}) => {
         const cleanup = () => {
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
+            overlay.style.display = 'none';
             overlay.removeEventListener('click', onOverlayClick);
             document.removeEventListener('keydown', onKeyDown);
             okBtn.removeEventListener('click', onOk);
@@ -434,7 +502,6 @@ document.addEventListener('click', (e) => {
     }
 }, true);
 
-<<<<<<< Updated upstream
 const openAuthModalFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('auth');
@@ -457,20 +524,15 @@ const openAuthModalFromUrl = () => {
     window.history.replaceState({}, '', nextUrl);
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', openAuthModalFromUrl);
-} else {
-    openAuthModalFromUrl();
-}
-=======
 document.addEventListener('DOMContentLoaded', () => {
+    openAuthModalFromUrl();
+
     const { el } = getAuthModalEls();
     if (!el) return;
     if (el.getAttribute('data-auto-open') !== 'true') return;
 
     openAuthModal();
 });
->>>>>>> Stashed changes
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
