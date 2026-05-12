@@ -197,7 +197,7 @@
         line-height: 1;
         font-weight: 800;
         letter-spacing: 0.08em;
-        color: #f0bb4c;
+        color: #ffde15;
     }
 
     .exact-auth-modal .exact-auth-rule {
@@ -205,7 +205,7 @@
         height: 4px;
         margin: 10px 0 12px;
         border-radius: 999px;
-        background: #f0bb4c;
+        background: #ffde15;
     }
 
     .exact-auth-modal .exact-auth-copy p {
@@ -440,7 +440,25 @@
         border-radius: 14px;
         background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
         box-shadow: 0 14px 26px rgba(20, 43, 111, 0.05);
-        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-width: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+        box-shadow: none;
+        transition: max-height 220ms ease, opacity 180ms ease, padding 180ms ease, border-color 180ms ease, border-width 180ms ease, transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .exact-auth-modal .exact-auth-password-guide.is-visible {
+        max-height: 420px;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        border-width: 1px;
+        opacity: 1;
+        pointer-events: auto;
+        box-shadow: 0 14px 26px rgba(20, 43, 111, 0.05);
     }
 
     .exact-auth-modal .exact-auth-password-guide:hover,
@@ -599,8 +617,8 @@
         padding: 0 22px;
         border: 0;
         border-radius: 999px;
-        background: linear-gradient(90deg, #2d2477 0%, #2442ad 38%, #d5202d 70%, #efbb38 100%);
-        box-shadow: 0 22px 42px rgba(34, 57, 159, 0.2), 0 12px 22px rgba(239, 187, 56, 0.18);
+        background: linear-gradient(90deg, #163b9f 0%, #1e4fd1 52%, #3b82f6 100%);
+        box-shadow: 0 22px 42px rgba(34, 57, 159, 0.2), 0 12px 22px rgba(59, 130, 246, 0.18);
         color: #ffffff;
         font-size: 12px;
         font-weight: 800;
@@ -926,7 +944,7 @@
                                         </div>
 
                                         <div class="exact-auth-field is-span-2">
-                                            <div id="modal_register_password_requirements" class="exact-auth-password-guide" data-password-guide>
+                                            <div id="modal_register_password_requirements" @class(['exact-auth-password-guide', 'is-visible' => $errors->has('password') || $errors->has('password_confirmation')]) data-password-guide>
                                                 <div class="exact-auth-password-guide-head">
                                                     <div class="exact-auth-password-guide-heading">
                                                         <div class="exact-auth-password-guide-badge" aria-hidden="true">
@@ -1081,19 +1099,40 @@
             });
         }
 
-        function setGuideFocus(isFocused) {
-            guide.classList.toggle('is-focused', isFocused);
+        function syncGuideVisibility() {
+            var activeElement = document.activeElement;
+            var shouldShow = passwordInput.value.length > 0
+                || (confirmationInput && confirmationInput.value.length > 0)
+                || activeElement === passwordInput
+                || activeElement === confirmationInput
+                || guide.classList.contains('is-focused');
+
+            guide.classList.toggle('is-visible', shouldShow);
         }
 
-        passwordInput.addEventListener('input', syncGuide);
+        function setGuideFocus(isFocused) {
+            guide.classList.toggle('is-focused', isFocused);
+            syncGuideVisibility();
+        }
+
+        passwordInput.addEventListener('input', function () {
+            syncGuide();
+            syncGuideVisibility();
+        });
         passwordInput.addEventListener('focus', function () { setGuideFocus(true); });
-        passwordInput.addEventListener('blur', function () { setGuideFocus(false); });
+        passwordInput.addEventListener('blur', function () {
+            window.setTimeout(function () { setGuideFocus(false); }, 0);
+        });
 
         if (confirmationInput) {
+            confirmationInput.addEventListener('input', syncGuideVisibility);
             confirmationInput.addEventListener('focus', function () { setGuideFocus(true); });
-            confirmationInput.addEventListener('blur', function () { setGuideFocus(false); });
+            confirmationInput.addEventListener('blur', function () {
+                window.setTimeout(function () { setGuideFocus(false); }, 0);
+            });
         }
 
         syncGuide();
+        syncGuideVisibility();
     }());
 </script>
