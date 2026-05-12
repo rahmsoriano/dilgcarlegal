@@ -868,6 +868,26 @@
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
 
+    const positionScrollBottomBtn = () => {
+        if (!scrollBottomBtn || !scrollEl) return;
+        const rect = scrollEl.getBoundingClientRect();
+        const centerX = rect.left + (rect.width / 2);
+        scrollBottomBtn.style.left = `${Math.round(centerX)}px`;
+    };
+
+    const schedulePositionScrollBottomBtn = () => {
+        positionScrollBottomBtn();
+        requestAnimationFrame(positionScrollBottomBtn);
+        window.setTimeout(positionScrollBottomBtn, 260);
+    };
+
+    if (scrollBottomBtn && scrollEl) {
+        schedulePositionScrollBottomBtn();
+        window.addEventListener('resize', schedulePositionScrollBottomBtn, { passive: true });
+        const sidebarObserver = new MutationObserver(() => schedulePositionScrollBottomBtn());
+        sidebarObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+
     const upsertSidebarConversation = ({ id, url, title, is_pinned, update_url, toggle_pin_url, toggle_save_url, delete_url }) => {
         if (window.__adminSidebarUpsertConversation) {
             return window.__adminSidebarUpsertConversation({ id, url, title, is_pinned, update_url, toggle_pin_url, toggle_save_url, delete_url });

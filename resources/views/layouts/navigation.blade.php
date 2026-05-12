@@ -1,69 +1,71 @@
-<nav x-data="{ open: false }" class="border-b border-white/10 shadow-[0_12px_36px_rgba(0,44,118,0.28)]" style="background:
-    radial-gradient(circle at 0% 50%, rgba(30,64,175,0.42), transparent 26%),
-    radial-gradient(circle at 72% 85%, rgba(96,165,250,0.18), transparent 22%),
-    linear-gradient(90deg, #081a73 0%, #0b2787 38%, #0a3da0 100%);">
-    <div class="mx-auto max-w-[1540px] px-4 sm:px-6 lg:px-8">
-        <div class="flex min-h-[80px] items-center justify-between gap-4">
-            <div class="flex min-w-0 items-center gap-4">
-                <a href="{{ auth()->user()->is_admin ? route('admin.dashboard') : route('chat.index') }}" class="flex min-w-0 items-center gap-3">
-                    <div class="flex h-[54px] w-[54px] items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_6px_20px_rgba(255,255,255,0.18)]">
-                        <x-application-logo class="block h-[48px] w-auto fill-current text-gray-800" />
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[14px] font-black leading-tight text-white sm:text-[15px]">{{ config('app.name', 'GABAY-Lex') }}</div>
-                        <div class="truncate text-[9px] font-semibold leading-tight text-blue-100/95 sm:text-[10px]">Guidance and Advisory for Better Administration in Law</div>
-                    </div>
-                </a>
-            </div>
+<nav x-data="{ open: false }" class="border-b border-white/10 shadow-[0_10px_30px_rgba(0,44,118,0.22)]" style="background:
+    radial-gradient(circle at top left, rgba(255, 222, 21, 0.14), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 45%),
+    linear-gradient(90deg, #002C76 0%, #083B8F 45%, #002C76 100%);">
+    <!-- Primary Navigation Menu -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between py-3">
+            <div class="flex">
+                <!-- Logo -->
+                <div class="shrink-0 flex items-center">
+                    <a href="{{ auth()->user()->is_admin ? route('admin.dashboard') : route('chat.index') }}">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 ring-1 ring-white/30 shadow-sm overflow-hidden">
+                                <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-[15px] font-black tracking-tight leading-tight text-white">{{ config('app.name', 'GABAY-Lex') }}</div>
+                                <div class="text-[10px] font-semibold leading-tight tracking-wide text-white/80">Guidance and Advisory for Better Administration in Law</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
 
-            <div class="hidden items-center justify-center gap-10 lg:flex">
-                <x-nav-link class="inline-flex items-center gap-2 border-none px-0 py-0 text-[14px] font-bold text-white/95 hover:text-white focus:text-white focus:outline-none" :href="auth()->user()->is_admin ? route('admin.legal.ai') : route('chat.index')" :active="request()->routeIs('chat.*') || request()->routeIs('admin.legal.ai*')">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h4M7 4h10a3 3 0 013 3v6a3 3 0 01-3 3h-3l-4 4v-4H7a3 3 0 01-3-3V7a3 3 0 013-3z" />
-                    </svg>
-                    {{ __('Chat') }}
-                </x-nav-link>
-
-                @can('admin')
-                    <x-nav-link class="inline-flex items-center gap-2 border-none px-0 py-0 text-[14px] font-bold text-white/95 hover:text-white focus:text-white focus:outline-none" :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2" />
-                            <circle cx="9.5" cy="7" r="3.5" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h4M19 6v4" />
-                        </svg>
-                        {{ __('Admin') }}
+                <!-- Navigation Links -->
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link class="text-white/85 hover:text-white hover:border-white/40 focus:text-white focus:border-white/60" :href="auth()->user()->is_admin ? route('admin.legal.ai') : route('chat.index')" :active="request()->routeIs('chat.*') || request()->routeIs('admin.legal.ai*')">
+                        {{ __('Chat') }}
                     </x-nav-link>
-                @endcan
+                    @if(!auth()->user()->is_admin)
+                        <x-nav-link class="text-white/85 hover:text-white hover:border-white/40 focus:text-white focus:border-white/60" :href="route('chat.saved')" :active="request()->routeIs('chat.saved')">
+                            {{ __('Saved') }}
+                        </x-nav-link>
+                    @endif
+                    @can('admin')
+                        <x-nav-link class="text-white/85 hover:text-white hover:border-white/40 focus:text-white focus:border-white/60" :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
+                            {{ __('Admin') }}
+                        </x-nav-link>
+                    @endcan
+                </div>
             </div>
 
-            <div class="hidden sm:flex sm:items-center">
-                <x-dropdown align="right" width="48" contentClasses="overflow-hidden rounded-[1.25rem] border border-[#dbe6fb] bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)]">
+            <!-- Settings Dropdown -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center gap-3 rounded-[1.1rem] bg-white/10 px-4 py-2 text-white transition hover:bg-white/15 focus:outline-none">
-                            <div class="text-right">
-                                <div class="max-w-[140px] truncate text-[14px] font-bold leading-tight">{{ Auth::user()->name }}</div>
-                                <div class="text-[11px] font-medium leading-tight text-blue-100/90">{{ auth()->user()->is_admin ? 'Administrator' : 'User' }}</div>
+                        <button class="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 text-sm font-bold text-white/90 ring-1 ring-white/15 hover:bg-white/15 hover:text-white focus:outline-none transition ease-in-out duration-150">
+                            <div class="max-w-[160px] truncate">{{ Auth::user()->name }}</div>
+
+                            <div class="ms-1">
+                                <svg class="fill-current h-4 w-4 text-white/80" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
                             </div>
-                            <div class="relative flex h-[42px] w-[42px] items-center justify-center rounded-full bg-gradient-to-br from-[#7c8dff] to-[#5f4af3] text-[0.95rem] font-black text-white">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                                <span class="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-[#1840a7] bg-[#67dd4f]"></span>
-                            </div>
-                            <svg class="h-4 w-4 text-white/90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                            </svg>
                         </button>
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')" class="rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700">
+                        <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
+                        <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
 
-                            <x-dropdown-link :href="route('logout')" class="rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-700"
-                                onclick="event.preventDefault(); this.closest('form').submit();">
+                            <x-dropdown-link :href="route('logout')"
+                                    onclick="event.preventDefault();
+                                                this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -71,8 +73,9 @@
                 </x-dropdown>
             </div>
 
-            <div class="flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center rounded-xl bg-white/10 p-2.5 text-white transition hover:bg-white/15 focus:outline-none">
+            <!-- Hamburger -->
+            <div class="-me-2 flex items-center sm:hidden">
+                <button @click="open = ! open" class="inline-flex items-center justify-center rounded-2xl bg-white/10 p-2 text-white/85 ring-1 ring-white/15 hover:bg-white/15 hover:text-white focus:outline-none transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -82,26 +85,47 @@
         </div>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden border-t border-white/10 bg-[#0b2f8f] sm:hidden">
-        <div class="space-y-1 px-4 py-3">
-            <x-responsive-nav-link class="rounded-xl border-l-0 px-4 py-3 text-white/95 hover:bg-white/10 hover:text-white" :href="auth()->user()->is_admin ? route('admin.legal.ai') : route('chat.index')" :active="request()->routeIs('chat.*') || request()->routeIs('admin.legal.ai*')">
+    <!-- Responsive Navigation Menu -->
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-[#002C76]/40 backdrop-blur-xl border-t border-white/10">
+        <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link class="text-white/90 hover:text-white hover:bg-white/10" :href="auth()->user()->is_admin ? route('admin.legal.ai') : route('chat.index')" :active="request()->routeIs('chat.*') || request()->routeIs('admin.legal.ai*')">
                 {{ __('Chat') }}
             </x-responsive-nav-link>
+            @if(!auth()->user()->is_admin)
+                <x-responsive-nav-link class="text-white/90 hover:text-white hover:bg-white/10" :href="route('chat.saved')" :active="request()->routeIs('chat.saved')">
+                    {{ __('Saved') }}
+                </x-responsive-nav-link>
+            @endif
             @can('admin')
-                <x-responsive-nav-link class="rounded-xl border-l-0 px-4 py-3 text-white/95 hover:bg-white/10 hover:text-white" :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
+                <x-responsive-nav-link class="text-white/90 hover:text-white hover:bg-white/10" :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                     {{ __('Admin') }}
                 </x-responsive-nav-link>
             @endcan
-            <x-responsive-nav-link class="rounded-xl border-l-0 px-4 py-3 text-white/95 hover:bg-white/10 hover:text-white" :href="route('profile.edit')">
-                {{ __('Profile') }}
-            </x-responsive-nav-link>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <x-responsive-nav-link class="rounded-xl border-l-0 px-4 py-3 text-white/95 hover:bg-white/10 hover:text-white" :href="route('logout')"
-                    onclick="event.preventDefault(); this.closest('form').submit();">
-                    {{ __('Log Out') }}
+        </div>
+
+        <!-- Responsive Settings Options -->
+        <div class="pt-4 pb-1 border-t border-white/10">
+            <div class="px-4">
+                <div class="font-bold text-base text-white">{{ Auth::user()->name }}</div>
+                <div class="font-semibold text-sm text-white/75">{{ Auth::user()->email }}</div>
+            </div>
+
+            <div class="mt-3 space-y-1">
+                <x-responsive-nav-link class="text-white/90 hover:text-white hover:bg-white/10" :href="route('profile.edit')">
+                    {{ __('Profile') }}
                 </x-responsive-nav-link>
-            </form>
+
+                <!-- Authentication -->
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+
+                    <x-responsive-nav-link class="text-white/90 hover:text-white hover:bg-white/10" :href="route('logout')"
+                            onclick="event.preventDefault();
+                                        this.closest('form').submit();">
+                        {{ __('Log Out') }}
+                    </x-responsive-nav-link>
+                </form>
+            </div>
         </div>
     </div>
 </nav>

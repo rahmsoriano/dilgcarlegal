@@ -7,10 +7,6 @@
 }
 
 @layer utilities {
-  [x-cloak] {
-    display: none !important;
-  }
-
   body.auth-modal-open {
     overflow: hidden;
   }
