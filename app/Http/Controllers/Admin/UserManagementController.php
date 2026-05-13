@@ -22,6 +22,9 @@ class UserManagementController extends Controller
             'status' => (string) $request->query('status', ''),
             'verification' => (string) $request->query('verification', ''),
         ];
+        if (! in_array($filters['role'], ['', 'admin', 'user'], true)) {
+            $filters['role'] = '';
+        }
 
         $users = User::query()
             ->when($filters['search'] !== '', function ($query) use ($filters) {
@@ -186,7 +189,7 @@ class UserManagementController extends Controller
             'birthday' => ['nullable', 'date', 'before:today'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user?->id)],
             'password' => $passwordRules,
-            'role' => ['required', Rule::in(['admin', 'staff', 'user'])],
+            'role' => ['required', Rule::in(['admin', 'user'])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
     }

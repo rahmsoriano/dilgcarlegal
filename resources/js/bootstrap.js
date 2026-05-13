@@ -24,6 +24,7 @@ const setGlobalLoaderVisible = (visible) => {
     if (!el) return;
 
     el.classList.toggle('hidden', !visible);
+    el.classList.toggle('global-loading-active', visible);
     el.setAttribute('aria-hidden', visible ? 'false' : 'true');
 };
 

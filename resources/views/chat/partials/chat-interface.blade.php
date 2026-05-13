@@ -334,33 +334,36 @@
     }
 
     .chat-suggestions__title {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
         line-height: 1.2;
-        color: #2563c7;
+        color: #6f87bd;
     }
 
     .chat-suggestions__grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(240px, 1fr));
-        gap: 10px 14px;
-        width: min(820px, 100%);
+        grid-template-columns: repeat(2, minmax(300px, 1fr));
+        gap: 12px 16px;
+        width: min(960px, 100%);
     }
 
     .chat-suggestion-btn {
         min-width: 0;
-        min-height: 39px;
+        min-height: 48px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
-        padding: 0 13px 0 18px;
-        border-radius: 10px;
+        gap: 12px;
+        padding: 0 16px 0 20px;
+        border-radius: 12px;
         border: 1px solid #cbd8ee;
         background: rgba(255, 255, 255, 0.88);
-        color: #1e5fc8;
-        font-size: 13px;
-        font-weight: 700;
+        color: #06143a;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0;
         line-height: 1.25;
         text-align: left;
         box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06);
@@ -381,10 +384,10 @@
     }
 
     .chat-suggestion-btn svg {
-        width: 15px;
-        height: 15px;
+        width: 17px;
+        height: 17px;
         flex: 0 0 auto;
-        color: #2563c7;
+        color: #6f87bd;
         transition: transform 160ms ease;
     }
 
@@ -816,8 +819,8 @@
 </style>
 
 <style>
-    /* Force hide the global loading overlay for the chat interface as requested */
-    #global-loading-overlay {
+    /* Keep stale chat loaders hidden, but allow intentional actions such as logout to show it. */
+    #global-loading-overlay:not(.global-loading-active) {
         display: none !important;
     }
 </style>

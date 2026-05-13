@@ -183,12 +183,11 @@
                 $roleLabels = [
                     '' => 'All Roles',
                     'admin' => 'Admin',
-                    'staff' => 'Staff',
                     'user' => 'User',
                 ];
 
                 $statusLabels = [
-                    '' => 'All Statuses',
+                    '' => 'All Status',
                     'active' => 'Active',
                     'inactive' => 'Inactive',
                 ];
@@ -226,20 +225,19 @@
                         <div id="users-role-menu" class="absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
                             <button type="button" data-role-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Roles</button>
                             <button type="button" data-role-filter="admin" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Admin</button>
-                            <button type="button" data-role-filter="staff" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Staff</button>
                             <button type="button" data-role-filter="user" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">User</button>
                         </div>
                     </div>
 
                     <div class="relative">
                         <button type="button" id="users-status-trigger" class="inline-flex h-[58px] w-full items-center justify-between rounded-[18px] border border-[#e3eaf6] bg-white px-6 text-[15px] font-bold text-[#1f2b4e] shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#cfdbf4]">
-                            <span id="users-status-label">{{ $statusLabels[$filters['status']] ?? 'All Statuses' }}</span>
+                            <span id="users-status-label">{{ $statusLabels[$filters['status']] ?? 'All Status' }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-[#253961]">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
                         </button>
                         <div id="users-status-menu" class="absolute left-0 top-full z-30 mt-3 hidden min-w-full overflow-hidden rounded-[20px] border border-white/70 bg-white/95 p-2 shadow-[0_22px_48px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/6 backdrop-blur-xl">
-                            <button type="button" data-status-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Statuses</button>
+                            <button type="button" data-status-filter="" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">All Status</button>
                             <button type="button" data-status-filter="active" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Active</button>
                             <button type="button" data-status-filter="inactive" class="flex w-full rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold text-[#32466e] transition hover:bg-[#f3f7ff]">Inactive</button>
                         </div>
@@ -317,7 +315,7 @@
                                             'inline-flex rounded-full px-4 py-2 text-[12px] font-black uppercase tracking-[0.14em]',
                                             'bg-[linear-gradient(135deg,#e9f1ff_0%,#dbeafe_100%)] text-[#2563eb]' => $role === 'user',
                                             'bg-[linear-gradient(135deg,#eef2ff_0%,#ddd6fe_100%)] text-[#5b3df5]' => $role === 'admin',
-                                            'bg-[linear-gradient(135deg,#fff7ed_0%,#ffedd5_100%)] text-[#c2410c]' => $role === 'staff',
+                                            'bg-slate-100 text-slate-700' => ! in_array($role, ['admin', 'user'], true),
                                         ])>
                                             {{ Str::upper($user->role) }}
                                         </span>
@@ -556,7 +554,7 @@
             statusMenu?.querySelectorAll('[data-status-filter]').forEach((button) => {
                 button.addEventListener('click', () => {
                     if (statusInput) statusInput.value = String(button.getAttribute('data-status-filter') || '');
-                    if (statusLabel) statusLabel.textContent = button.textContent?.trim() || 'All Statuses';
+                    if (statusLabel) statusLabel.textContent = button.textContent?.trim() || 'All Status';
                     statusMenu.classList.add('hidden');
                     filterForm?.requestSubmit();
                 });
