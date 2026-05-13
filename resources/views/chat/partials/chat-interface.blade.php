@@ -334,7 +334,11 @@
     }
 
     .chat-suggestions__title {
+<<<<<<< Updated upstream
         font-size: 11px;
+=======
+        font-size: 14px;
+>>>>>>> Stashed changes
         font-weight: 800;
         letter-spacing: 0.2em;
         text-transform: uppercase;
@@ -351,7 +355,11 @@
 
     .chat-suggestion-btn {
         min-width: 0;
+<<<<<<< Updated upstream
         min-height: 48px;
+=======
+        min-height: 46px;
+>>>>>>> Stashed changes
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -360,10 +368,16 @@
         border-radius: 12px;
         border: 1px solid #cbd8ee;
         background: rgba(255, 255, 255, 0.88);
+<<<<<<< Updated upstream
         color: #06143a;
         font-size: 14px;
         font-weight: 600;
         letter-spacing: 0;
+=======
+        color: #1e5fc8;
+        font-size: 15px;
+        font-weight: 700;
+>>>>>>> Stashed changes
         line-height: 1.25;
         text-align: left;
         box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06);
@@ -816,6 +830,252 @@
             transition: none !important;
         }
     }
+
+    .chat-shell {
+        background: {{ $isPro ? 'radial-gradient(circle at 14% 18%, rgba(77, 125, 255, 0.14), transparent 18%), radial-gradient(circle at 86% 12%, rgba(15, 58, 165, 0.08), transparent 22%), radial-gradient(circle at 50% 100%, rgba(191, 219, 254, 0.28), transparent 24%), linear-gradient(180deg, #f9fbff 0%, #eff4fc 100%)' : 'radial-gradient(circle at top left, rgba(14, 165, 233, 0.14), transparent 28%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.14), transparent 32%), linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%)' }};
+    }
+
+    .chat-panel {
+        backdrop-filter: blur(18px);
+        background: rgba(255, 255, 255, 0.44);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
+    }
+
+    .pro-input-wrapper {
+        background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,251,255,0.96) 100%);
+        border: 1px solid rgba(196, 212, 241, 0.80);
+        border-radius: 1.75rem;
+        box-shadow: 0 20px 42px rgba(16, 36, 89, 0.08);
+    }
+
+    .pro-input-wrapper:focus-within {
+        border-color: rgba(59, 130, 246, 0.42);
+        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.10), 0 24px 48px rgba(20, 54, 120, 0.14);
+    }
+
+    .chat-empty-state {
+        position: relative;
+        width: 100%;
+        max-width: 1100px;
+        padding-bottom: 0.35rem;
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chat-empty-state::before {
+        content: "";
+        position: absolute;
+        inset: 2rem 10% auto;
+        height: 340px;
+        background:
+            radial-gradient(circle at center, rgba(59, 130, 246, 0.11), transparent 36%),
+            radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.92), transparent 32%);
+        pointer-events: none;
+        filter: blur(10px);
+    }
+
+    .chat-empty-state__brand {
+        position: relative;
+        z-index: 1;
+    }
+
+    .chat-empty-state__brand::before {
+        content: "";
+        position: absolute;
+        inset: 50%;
+        width: 138px;
+        height: 138px;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.06) 48%, transparent 72%);
+        filter: blur(12px);
+    }
+
+    .chat-empty-state__cards {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(220px, 1fr));
+        gap: 24px;
+        width: 100%;
+        margin-top: 1.5rem;
+        margin-left: auto;
+        margin-right: auto;
+        justify-content: center;
+    }
+
+    .chat-empty-state {
+        min-height: auto;
+        justify-content: flex-start;
+        padding-top: 7.5rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .chat-feature-card {
+        min-height: 224px;
+        padding: 26px 22px 22px;
+        border-radius: 20px;
+        border: 1px solid rgba(205, 220, 244, 0.92);
+        background: linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(249,251,255,0.82) 100%);
+        box-shadow: 0 18px 38px rgba(16, 36, 89, 0.08);
+        backdrop-filter: blur(16px);
+        transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+
+    .chat-feature-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(145, 178, 241, 0.92);
+        box-shadow: 0 24px 48px rgba(24, 60, 129, 0.12);
+    }
+
+    .chat-feature-card__icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 18px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .chat-feature-card__icon svg {
+        width: 34px;
+        height: 34px;
+    }
+
+    .chat-feature-card__title {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #12275c;
+    }
+
+    .chat-feature-card__copy {
+        margin-top: 10px;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #62759a;
+    }
+
+    .chat-suggestions {
+        gap: 12px;
+        align-items: center;
+        margin-top: 24px;
+        width: 100%;
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .chat-suggestions__title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 15px;
+        color: #1f4fa8;
+        text-align: center;
+        width: 100%;
+    }
+
+    .chat-suggestions__grid {
+        gap: 12px 16px;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #chat-form {
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #chat-form > * {
+        width: 100%;
+    }
+
+    .chat-suggestion-btn {
+        min-height: 44px;
+        padding: 0 16px 0 18px;
+        border-radius: 999px;
+        border-color: #cfddf4;
+        box-shadow: 0 12px 26px rgba(17, 42, 95, 0.06);
+        font-size: 15px;
+    }
+
+    .chat-suggestion-btn:hover {
+        border-color: #9fc0f4;
+        box-shadow: 0 18px 30px rgba(37, 99, 235, 0.10);
+        transform: translateY(-2px);
+    }
+
+    .chat-composer-shell {
+        border-radius: 30px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,255,0.95) 100%);
+        border: 1px solid rgba(204, 220, 244, 0.84);
+        box-shadow: 0 22px 44px rgba(18, 48, 108, 0.10);
+    }
+
+    .chat-send-premium {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #1d5eff 0%, #0c45d7 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 14px 30px rgba(29, 94, 255, 0.28);
+    }
+
+    .chat-send-premium:hover {
+        box-shadow: 0 18px 36px rgba(29, 94, 255, 0.34);
+        transform: translateY(-1px);
+    }
+
+    .chat-send-premium svg {
+        color: #ffffff !important;
+    }
+
+    @media (max-width: 760px) {
+        .chat-empty-state__cards {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 1.25rem;
+        }
+
+        .chat-feature-card__title {
+            font-size: 18px;
+        }
+
+        .chat-feature-card__copy {
+            font-size: 15px;
+        }
+
+        .chat-suggestions__title {
+            font-size: 14px;
+        }
+
+        .chat-suggestion-btn {
+            min-height: 44px;
+            font-size: 14px;
+        }
+
+        .chat-suggestions {
+            margin-top: 0;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .chat-empty-state {
+            padding-left: 18px;
+        }
+    }
 </style>
 
 <style>
@@ -833,8 +1093,8 @@
 
             <div id="chat-scroll" class="chat-scrollbar flex-1 overflow-y-auto p-8">
                 @if ($messages->isEmpty())
-                    <div class="flex h-full flex-col items-center justify-center text-center">
-                        <div class="relative mb-8">
+                    <div class="chat-empty-state text-center">
+                        <div class="chat-empty-state__brand relative mb-6">
                             <div class="absolute inset-0 bg-[#002C76] blur-[40px] opacity-20 animate-pulse"></div>
                             <div class="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white shadow-2xl">
                                 <img
@@ -844,8 +1104,77 @@
                                 >
                             </div>
                         </div>
-                        <h3 class="text-3xl font-black tracking-tight {{ $isPro ? 'text-slate-900' : 'text-slate-950' }}">What can Lex assist you today?</h3>
-                        <p class="mt-4 max-w-md text-lg text-slate-500 font-normal leading-relaxed">Ask about legal opinions.</p>
+                        <h3 class="text-[3.75rem] font-black tracking-tight {{ $isPro ? 'text-slate-900' : 'text-slate-950' }} sm:text-[4.1rem]" style="letter-spacing:-0.04em;">What can Lex assist you today?</h3>
+                        <p class="mt-4 max-w-md text-[1.45rem] text-slate-500 font-normal leading-relaxed sm:text-[1.55rem]">Ask about legal opinions.</p>
+
+                        <div class="chat-empty-state__cards">
+                            <div class="chat-feature-card">
+                                <div class="chat-feature-card__icon" style="background:linear-gradient(180deg, rgba(218,232,255,0.98) 0%, rgba(235,242,255,0.92) 100%); color:#2563eb;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 14h5" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20 21 16V6a2 2 0 0 0-2-2H5A2 2 0 0 0 3 6v10a2 2 0 0 0 2 2h12Z" />
+                                    </svg>
+                                </div>
+                                <div class="chat-feature-card__title">Legal Opinions</div>
+                                <div class="chat-feature-card__copy">Ask about legal interpretations and opinions.</div>
+                            </div>
+                            <div class="chat-feature-card">
+                                <div class="chat-feature-card__icon" style="background:linear-gradient(180deg, rgba(219,247,235,0.98) 0%, rgba(233,250,241,0.92) 100%); color:#16a34a;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 2.25H8.25A2.25 2.25 0 0 0 6 4.5v15A2.25 2.25 0 0 0 8.25 21.75h7.5A2.25 2.25 0 0 0 18 19.5V6l-3.75-3.75Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 2.25V6H18" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 12h4.5m-4.5 3h4.5" />
+                                    </svg>
+                                </div>
+                                <div class="chat-feature-card__title">Document Review</div>
+                                <div class="chat-feature-card__copy">Get help understanding legal documents.</div>
+                            </div>
+                            <div class="chat-feature-card">
+                                <div class="chat-feature-card__icon" style="background:linear-gradient(180deg, rgba(255,238,220,0.98) 0%, rgba(255,245,233,0.92) 100%); color:#ea580c;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-6-6h12M8.25 6.75h7.5M9 3h6M7.5 21h9" />
+                                    </svg>
+                                </div>
+                                <div class="chat-feature-card__title">Legal Guidance</div>
+                                <div class="chat-feature-card__copy">Receive guidance on various legal matters.</div>
+                            </div>
+                            <div class="chat-feature-card">
+                                <div class="chat-feature-card__icon" style="background:linear-gradient(180deg, rgba(241,232,255,0.98) 0%, rgba(248,243,255,0.92) 100%); color:#7c3aed;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25A2.25 2.25 0 0 1 6.75 3h10.5A2.25 2.25 0 0 1 19.5 5.25v13.5A2.25 2.25 0 0 1 17.25 21h-10.5A2.25 2.25 0 0 1 4.5 18.75V5.25Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5h7.5M8.25 12h7.5M8.25 16.5h4.5" />
+                                    </svg>
+                                </div>
+                                <div class="chat-feature-card__title">Knowledge Base</div>
+                                <div class="chat-feature-card__copy">Search through your curated legal resources.</div>
+                            </div>
+                        </div>
+
+                        <div id="chat-suggestions" class="chat-suggestions mx-auto w-full max-w-6xl" aria-label="Suggested questions">
+                            <div class="chat-suggestions__title">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18l-.813-2.096A4.5 4.5 0 0 0 6.096 13.81L4 13l2.096-.813A4.5 4.5 0 0 0 8.187 10.096L9 8l.813 2.096a4.5 4.5 0 0 0 2.091 2.091L14 13l-2.096.813a4.5 4.5 0 0 0-2.091 2.091Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 6h.01M18 10h.01" />
+                                </svg>
+                                <span>Suggested questions</span>
+                            </div>
+                            <div class="chat-suggestions__grid">
+                                @foreach ([
+                                    'Is a verbal agreement legally binding?',
+                                    'Is recording a conversation without consent legal?',
+                                    'Is self-defense always a valid legal defense?',
+                                    'Can an acting Punong Barangay receive honorarium?',
+                                ] as $suggestedQuestion)
+                                    <button type="button" class="chat-suggestion-btn" data-chat-suggestion="{{ $suggestedQuestion }}">
+                                        <span>{{ $suggestedQuestion }}</span>
+                                        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 1 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 @else
                     <div data-message-stack="true" class="mx-auto flex w-full max-w-6xl flex-col gap-10">
@@ -892,26 +1221,6 @@
             </button>
 
             <div class="border-t {{ $isPro ? 'border-slate-900/[0.03] bg-white/50' : 'border-slate-200/50 bg-white/70' }} px-6 py-4 sm:px-8 sm:py-5">
-                @if ($messages->isEmpty())
-                    <div id="chat-suggestions" class="chat-suggestions mx-auto mb-5 w-full max-w-6xl" aria-label="Suggested questions">
-                        <div class="chat-suggestions__title">Suggested questions</div>
-                        <div class="chat-suggestions__grid">
-                            @foreach ([
-                                'Is a verbal agreement legally binding?',
-                                'Is recording a conversation without consent legal?',
-                                'Is self-defense always a valid legal defense?',
-                                'Can an acting Punong Barangay receive honorarium?',
-                            ] as $suggestedQuestion)
-                                <button type="button" class="chat-suggestion-btn" data-chat-suggestion="{{ $suggestedQuestion }}">
-                                    <span>{{ $suggestedQuestion }}</span>
-                                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 1 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
                 <form
                     id="chat-form"
                     data-loader-skip
@@ -921,7 +1230,7 @@
                     data-active-conversation-url="{{ $activeConversation ? route($showRoute ?? 'chat.show', $activeConversation->id) : '' }}"
                     data-conversation-id="{{ $activeConversation?->id }}"
                 >
-                    <div class="group relative overflow-hidden {{ $isPro ? 'pro-input-wrapper' : 'rounded-[2rem] border border-slate-200 bg-white' }} transition-all duration-500">
+                    <div class="chat-composer-shell group relative overflow-hidden {{ $isPro ? 'pro-input-wrapper' : 'rounded-[2rem] border border-slate-200 bg-white' }} transition-all duration-500">
                         <div class="flex items-center gap-3 px-8 py-3">
                             <textarea
                                 id="chat-prompt"
@@ -929,8 +1238,8 @@
                                 class="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-base font-normal leading-6 {{ $isPro ? 'text-slate-900 placeholder:text-slate-400 focus:ring-0' : 'text-slate-800 placeholder:text-slate-400' }}"
                                 placeholder="Type your legal inquiry here..."
                             ></textarea>
-                            <button id="chat-send" type="submit" aria-label="Send" class="group flex h-10 w-10 items-center justify-center rounded-xl bg-[#002C76] text-[#FFDE15] shadow-md shadow-slate-900/10 transition-all duration-200 hover:bg-[#002C76]/95" style="background-color: #002C76 !important; color: #FFDE15 !important;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block; color: #FFDE15 !important;">
+                            <button id="chat-send" type="submit" aria-label="Send" class="chat-send-premium group flex items-center justify-center transition-all duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block;">
                                     <path d="M3.478 2.405a.75.75 0 0 1 .81-.163l18 8.25a.75.75 0 0 1 0 1.362l-18 8.25A.75.75 0 0 1 3 19.5v-6.764a.75.75 0 0 1 .553-.724L12 9.75 3.553 7.488A.75.75 0 0 1 3 6.764V3a.75.75 0 0 1 .478-.595Z"/>
                                 </svg>
                             </button>

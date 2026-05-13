@@ -626,6 +626,162 @@
                 background-color: rgba(0, 44, 118, 0.55);
             }
 
+            .admin-shell {
+                background:
+                    radial-gradient(circle at top left, rgba(86, 133, 255, 0.10), transparent 24%),
+                    radial-gradient(circle at bottom right, rgba(17, 74, 176, 0.08), transparent 24%),
+                    linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            }
+
+            .admin-header {
+                background:
+                    radial-gradient(circle at 78% 0%, rgba(76, 123, 255, 0.28), transparent 30%),
+                    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.10), transparent 24%),
+                    linear-gradient(90deg, #071739 0%, #0c2570 42%, #153ba1 100%);
+                border-bottom-color: rgba(138, 169, 255, 0.14);
+                box-shadow: 0 18px 40px rgba(4, 16, 49, 0.30);
+            }
+
+            .admin-header-inner {
+                padding: 16px 26px;
+            }
+
+            .admin-brand {
+                gap: 14px;
+            }
+
+            .admin-brand-badge {
+                width: 48px;
+                height: 48px;
+                background: rgba(255, 255, 255, 0.96);
+                box-shadow: 0 12px 28px rgba(4, 16, 49, 0.18);
+                border-color: rgba(255, 255, 255, 0.52);
+            }
+
+            .admin-brand-title {
+                color: #ffffff;
+                font-weight: 800;
+                font-size: 22px;
+                line-height: 1.02;
+                letter-spacing: -0.03em;
+                text-shadow: 0 2px 10px rgba(4,16,49,0.24);
+            }
+
+            .admin-brand-subtitle {
+                color: rgba(255, 255, 255, 0.82);
+                font-weight: 600;
+                font-size: 13px;
+                line-height: 1.12;
+                letter-spacing: 0.01em;
+                margin-top: 4px;
+            }
+
+            .admin-content {
+                padding: 16px 18px 22px;
+            }
+
+            .admin-sidebar {
+                background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(248,251,255,0.86) 100%) !important;
+                border: 1px solid rgba(193, 212, 246, 0.72);
+                border-radius: 28px;
+                box-shadow: 0 24px 54px rgba(18, 48, 108, 0.08);
+                backdrop-filter: blur(18px);
+            }
+
+            .sidebar-nav-link {
+                border-radius: 18px !important;
+                min-height: 58px;
+                transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+            }
+
+            .sidebar-nav-link:hover {
+                background: linear-gradient(180deg, rgba(243,248,255,0.98) 0%, rgba(236,243,255,0.92) 100%) !important;
+                border-radius: 18px !important;
+                transform: translateY(-1px);
+            }
+
+            .sidebar-nav-link.active-link {
+                background: linear-gradient(180deg, rgba(235,242,255,1) 0%, rgba(226,236,255,0.96) 100%) !important;
+                border-radius: 18px !important;
+                box-shadow: inset 4px 0 0 #2563eb, 0 14px 28px rgba(37,99,235,0.10);
+            }
+
+            .sidebar-nav-link.active-link::after {
+                content: "";
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                width: 10px;
+                height: 36px;
+                transform: translateY(-50%);
+                border-radius: 999px;
+                background: radial-gradient(circle, rgba(59,130,246,0.30) 0%, rgba(59,130,246,0) 72%);
+                pointer-events: none;
+            }
+
+            .sidebar-nav-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 14px;
+                background: linear-gradient(180deg, #0d2e7c 0%, #1d4ed8 100%);
+                box-shadow: 0 10px 22px rgba(29,78,216,0.18);
+            }
+
+            #sidebar-chat-search {
+                border-radius: 18px !important;
+                border-color: #dbe6f6 !important;
+                background: rgba(255,255,255,0.84) !important;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.84), 0 8px 18px rgba(15,23,42,0.04);
+                min-height: 44px;
+            }
+
+            #sidebar-profile-trigger {
+                border-radius: 20px !important;
+                border: 1px solid #dbe6f6 !important;
+                background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.92) 100%) !important;
+                box-shadow: 0 16px 34px rgba(15,23,42,0.06);
+                min-height: 74px;
+            }
+
+            #sidebar-profile-menu {
+                border-radius: 18px !important;
+                border: 1px solid rgba(193, 212, 246, 0.78);
+                box-shadow: 0 24px 54px rgba(18,48,108,0.12) !important;
+            }
+
+            .sidebar-chat-item {
+                border-radius: 16px !important;
+                transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease !important;
+            }
+
+            .sidebar-chat-item:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 22px rgba(15,23,42,0.04) !important;
+            }
+
+            .sidebar-chat-item.is-active {
+                background: linear-gradient(180deg, rgba(235,242,255,1) 0%, rgba(226,236,255,0.96) 100%) !important;
+                box-shadow: inset 3px 0 0 #2563eb, 0 12px 24px rgba(37,99,235,0.08) !important;
+            }
+
+            @media (max-width: 1023px) {
+                .admin-content {
+                    padding: 14px 12px 18px;
+                }
+
+                .admin-sidebar {
+                    border-radius: 24px;
+                }
+
+                .admin-brand-title {
+                    font-size: 18px;
+                }
+
+                .admin-brand-subtitle {
+                    font-size: 11px;
+                }
+            }
+
         </style>
     </head>
     <body class="font-sans antialiased selection:bg-slate-900/10 selection:text-slate-900">
@@ -641,11 +797,10 @@
                             >
                         </div>
                         <div style="min-width: 0;">
-                            <div style="color: #ffffff; font-weight: 800; font-size: 15px; line-height: 1.1; letter-spacing: -0.01em;">{{ config('app.name', 'GABAY-Lex') }}</div>
-                            <div style="color: rgba(255, 255, 255, 0.78); font-weight: 600; font-size: 10px; line-height: 1.1; letter-spacing: 0.02em; margin-top: 2px;">Guidance and Advisory for Better Administration in Law</div>
+                            <div class="admin-brand-title">{{ config('app.name', 'GABAY-Lex') }}</div>
+                            <div class="admin-brand-subtitle">Guidance and Advisory for Better Administration in Law</div>
                         </div>
                     </div>
-                    <div></div>
                 </div>
             </header>
 
@@ -663,19 +818,26 @@
                                 ? $routeConversation->id
                                 : request()->route('conversationId');
 
+                            $isSavedMode = ($mode ?? 'all') === 'saved';
+                            $sidebarSectionTitle = $isSavedMode ? 'Archived Chats' : 'Your Chats';
+                            $sidebarBulkSaveLabel = $isSavedMode ? 'Restore' : 'Archive';
+
                             $sidebarChats = collect();
                             if ($mode === 'public') {
                                 $rows = (array) session('public_conversations', []);
                                 $sidebarChats = collect($rows)
-                                    ->filter(fn ($c) => empty($c['is_saved']))
+                                    ->filter(fn ($c) => $isSavedMode ? !empty($c['is_saved']) : empty($c['is_saved']))
                                     ->sortByDesc(fn ($c) => !empty($c['is_pinned']) ? 1 : 0)
                                     ->sortByDesc(fn ($c) => !empty($c['pinned_at']) ? strtotime((string) $c['pinned_at']) : 0)
+                                    ->sortByDesc(fn ($c) => $isSavedMode ? (!empty($c['saved_at']) ? strtotime((string) $c['saved_at']) : 0) : 0)
                                     ->sortByDesc(fn ($c) => !empty($c['last_message_at']) ? strtotime((string) $c['last_message_at']) : 0)
                                     ->sortByDesc(fn ($c) => (int) ($c['id'] ?? 0))
                                     ->map(function ($c) {
                                         return (object) [
                                             'id' => (int) ($c['id'] ?? 0),
                                             'title' => $c['title'] ?? null,
+                                            'is_saved' => (bool) ($c['is_saved'] ?? false),
+                                            'saved_at' => !empty($c['saved_at']) ? \Illuminate\Support\Carbon::parse((string) $c['saved_at']) : null,
                                             'is_pinned' => (bool) ($c['is_pinned'] ?? false),
                                             'pinned_at' => !empty($c['pinned_at']) ? \Illuminate\Support\Carbon::parse((string) $c['pinned_at']) : null,
                                             'last_message_at' => !empty($c['last_message_at']) ? \Illuminate\Support\Carbon::parse((string) $c['last_message_at']) : null,
@@ -685,10 +847,11 @@
                                     ->values();
                             } elseif (auth()->check()) {
                                 $sidebarChats = auth()->user()->conversations()
-                                    ->select(['id', 'title', 'is_pinned', 'pinned_at', 'last_message_at', 'created_at'])
-                                    ->where('is_saved', false)
+                                    ->select(['id', 'title', 'is_saved', 'saved_at', 'is_pinned', 'pinned_at', 'last_message_at', 'created_at'])
+                                    ->where('is_saved', $isSavedMode)
                                     ->orderByDesc('is_pinned')
                                     ->orderByDesc('pinned_at')
+                                    ->when($isSavedMode, fn ($query) => $query->orderByDesc('saved_at'))
                                     ->orderByDesc('last_message_at')
                                     ->orderByDesc('id')
                                     ->get();
@@ -800,7 +963,7 @@
                         <div class="sidebar-history mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
                             <div class="sidebar-history-inner flex min-h-0 flex-1 flex-col">
                                 <button id="sidebar-chats-toggle" type="button" class="flex items-center justify-between px-4 py-2 text-left w-full">
-                                    <div class="sidebar-section-label text-[10px] font-black uppercase tracking-[0.2em]" style="color: #002C76 !important; opacity: 0.6;">Your Chats</div>
+                                    <div class="sidebar-section-label text-[10px] font-black uppercase tracking-[0.2em]" style="color: #002C76 !important; opacity: 0.6;">{{ $sidebarSectionTitle }}</div>
                                     <svg id="sidebar-chats-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-4 w-4 transition-transform duration-200" style="color: #002C76 !important; opacity: 0.6;">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                     </svg>
@@ -813,8 +976,8 @@
                                     </label>
 
                                     <div id="sidebar-bulk-actions" class="hidden items-center gap-2">
-                                        <a id="sidebar-bulk-archive" href="#" aria-disabled="true" class="text-xs font-black tracking-wide text-slate-600 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-slate-900">
-                                            Archive
+                                        <a id="sidebar-bulk-archive" href="#" aria-disabled="true" data-label-default="{{ $sidebarBulkSaveLabel }}" class="text-xs font-black tracking-wide text-slate-600 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-slate-900">
+                                            {{ $sidebarBulkSaveLabel }}
                                         </a>
                                         <a id="sidebar-bulk-delete" href="#" aria-disabled="true" class="text-xs font-black tracking-wide text-rose-700 underline transition opacity-40 cursor-not-allowed pointer-events-none hover:text-rose-800">
                                             Delete
@@ -828,6 +991,8 @@
                                             @forelse ($sidebarChats as $conversation)
                                                 <div
                                                     data-conversation-id="{{ $conversation->id }}"
+                                                    data-is-saved="{{ $conversation->is_saved ? '1' : '0' }}"
+                                                    data-saved-at="{{ $conversation->saved_at?->toIso8601String() }}"
                                                     data-is-pinned="{{ $conversation->is_pinned ? '1' : '0' }}"
                                                     data-pinned-at="{{ $conversation->pinned_at?->toIso8601String() }}"
                                                     data-last-message-at="{{ $conversation->last_message_at?->toIso8601String() }}"
@@ -881,7 +1046,7 @@
                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-slate-500">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                                                 </svg>
-                                                                <span>Archive</span>
+                                                                <span>{{ $isSavedMode ? 'Restore' : 'Archive' }}</span>
                                                             </button>
                                                             <button type="button" data-action="delete" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-500/10 transition">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-rose-600">
@@ -1273,6 +1438,11 @@
                 return resp.json();
             };
 
+            const sidebarSavedMode = @json($isSavedMode);
+            const bulkSaveLabel = @json($sidebarBulkSaveLabel);
+            const sidebarArchiveRoute = @json(route($archiveRoute));
+            const sidebarChatIndexRoute = @json(route($chatIndexRoute));
+
             const globalMenu = document.createElement('div');
             globalMenu.id = 'sidebar-chat-global-menu';
             globalMenu.className = 'fixed hidden w-52 overflow-hidden rounded-2xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.14)]';
@@ -1295,7 +1465,9 @@
                 if (!btn || !item) return;
 
                 const isPinned = item.dataset.isPinned === '1';
+                const isSaved = item.dataset.isSaved === '1';
                 const pinLabel = isPinned ? 'Unpin Chat' : 'Pin Chat';
+                const saveLabel = isSaved ? 'Restore' : 'Archive';
 
                 menuOpenForItem = item;
                 menuOpenForButton = btn;
@@ -1321,7 +1493,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-slate-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                         </svg>
-                        <span>Archive</span>
+                        <span>${saveLabel}</span>
                     </button>
                     <button type="button" data-action="delete" class="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] font-semibold text-rose-700 hover:bg-rose-500/10 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-rose-600">
@@ -1442,6 +1614,8 @@
                 const pinned = item.dataset.isPinned === '1';
                 const pinText = item.querySelector('[data-action="pin"] span');
                 if (pinText) pinText.textContent = pinned ? 'Unpin Chat' : 'Pin Chat';
+                const saveText = item.querySelector('[data-action="archive"] span');
+                if (saveText) saveText.textContent = item.dataset.isSaved === '1' ? 'Restore' : 'Archive';
             };
 
             const setPinnedVisual = (item, pinned, pinnedAt) => {
@@ -1742,7 +1916,11 @@
                     for (const item of selected) {
                         try {
                             const data = await requestJson('post', item.dataset.toggleSaveUrl);
-                            if (data?.is_saved) {
+                            const nextSaved = !!data?.is_saved;
+                            item.dataset.isSaved = nextSaved ? '1' : '0';
+                            if (nextSaved === sidebarSavedMode) {
+                                updateMenuLabels(item);
+                            } else {
                                 item.remove();
                             }
                         } catch (e) {}
@@ -1839,14 +2017,21 @@
 
                     if (action === 'archive') {
                         requestJson('post', item.dataset.toggleSaveUrl).then((data) => {
-                            if (data?.is_saved) {
+                            const nextSaved = !!data?.is_saved;
+                            item.dataset.isSaved = nextSaved ? '1' : '0';
+                            if (nextSaved !== sidebarSavedMode) {
                                 item.style.transition = 'opacity 160ms ease, transform 160ms ease';
                                 item.style.opacity = '0';
                                 item.style.transform = 'translateY(-4px)';
                                 window.setTimeout(() => {
                                     item.remove();
                                     ensureEmptyState();
+                                    if (activeConversationId && String(activeConversationId) === String(item.dataset.conversationId)) {
+                                        window.location.href = sidebarSavedMode ? sidebarArchiveRoute : sidebarChatIndexRoute;
+                                    }
                                 }, 180);
+                            } else {
+                                updateMenuLabels(item);
                             }
                         }).catch(() => {});
                         return;
