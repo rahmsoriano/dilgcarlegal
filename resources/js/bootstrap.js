@@ -129,17 +129,31 @@ const ensureConfirmOverlay = () => {
 
     overlay = document.createElement('div');
     overlay.id = 'confirm-overlay';
-    overlay.className = 'fixed inset-0 hidden items-center justify-center bg-slate-900/40 px-4';
+    overlay.className = 'confirm-overlay hidden';
     overlay.style.zIndex = '2147483300';
     overlay.innerHTML = `
-        <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white/95 ring-1 ring-slate-900/10 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-            <div class="px-8 pt-7 pb-4">
-                <div class="text-base font-black tracking-tight text-slate-900" data-confirm-title></div>
-                <div class="mt-2 text-sm font-medium text-slate-600" data-confirm-message></div>
-            </div>
-            <div class="flex items-center justify-end gap-2 px-8 pb-7">
-                <button type="button" class="h-10 rounded-2xl border border-slate-900/10 bg-white/60 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-700 hover:bg-white transition" data-confirm-cancel>Cancel</button>
-                <button type="button" class="h-10 rounded-2xl bg-rose-600 px-5 text-xs font-black uppercase tracking-[0.18em] text-white hover:bg-rose-500 transition" data-confirm-ok>Delete</button>
+        <div class="confirm-dialog">
+            <div class="confirm-dialog__content">
+                <div class="confirm-dialog__body">
+                    <div class="confirm-dialog__icon" aria-hidden="true">
+                        <span class="confirm-dialog__spark confirm-dialog__spark--one"></span>
+                        <span class="confirm-dialog__spark confirm-dialog__spark--two"></span>
+                        <span class="confirm-dialog__spark confirm-dialog__spark--three"></span>
+                        <span class="confirm-dialog__spark confirm-dialog__spark--four"></span>
+                        <svg viewBox="0 0 96 96" fill="none">
+                            <path d="M31 35H65L62.8 74.5C62.65 77.35 60.3 79.6 57.45 79.6H38.55C35.7 79.6 33.35 77.35 33.2 74.5L31 35Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+                            <path d="M25 35H71" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M39 27H57" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M42 45V69M54 45V69" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="confirm-dialog__title" data-confirm-title></div>
+                    <div class="confirm-dialog__message" data-confirm-message></div>
+                </div>
+                <div class="confirm-dialog__actions">
+                    <button type="button" class="confirm-dialog__btn confirm-dialog__btn--cancel" data-confirm-cancel>Cancel</button>
+                    <button type="button" class="confirm-dialog__btn confirm-dialog__btn--delete" data-confirm-ok>Delete</button>
+                </div>
             </div>
         </div>
     `;

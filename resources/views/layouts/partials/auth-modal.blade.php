@@ -37,7 +37,9 @@
 
     .exact-auth-modal .exact-auth-shell {
         width: min(1020px, calc(100vw - 120px));
-        min-height: min(660px, calc(100vh - 120px));
+        height: min(660px, calc(100dvh - 32px));
+        max-height: calc(100dvh - 32px);
+        min-height: 0;
         display: grid;
         grid-template-columns: minmax(0, 1.08fr) minmax(410px, 0.92fr);
         overflow: hidden;
@@ -50,6 +52,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        max-height: calc(100dvh - 16px);
     }
 
     .exact-auth-modal [data-auth-views-root] {
@@ -254,10 +257,14 @@
 
     .exact-auth-modal .exact-auth-right {
         position: relative;
-        overflow: hidden;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 20px 22px;
         background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
     }
@@ -296,6 +303,7 @@
         position: relative;
         width: 100%;
         max-width: 400px;
+        margin: auto;
         padding: 18px 18px 20px;
         border: 1px solid rgba(188, 212, 246, 0.72);
         border-radius: 28px;
@@ -651,11 +659,17 @@
     @media (max-width: 1180px) {
         .exact-auth-modal .exact-auth-shell {
             grid-template-columns: 1fr;
-            min-height: auto;
+            height: auto;
+            max-height: calc(100dvh - 24px);
+            overflow-y: auto;
         }
 
         .exact-auth-modal .exact-auth-left {
             min-height: 640px;
+        }
+
+        .exact-auth-modal .exact-auth-right {
+            overflow: visible;
         }
     }
 
@@ -1101,6 +1115,7 @@
 
         function syncGuideVisibility() {
             var activeElement = document.activeElement;
+            var wasVisible = guide.classList.contains('is-visible');
             var shouldShow = passwordInput.value.length > 0
                 || (confirmationInput && confirmationInput.value.length > 0)
                 || activeElement === passwordInput
@@ -1108,6 +1123,15 @@
                 || guide.classList.contains('is-focused');
 
             guide.classList.toggle('is-visible', shouldShow);
+
+            if (shouldShow && !wasVisible) {
+                requestAnimationFrame(function () {
+                    guide.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                });
+                window.setTimeout(function () {
+                    guide.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }, 240);
+            }
         }
 
         function setGuideFocus(isFocused) {

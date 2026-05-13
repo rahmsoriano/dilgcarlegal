@@ -13,6 +13,7 @@
     }
 
     .chat-panel {
+        position: relative;
         backdrop-filter: none;
         background: #ffffff;
         box-shadow: none;
@@ -268,9 +269,9 @@
     }
 
     .chat-scroll-bottom-btn {
-        position: fixed;
+        position: absolute;
         left: 50%;
-        bottom: 98px;
+        bottom: clamp(5.75rem, 8vw, 6.75rem);
         transform: translateX(-50%) translateY(10px);
         z-index: 80;
         width: 44px;
@@ -313,6 +314,99 @@
         opacity: 0 !important;
         pointer-events: none !important;
         transform: translateX(-50%) translateY(10px) !important;
+    }
+
+    .chat-suggestions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: opacity 220ms ease, transform 220ms ease, max-height 260ms ease, margin 260ms ease;
+        max-height: 180px;
+        overflow: hidden;
+    }
+
+    .chat-suggestions.is-fading {
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        max-height: 0;
+        margin-bottom: 0 !important;
+    }
+
+    .chat-suggestions__title {
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.2;
+        color: #2563c7;
+    }
+
+    .chat-suggestions__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 10px 14px;
+        width: min(820px, 100%);
+    }
+
+    .chat-suggestion-btn {
+        min-width: 0;
+        min-height: 39px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 13px 0 18px;
+        border-radius: 10px;
+        border: 1px solid #cbd8ee;
+        background: rgba(255, 255, 255, 0.88);
+        color: #1e5fc8;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.25;
+        text-align: left;
+        box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06);
+        transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .chat-suggestion-btn:hover {
+        border-color: #b7c8e5;
+        background: #ffffff;
+        box-shadow: 0 5px 14px rgba(37, 99, 235, 0.10);
+        transform: translateY(-1px);
+    }
+
+    .chat-suggestion-btn:focus-visible {
+        outline: none;
+        border-color: rgba(37, 99, 235, 0.55);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+
+    .chat-suggestion-btn svg {
+        width: 15px;
+        height: 15px;
+        flex: 0 0 auto;
+        color: #2563c7;
+        transition: transform 160ms ease;
+    }
+
+    .chat-suggestion-btn:hover svg {
+        transform: translateX(2px);
+    }
+
+    .chat-suggestion-btn span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 760px) {
+        .chat-suggestions__grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chat-suggestions {
+            max-height: 320px;
+        }
     }
 
     @keyframes chat-fade-in {
@@ -795,6 +889,26 @@
             </button>
 
             <div class="border-t {{ $isPro ? 'border-slate-900/[0.03] bg-white/50' : 'border-slate-200/50 bg-white/70' }} px-6 py-4 sm:px-8 sm:py-5">
+                @if ($messages->isEmpty())
+                    <div id="chat-suggestions" class="chat-suggestions mx-auto mb-5 w-full max-w-6xl" aria-label="Suggested questions">
+                        <div class="chat-suggestions__title">Suggested questions</div>
+                        <div class="chat-suggestions__grid">
+                            @foreach ([
+                                'Is a verbal agreement legally binding?',
+                                'Is recording a conversation without consent legal?',
+                                'Is self-defense always a valid legal defense?',
+                                'Can an acting Punong Barangay receive honorarium?',
+                            ] as $suggestedQuestion)
+                                <button type="button" class="chat-suggestion-btn" data-chat-suggestion="{{ $suggestedQuestion }}">
+                                    <span>{{ $suggestedQuestion }}</span>
+                                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 1 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
                 <form
                     id="chat-form"
                     data-loader-skip
@@ -864,29 +978,17 @@
     const scrollEl = document.getElementById('chat-scroll');
     const errorEl = document.getElementById('chat-error');
     const scrollBottomBtn = document.getElementById('chat-scroll-bottom-btn');
+    const suggestionsEl = document.getElementById('chat-suggestions');
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
 
-    const positionScrollBottomBtn = () => {
-        if (!scrollBottomBtn || !scrollEl) return;
-        const rect = scrollEl.getBoundingClientRect();
-        const centerX = rect.left + (rect.width / 2);
-        scrollBottomBtn.style.left = `${Math.round(centerX)}px`;
+    const fadeOutSuggestions = () => {
+        if (!suggestionsEl || suggestionsEl.classList.contains('is-fading')) return;
+        suggestionsEl.classList.add('is-fading');
+        suggestionsEl.setAttribute('aria-hidden', 'true');
+        window.setTimeout(() => suggestionsEl.remove(), 320);
     };
-
-    const schedulePositionScrollBottomBtn = () => {
-        positionScrollBottomBtn();
-        requestAnimationFrame(positionScrollBottomBtn);
-        window.setTimeout(positionScrollBottomBtn, 260);
-    };
-
-    if (scrollBottomBtn && scrollEl) {
-        schedulePositionScrollBottomBtn();
-        window.addEventListener('resize', schedulePositionScrollBottomBtn, { passive: true });
-        const sidebarObserver = new MutationObserver(() => schedulePositionScrollBottomBtn());
-        sidebarObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    }
 
     const upsertSidebarConversation = ({ id, url, title, is_pinned, update_url, toggle_pin_url, toggle_save_url, delete_url }) => {
         if (window.__adminSidebarUpsertConversation) {
@@ -1180,6 +1282,7 @@
         const prompt = (promptEl.value || '').trim();
         if (!prompt) return;
 
+        fadeOutSuggestions();
         sendBtn.disabled = true;
         promptEl.disabled = true;
 
@@ -1237,6 +1340,19 @@
             promptEl.focus();
         }
     });
+
+    if (suggestionsEl) {
+        suggestionsEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-chat-suggestion]');
+            if (!btn || promptEl.disabled) return;
+            const question = String(btn.getAttribute('data-chat-suggestion') || '').trim();
+            if (!question) return;
+
+            promptEl.value = question;
+            fadeOutSuggestions();
+            form.requestSubmit();
+        });
+    }
 
     promptEl.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
