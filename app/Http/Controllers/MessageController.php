@@ -553,7 +553,7 @@ class MessageController extends Controller
 
             if ($faqMatch) {
                 return [
-                    'content' => $this->sanitizeAssistantText((string) $faqMatch->response),
+                    'content' => $this->formatFaqResponse((string) $faqMatch->response),
                     'model' => 'faq',
                     'provider' => 'faq_response_manager',
                 ];
@@ -589,7 +589,7 @@ class MessageController extends Controller
 
             if ($faqMatch) {
                 return [
-                    'content' => $this->sanitizeAssistantText((string) $faqMatch->response),
+                    'content' => $this->formatFaqResponse((string) $faqMatch->response),
                     'model' => 'faq',
                     'provider' => 'faq_response_manager',
                 ];
@@ -1825,6 +1825,36 @@ This answer is based on general legal information outside the stored DILG opinio
         return trim($t);
     }
 
+    private function formatFaqResponse(string $text): string
+    {
+        $text = str_replace(["\r\n", "\r"], "\n", trim($text));
+        if ($text === '') {
+            return '';
+        }
+
+        $escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escaped = preg_replace_callback('/https?:\/\/[^\s<]+/i', static function ($matches) {
+            $url = (string) ($matches[0] ?? '');
+            $safeUrl = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+            return '<a href="'.$safeUrl.'" target="_blank" rel="noopener noreferrer" class="external-source-link">'.$safeUrl.'</a>';
+        }, $escaped) ?? $escaped;
+
+        $blocks = preg_split("/\n{2,}/", $escaped) ?: [];
+        $paragraphs = [];
+
+        foreach ($blocks as $block) {
+            $block = trim((string) $block);
+            if ($block === '') {
+                continue;
+            }
+
+            $paragraphs[] = '<p class="chat-faq-paragraph">'.nl2br($block, false).'</p>';
+        }
+
+        return $paragraphs !== [] ? implode('', $paragraphs) : nl2br($escaped, false);
+    }
+
     private function isOpinionListRequest(string $prompt): bool
     {
         $t = mb_strtolower(trim($prompt));
@@ -2057,7 +2087,7 @@ This answer is based on general legal information outside the stored DILG opinio
                 'id' => $op->id,
                 'title' => $op->title,
                 'opinion_number' => $op->opinion_number,
-                'date' => optional($op->date)->format('Y-m-d'),
+                'date' => optional($op->date)->format('Y'),
                 'author' => $author,
                 'summary' => $summary,
                 'url' => route('opinions.public.show', $op),

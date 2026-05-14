@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\LegalOpinionLibrary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class ChatController extends Controller
 {
@@ -29,6 +31,7 @@ class ChatController extends Controller
             'activeConversation' => $activeConversation,
             'messages' => $messages,
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -47,6 +50,7 @@ class ChatController extends Controller
             'activeConversation' => null,
             'messages' => collect(),
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -72,6 +76,7 @@ class ChatController extends Controller
             'activeConversation' => $activeConversation,
             'messages' => $messages,
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -112,6 +117,7 @@ class ChatController extends Controller
             'activeConversation' => $activeConversation,
             'messages' => $messages,
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -134,6 +140,7 @@ class ChatController extends Controller
             'activeConversation' => null,
             'messages' => collect(),
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -160,6 +167,7 @@ class ChatController extends Controller
             'activeConversation' => $conversation,
             'messages' => $messages,
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -188,6 +196,7 @@ class ChatController extends Controller
             'activeConversation' => $activeConversation,
             'messages' => $messages,
             'mode' => 'saved',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -251,5 +260,18 @@ class ChatController extends Controller
                 'created_at' => !empty($m['created_at']) ? Carbon::parse((string) $m['created_at']) : now(),
             ];
         });
+    }
+
+    private function reviewableOpinions()
+    {
+        if (! Schema::hasTable('legal_opinions_library')) {
+            return collect();
+        }
+
+        return LegalOpinionLibrary::query()
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get(['id', 'title', 'opinion_number', 'date']);
     }
 }

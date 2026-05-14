@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Models\LegalOpinionLibrary;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class AdminChatController extends Controller
 {
@@ -31,6 +33,7 @@ class AdminChatController extends Controller
             'activeConversation' => $activeConversation,
             'messages' => $messages,
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -52,6 +55,7 @@ class AdminChatController extends Controller
             'activeConversation' => null,
             'messages' => collect(),
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -77,6 +81,7 @@ class AdminChatController extends Controller
             'activeConversation' => $conversation,
             'messages' => $messages,
             'mode' => 'all',
+            'reviewableOpinions' => $this->reviewableOpinions(),
         ]);
     }
 
@@ -120,5 +125,18 @@ class AdminChatController extends Controller
             'conversations' => $conversations,
             'filters' => $filters,
         ]);
+    }
+
+    private function reviewableOpinions()
+    {
+        if (! Schema::hasTable('legal_opinions_library')) {
+            return collect();
+        }
+
+        return LegalOpinionLibrary::query()
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get(['id', 'title', 'opinion_number', 'date']);
     }
 }

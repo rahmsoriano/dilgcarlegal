@@ -1,5 +1,7 @@
 @php
     $isPro = ($theme ?? '') === 'pro';
+    $canUseDocumentReview = auth()->check();
+    $canSelectOpinionForReview = auth()->check() && auth()->user()?->is_admin;
 @endphp
 
 <style>
@@ -334,11 +336,7 @@
     }
 
     .chat-suggestions__title {
-<<<<<<< Updated upstream
-        font-size: 11px;
-=======
         font-size: 14px;
->>>>>>> Stashed changes
         font-weight: 800;
         letter-spacing: 0.2em;
         text-transform: uppercase;
@@ -355,11 +353,7 @@
 
     .chat-suggestion-btn {
         min-width: 0;
-<<<<<<< Updated upstream
-        min-height: 48px;
-=======
         min-height: 46px;
->>>>>>> Stashed changes
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -368,16 +362,9 @@
         border-radius: 12px;
         border: 1px solid #cbd8ee;
         background: rgba(255, 255, 255, 0.88);
-<<<<<<< Updated upstream
-        color: #06143a;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0;
-=======
         color: #1e5fc8;
         font-size: 15px;
         font-weight: 700;
->>>>>>> Stashed changes
         line-height: 1.25;
         text-align: left;
         box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06);
@@ -479,6 +466,200 @@
 
     .chat-scrollbar::-webkit-scrollbar-track {
         background: transparent;
+    }
+
+    .chat-faq-paragraph + .chat-faq-paragraph {
+        margin-top: 0.9rem;
+    }
+
+    .chat-tool-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.9rem 1.35rem 1.1rem;
+        border-top: 1px solid rgba(15, 23, 42, 0.06);
+        background: linear-gradient(180deg, rgba(251, 253, 255, 0.88) 0%, rgba(247, 250, 255, 0.96) 100%);
+    }
+
+    .chat-tool-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+    }
+
+    .chat-doc-review-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(0, 44, 118, 0.10);
+        background: rgba(255, 255, 255, 0.84);
+        padding: 0.55rem 0.9rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #1f3b77;
+        transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .chat-doc-review-chip:hover {
+        border-color: rgba(37, 99, 235, 0.18);
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
+    }
+
+    .chat-doc-review-chip[aria-expanded="true"] {
+        background: rgba(0, 44, 118, 0.08);
+        border-color: rgba(0, 44, 118, 0.18);
+        color: #113273;
+    }
+
+    .chat-doc-review-copy {
+        font-size: 0.8rem;
+        line-height: 1.45;
+        color: #64748b;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .chat-doc-review-panel {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        border-top: 1px solid transparent;
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.84) 0%, rgba(255, 255, 255, 0.98) 100%);
+        transition: max-height 260ms ease, opacity 220ms ease, border-color 220ms ease;
+    }
+
+    .chat-doc-review-panel.is-open {
+        max-height: 420px;
+        opacity: 1;
+        border-top-color: rgba(15, 23, 42, 0.08);
+    }
+
+    .chat-doc-review-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        gap: 0.9rem;
+        padding: 1rem 1.35rem 1.2rem;
+    }
+
+    .chat-doc-review-grid--upload-only {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .chat-doc-review-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .chat-doc-review-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .chat-doc-review-input {
+        width: 100%;
+        border-radius: 1rem;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.95);
+        color: #0f172a;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        padding: 0.8rem 1rem;
+    }
+
+    .chat-doc-review-input:focus {
+        outline: none;
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    }
+
+    .chat-doc-review-upload-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        min-height: 48px;
+        border-radius: 1rem;
+        border: 1px dashed rgba(0, 44, 118, 0.18);
+        background: rgba(255, 255, 255, 0.96);
+        color: #173879;
+        font-size: 0.92rem;
+        font-weight: 700;
+        transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+    }
+
+    .chat-doc-review-upload-btn:hover {
+        border-color: rgba(37, 99, 235, 0.35);
+        background: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .chat-doc-review-submit {
+        min-height: 48px;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #002c76 0%, #1947a6 100%);
+        color: #ffffff;
+        font-size: 0.92rem;
+        font-weight: 800;
+        box-shadow: 0 18px 32px rgba(0, 44, 118, 0.16);
+        transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    }
+
+    .chat-doc-review-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 22px 36px rgba(0, 44, 118, 0.22);
+    }
+
+    .chat-doc-review-status {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .chat-doc-review-status-text {
+        font-size: 0.8rem;
+        color: #475569;
+        line-height: 1.45;
+    }
+
+    .chat-doc-review-clear {
+        flex: 0 0 auto;
+        border: 0;
+        background: transparent;
+        color: #1d4ed8;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 900px) {
+        .chat-tool-row {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .chat-doc-review-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chat-doc-review-status {
+            align-items: flex-start;
+            flex-direction: column;
+        }
     }
 
     .message-enter {
@@ -1241,6 +1422,7 @@
                     data-messages-url="{{ $activeConversation ? route($messagesRoute ?? 'messages.store', $activeConversation->id) : '' }}"
                     data-active-conversation-url="{{ $activeConversation ? route($showRoute ?? 'chat.show', $activeConversation->id) : '' }}"
                     data-conversation-id="{{ $activeConversation?->id }}"
+                    data-document-review-url="{{ route($documentReviewRoute ?? 'document-review.store') }}"
                 >
                     <div class="chat-composer-shell group relative overflow-hidden {{ $isPro ? 'pro-input-wrapper' : 'rounded-[2rem] border border-slate-200 bg-white' }} transition-all duration-500">
                         <div class="flex items-center gap-3 px-8 py-3">
@@ -1256,6 +1438,65 @@
                                 </svg>
                             </button>
                         </div>
+                        @if ($canUseDocumentReview)
+                            <div class="chat-tool-row">
+                                <div class="chat-tool-actions">
+                                    <button id="document-review-toggle" type="button" class="chat-doc-review-chip" aria-expanded="false" aria-controls="document-review-panel">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 2.25H8.25A2.25 2.25 0 0 0 6 4.5v15a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 19.5V6l-3.75-3.75Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 2.25V6H18" />
+                                        </svg>
+                                        Document Review
+                                    </button>
+                                </div>
+                                <div class="chat-doc-review-copy">Upload a file or pick a legal opinion only when you need a structured review.</div>
+                            </div>
+
+                            <div id="document-review-panel" class="chat-doc-review-panel">
+                                <input id="document-review-file" type="file" accept=".pdf,.pptx,.xlsx,.txt" class="hidden">
+
+                                <div class="chat-doc-review-grid {{ $canSelectOpinionForReview ? '' : 'chat-doc-review-grid--upload-only' }}">
+                                    <div class="chat-doc-review-field">
+                                        <label class="chat-doc-review-label">Upload Document</label>
+                                        <button id="document-review-file-btn" type="button" class="chat-doc-review-upload-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V6.75m0 0-3.75 3.75M12 6.75l3.75 3.75M3.75 15v1.5A2.25 2.25 0 0 0 6 18.75h12a2.25 2.25 0 0 0 2.25-2.25V15" />
+                                            </svg>
+                                            Choose File
+                                        </button>
+                                    </div>
+
+                                    @if ($canSelectOpinionForReview)
+                                        <div class="chat-doc-review-field">
+                                            <label for="document-review-opinion" class="chat-doc-review-label">Or Select Legal Opinion</label>
+                                            <select id="document-review-opinion" class="chat-doc-review-input">
+                                                <option value="">Pick an existing opinion for review</option>
+                                                @foreach (($reviewableOpinions ?? collect()) as $reviewOpinion)
+                                                    <option value="{{ $reviewOpinion->id }}">{{ $reviewOpinion->title }}{{ $reviewOpinion->opinion_number ? ' - '.$reviewOpinion->opinion_number : '' }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+
+                                    <div class="chat-doc-review-field">
+                                        <label for="document-review-focus" class="chat-doc-review-label">Focus</label>
+                                        <input id="document-review-focus" type="text" class="chat-doc-review-input" placeholder="Example: summary, obligations, deadlines">
+                                    </div>
+
+                                    <div class="chat-doc-review-field">
+                                        <label class="chat-doc-review-label">Action</label>
+                                        <button id="document-review-submit" type="button" class="chat-doc-review-submit">
+                                            Review Document
+                                        </button>
+                                    </div>
+
+                                    <div class="chat-doc-review-status">
+                                        <div id="document-review-meta" class="chat-doc-review-status-text">No file selected.</div>
+                                        <button id="document-review-clear" type="button" class="chat-doc-review-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </form>
                 <div id="chat-error" class="mx-auto hidden w-full max-w-6xl mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-6 py-4 text-sm font-bold text-rose-400"></div>
@@ -1303,6 +1544,15 @@
     const errorEl = document.getElementById('chat-error');
     const scrollBottomBtn = document.getElementById('chat-scroll-bottom-btn');
     const suggestionsEl = document.getElementById('chat-suggestions');
+    const documentReviewToggleBtn = document.getElementById('document-review-toggle');
+    const documentReviewPanel = document.getElementById('document-review-panel');
+    const documentReviewFileInput = document.getElementById('document-review-file');
+    const documentReviewFileBtn = document.getElementById('document-review-file-btn');
+    const documentReviewOpinionEl = document.getElementById('document-review-opinion');
+    const documentReviewFocusEl = document.getElementById('document-review-focus');
+    const documentReviewSubmitBtn = document.getElementById('document-review-submit');
+    const documentReviewMetaEl = document.getElementById('document-review-meta');
+    const documentReviewClearBtn = document.getElementById('document-review-clear');
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
@@ -1334,7 +1584,29 @@
         sendBtn.title = busy ? 'Stop generating' : 'Send';
         sendBtn.innerHTML = busy ? sendIconStop : sendIconDefault;
         promptEl.readOnly = busy;
+        if (documentReviewSubmitBtn) {
+            documentReviewSubmitBtn.disabled = busy;
+            documentReviewSubmitBtn.classList.toggle('opacity-60', busy);
+        }
     };
+
+    const showComposerError = (message) => {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    };
+
+    const setDocumentReviewOpen = (open) => {
+        if (!documentReviewPanel || !documentReviewToggleBtn) return;
+        documentReviewPanel.classList.toggle('is-open', open);
+        documentReviewToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 
     const fadeOutSuggestions = () => {
         if (!suggestionsEl || suggestionsEl.classList.contains('is-fading')) return;
@@ -1697,6 +1969,86 @@
         }
     };
 
+    const updateDocumentReviewMeta = () => {
+        if (!documentReviewMetaEl) return;
+
+        const parts = [];
+        const fileName = documentReviewFileInput?.files?.[0]?.name;
+        const selectedText = documentReviewOpinionEl?.selectedOptions?.[0]?.textContent?.trim();
+
+        if (fileName) {
+            parts.push(`File: ${fileName}`);
+        }
+
+        if (documentReviewOpinionEl?.value && selectedText) {
+            parts.push(`Selected opinion: ${selectedText}`);
+        }
+
+        documentReviewMetaEl.textContent = parts.length > 0 ? parts.join(' • ') : 'No file selected.';
+        if (parts.length > 0) {
+            setDocumentReviewOpen(true);
+        }
+    };
+
+    const submitDocumentReview = async () => {
+        if (!form?.dataset?.documentReviewUrl || activeGeneration) return;
+
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+
+        const file = documentReviewFileInput?.files?.[0] || null;
+        const opinionId = String(documentReviewOpinionEl?.value || '').trim();
+        const focus = String(documentReviewFocusEl?.value || '').trim();
+
+        if (!file && !opinionId) {
+            showComposerError('Please upload a document or choose an existing legal opinion first.');
+            return;
+        }
+
+        fadeOutSuggestions();
+        setComposerBusy(true);
+
+        const summaryTitle = file ? `Please review this document: ${file.name}` : `Please review the selected legal opinion${documentReviewOpinionEl?.selectedOptions?.[0]?.textContent ? `: ${documentReviewOpinionEl.selectedOptions[0].textContent.trim()}` : ''}`;
+        renderMessage('user', summaryTitle);
+        const thinkingEl = renderThinkingMessage();
+        scrollToBottom();
+
+        try {
+            const payload = new FormData();
+            if (file) payload.append('document', file);
+            if (opinionId) payload.append('opinion_id', opinionId);
+            if (focus) payload.append('focus', focus);
+
+            const resp = await window.axios.post(form.dataset.documentReviewUrl, payload, {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'multipart/form-data',
+                    'X-Loader-Skip': 'true',
+                },
+                timeout: 120000,
+            });
+
+            const reviewTitle = escapeHtml(resp?.data?.title || 'Document Review');
+            const reviewBody = escapeHtml(String(resp?.data?.review || '').trim()).replace(/\n/g, '<br>');
+            const content = `<p class="chat-faq-paragraph"><strong>${reviewTitle}</strong></p>${reviewBody !== '' ? `<p class="chat-faq-paragraph">${reviewBody}</p>` : ''}`;
+            await deliverAssistantResponse(thinkingEl, content, { stopped: false });
+
+            if (documentReviewFileInput) documentReviewFileInput.value = '';
+            if (documentReviewOpinionEl) documentReviewOpinionEl.value = '';
+            if (documentReviewFocusEl) documentReviewFocusEl.value = '';
+            updateDocumentReviewMeta();
+            setDocumentReviewOpen(false);
+            scrollToBottom();
+        } catch (err) {
+            if (thinkingEl?.dataset?.thinking === 'true') {
+                thinkingEl.remove();
+            }
+            showComposerError(err?.response?.data?.message || 'Unable to review the document right now.');
+        } finally {
+            setComposerBusy(false);
+        }
+    };
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -1775,6 +2127,46 @@
             promptEl.value = question;
             fadeOutSuggestions();
             form.requestSubmit();
+        });
+    }
+
+    if (documentReviewFileBtn && documentReviewFileInput) {
+        documentReviewFileBtn.addEventListener('click', () => documentReviewFileInput.click());
+        documentReviewFileInput.addEventListener('change', () => {
+            if (documentReviewOpinionEl && documentReviewFileInput.files?.length) {
+                documentReviewOpinionEl.value = '';
+            }
+            updateDocumentReviewMeta();
+        });
+    }
+
+    if (documentReviewToggleBtn) {
+        documentReviewToggleBtn.addEventListener('click', () => {
+            const isOpen = documentReviewPanel?.classList.contains('is-open');
+            setDocumentReviewOpen(!isOpen);
+        });
+    }
+
+    if (documentReviewOpinionEl) {
+        documentReviewOpinionEl.addEventListener('change', () => {
+            if (documentReviewFileInput && documentReviewOpinionEl.value) {
+                documentReviewFileInput.value = '';
+            }
+            updateDocumentReviewMeta();
+        });
+    }
+
+    if (documentReviewSubmitBtn) {
+        documentReviewSubmitBtn.addEventListener('click', submitDocumentReview);
+    }
+
+    if (documentReviewClearBtn) {
+        documentReviewClearBtn.addEventListener('click', () => {
+            if (documentReviewFileInput) documentReviewFileInput.value = '';
+            if (documentReviewOpinionEl) documentReviewOpinionEl.value = '';
+            if (documentReviewFocusEl) documentReviewFocusEl.value = '';
+            updateDocumentReviewMeta();
+            setDocumentReviewOpen(false);
         });
     }
 
@@ -2000,6 +2392,8 @@
     document.querySelectorAll('.ref-accordion-body[hidden]').forEach((el) => {
         el.removeAttribute('hidden');
     });
+
+    updateDocumentReviewMeta();
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;

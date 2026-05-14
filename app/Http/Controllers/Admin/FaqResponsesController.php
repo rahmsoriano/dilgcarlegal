@@ -15,6 +15,7 @@ class FaqResponsesController extends Controller
         $items = FaqResponse::query()
             ->when($q !== '', function ($query) use ($q) {
                 $query->where('inquiry', 'like', '%'.$q.'%')
+                    ->orWhere('aliases', 'like', '%'.$q.'%')
                     ->orWhere('response', 'like', '%'.$q.'%');
             })
             ->orderByDesc('updated_at')
@@ -32,15 +33,17 @@ class FaqResponsesController extends Controller
     {
         $validated = $request->validate([
             'inquiry' => ['required', 'string', 'max:1000'],
+            'aliases' => ['nullable', 'string', 'max:4000'],
             'response' => ['required', 'string', 'max:8000'],
         ]);
 
         FaqResponse::create([
             'inquiry' => $validated['inquiry'],
+            'aliases' => $validated['aliases'] ?? null,
             'response' => $validated['response'],
         ]);
 
-        return redirect()->route('admin.faq-responses.index');
+        return redirect()->route('admin.faq-responses.index')->with('status', 'FAQ response added successfully.');
     }
 
     public function edit(FaqResponse $faqResponse)
@@ -54,22 +57,23 @@ class FaqResponsesController extends Controller
     {
         $validated = $request->validate([
             'inquiry' => ['required', 'string', 'max:1000'],
+            'aliases' => ['nullable', 'string', 'max:4000'],
             'response' => ['required', 'string', 'max:8000'],
         ]);
 
         $faqResponse->update([
             'inquiry' => $validated['inquiry'],
+            'aliases' => $validated['aliases'] ?? null,
             'response' => $validated['response'],
         ]);
 
-        return redirect()->route('admin.faq-responses.index');
+        return redirect()->route('admin.faq-responses.index')->with('status', 'FAQ response updated successfully.');
     }
 
     public function destroy(FaqResponse $faqResponse)
     {
         $faqResponse->delete();
 
-        return redirect()->route('admin.faq-responses.index');
+        return redirect()->route('admin.faq-responses.index')->with('status', 'FAQ response deleted successfully.');
     }
 }
-

@@ -22,7 +22,7 @@ class UserManagementController extends Controller
             'status' => (string) $request->query('status', ''),
             'verification' => (string) $request->query('verification', ''),
         ];
-        if (! in_array($filters['role'], ['', 'admin', 'user'], true)) {
+        if (! in_array($filters['role'], ['', User::ROLE_ADMIN, User::ROLE_ADMIN_RESTRICTED, User::ROLE_USER], true)) {
             $filters['role'] = '';
         }
 
@@ -96,7 +96,7 @@ class UserManagementController extends Controller
         $validated = $request->validate($this->rules(user: $user, requirePassword: false));
         $admin = $request->user();
 
-        if ($admin->is($user) && $validated['role'] !== 'admin') {
+        if ($admin->is($user) && ! in_array($validated['role'], [User::ROLE_ADMIN, User::ROLE_ADMIN_RESTRICTED], true)) {
             return back()
                 ->withErrors(['role' => 'You cannot change your own role from admin.'])
                 ->withInput();
@@ -189,7 +189,7 @@ class UserManagementController extends Controller
             'birthday' => ['nullable', 'date', 'before:today'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user?->id)],
             'password' => $passwordRules,
-            'role' => ['required', Rule::in(['admin', 'user'])],
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_ADMIN_RESTRICTED, User::ROLE_USER])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ];
     }

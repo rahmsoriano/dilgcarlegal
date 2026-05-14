@@ -16,7 +16,7 @@
                         <span class="inline-flex items-center rounded-full bg-indigo-500/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 ring-1 ring-indigo-500/20">
                             {{ $opinion->opinion_number }}
                         </span>
-                        <span class="text-xs font-semibold text-slate-500">Issued {{ optional($opinion->date)->format('m/d/Y') }}</span>
+                        <span class="text-xs font-semibold text-slate-500">Issued {{ optional($opinion->date)->format('Y') }}</span>
                         <span class="text-xs font-semibold text-slate-400">Updated {{ $opinion->updated_at->diffForHumans() }}</span>
                     </div>
                 </div>

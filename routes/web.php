@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminChatController;
+use App\Http\Controllers\Admin\AmicusSectionsController as AdminAmicusSectionsController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\FaqResponsesController as AdminFaqResponsesController;
 use App\Http\Controllers\Admin\LawController as AdminLawController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\UsageController as AdminUsageController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +55,9 @@ Route::post('/legal-ai/conversations/{conversationId}/messages', [MessageControl
     ->whereNumber('conversationId')
     ->middleware('throttle:20,1')
     ->name('legal.ai.messages.store');
+Route::post('/legal-ai/document-review', [DocumentReviewController::class, 'storePublic'])
+    ->middleware('throttle:10,1')
+    ->name('legal.ai.document-review');
 
 Route::get('/dashboard', function () {
     if (auth()->user()->is_admin) {
@@ -77,6 +82,7 @@ Route::middleware(['auth', 'verified.user', 'active'])->group(function () {
     Route::delete('/conversations/{conversation}', [ConversationController::class, 'destroy'])->name('conversations.destroy');
 
     Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store'])->middleware('throttle:20,1')->name('messages.store');
+    Route::post('/document-review', [DocumentReviewController::class, 'store'])->middleware('throttle:10,1')->name('document-review.store');
 });
 
 Route::middleware(['auth', 'active', 'can:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -98,6 +104,12 @@ Route::middleware(['auth', 'active', 'can:admin'])->prefix('admin')->name('admin
     Route::post('/opinions/extract', [AdminOpinionsController::class, 'extract'])->name('opinions.extract');
     Route::resource('opinions', AdminOpinionsController::class);
     Route::resource('faq-responses', AdminFaqResponsesController::class)->except(['show', 'create']);
+    Route::post('/document-review', [DocumentReviewController::class, 'store'])->middleware('throttle:10,1')->name('document-review.store');
+    Route::middleware('can:manage-amicus')->group(function () {
+        Route::resource('amicus', AdminAmicusSectionsController::class)->parameters([
+            'amicus' => 'amicus',
+        ])->except(['show', 'create']);
+    });
 
     Route::resource('laws', AdminLawController::class);
 });

@@ -1,229 +1,49 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Services;
 
-use App\Http\Controllers\Controller;
-use App\Models\LegalOpinionLibrary;
 use DOMDocument;
 use DOMXPath;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Carbon;
 use Smalot\PdfParser\Parser as PdfParser;
 use ZipArchive;
 
-class OpinionsController extends Controller
+class DocumentTextExtractor
 {
-    public function index(Request $request)
+    public function extractFromUpload(UploadedFile $file): array
     {
-        $q = trim((string) $request->get('q', ''));
-        $yearParam = trim((string) $request->get('year', ''));
-        $year = ctype_digit($yearParam) ? (int) $yearParam : null;
-
-        $query = LegalOpinionLibrary::query();
-
-        if ($q !== '') {
-            $query->searchAdmin($q)->orderByDesc('relevance_score')->orderByDesc('date');
-        } else {
-            $query->orderByDesc('date')->orderByDesc('updated_at');
-        }
-
-        if ($year !== null) {
-            $query->whereYear('date', $year);
-        }
-
-        $opinions = $query->paginate(20)->withQueryString();
-
-        return view('admin.opinions.index', [
-            'opinions' => $opinions,
-            'q' => $q,
-            'year' => $yearParam === '' ? 'all' : $yearParam,
-        ]);
-    }
-
-    public function create()
-    {
-        return view('admin.opinions.create');
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'opinion_number' => ['required', 'string', 'max:255'],
-            'date' => ['required', 'date_format:m/d/Y'],
-            'context' => ['nullable', 'string', 'required_without:context_file'],
-            'context_file' => ['nullable', 'file', 'mimes:txt', 'max:5120', 'required_without:context'],
-        ]);
-
-        $context = $this->resolveContext($request);
-        $dateYmd = Carbon::createFromFormat('m/d/Y', $validated['date'])->format('Y-m-d');
-        $opinion = LegalOpinionLibrary::create([
-            'title' => $validated['title'],
-            'opinion_number' => $validated['opinion_number'],
-            'date' => $dateYmd,
-            'context' => $context,
-        ]);
-
-        if ($request->boolean('save_new')) {
-            return redirect()
-                ->route('admin.opinions.create')
-                ->with('success', 'Added Opinion Successfully');
-        }
-
-        return redirect()
-            ->route('admin.opinions.show', $opinion)
-            ->with('success', 'Added Opinion Successfully');
-    }
-
-    public function show(LegalOpinionLibrary $opinion)
-    {
-        $isAdmin = auth()->check() && auth()->user()->is_admin;
-        return view('admin.opinions.show', [
-            'opinion' => $opinion,
-            'isAdmin' => $isAdmin,
-        ]);
-    }
-
-    public function publicShow(LegalOpinionLibrary $opinion)
-    {
-        return view('admin.opinions.show', [
-            'opinion' => $opinion,
-            'isAdmin' => false, // Hardcoded to false for public view
-        ]);
-    }
-
-    public function publicDetails(LegalOpinionLibrary $opinion): JsonResponse
-    {
-        return response()->json([
-            'id' => $opinion->id,
-            'title' => $opinion->title,
-            'opinion_number' => $opinion->opinion_number,
-            'date' => $opinion->date ? $opinion->date->format('Y') : 'N/A',
-            'context' => $opinion->context,
-        ]);
-    }
-
-    public function edit(LegalOpinionLibrary $opinion)
-    {
-        return view('admin.opinions.edit', [
-            'opinion' => $opinion,
-        ]);
-    }
-
-    public function update(Request $request, LegalOpinionLibrary $opinion)
-    {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'opinion_number' => ['required', 'string', 'max:255'],
-            'date' => ['required', 'date_format:m/d/Y'],
-            'context' => ['nullable', 'string', 'required_without:context_file'],
-            'context_file' => ['nullable', 'file', 'mimes:txt', 'max:5120', 'required_without:context'],
-        ]);
-
-        $context = $this->resolveContext($request);
-        $dateYmd = Carbon::createFromFormat('m/d/Y', $validated['date'])->format('Y-m-d');
-        $opinion->update([
-            'title' => $validated['title'],
-            'opinion_number' => $validated['opinion_number'],
-            'date' => $dateYmd,
-            'context' => $context,
-        ]);
-
-        return redirect()->route('admin.opinions.show', $opinion);
-    }
-
-    public function destroy(LegalOpinionLibrary $opinion)
-    {
-        $opinion->delete();
-
-        return redirect()->route('admin.opinions.index');
-    }
-
-    public function extract(Request $request): JsonResponse
-    {
-        @set_time_limit(300);
-        $validated = $request->validate([
-            'document' => ['required', 'file', 'max:20480'],
-        ]);
-
-        /** @var UploadedFile $file */
-        $file = $validated['document'];
         $ext = strtolower((string) $file->getClientOriginalExtension());
 
         if (in_array($ext, ['ppt', 'xls'], true)) {
-            return response()->json([
-                'message' => 'This file type needs to be saved as .pptx or .xlsx first, then upload again.',
-            ], 422);
+            throw new \RuntimeException('This file type needs to be saved as .pptx or .xlsx first, then upload again.');
         }
 
-        if (! in_array($ext, ['pdf', 'pptx', 'xlsx'], true)) {
-            return response()->json([
-                'message' => 'Unsupported file type. Please upload a PDF, PPTX, or XLSX file.',
-            ], 422);
+        if (! in_array($ext, ['pdf', 'pptx', 'xlsx', 'txt'], true)) {
+            throw new \RuntimeException('Unsupported file type. Please upload a PDF, PPTX, XLSX, or TXT file.');
         }
 
-        try {
-            $text = $this->extractTextFromDocument($file, $ext);
-        } catch (\Throwable $e) {
-            $message = 'Unable to extract text from the uploaded file.';
-            if ($ext === 'pdf') {
-                $message = 'Unable to extract text from this PDF. If this is a scanned/image PDF, OCR requires Tesseract and pdftoppm (Poppler) to be installed on the server.';
+        $text = $ext === 'txt'
+            ? (string) $file->get()
+            : $this->extractTextFromDocument($file, $ext);
 
-                $debug = (bool) config('app.debug');
-                if ($debug) {
-                    $disableFunctions = strtolower((string) ini_get('disable_functions'));
-                    $procOpenDisabled = ! function_exists('proc_open') || str_contains($disableFunctions, 'proc_open');
+        return [
+            'extension' => $ext,
+            'text' => $this->normalizeText($text),
+        ];
+    }
 
-                    $tesseract = $this->resolveExecutable(trim((string) env('TESSERACT_BIN', 'tesseract')), $this->defaultTesseractCandidates());
-                    $pdftoppm = $this->resolveExecutable(trim((string) env('PDFTOPPM_BIN', 'pdftoppm')), $this->defaultPdftoppmCandidates());
-
-                    $message .= "\n\nDebug:";
-                    $message .= "\n- proc_open disabled: ".($procOpenDisabled ? 'yes' : 'no');
-                    $message .= "\n- TESSERACT_BIN resolved: ".$tesseract;
-                    $message .= "\n- PDFTOPPM_BIN resolved: ".$pdftoppm;
-                    $message .= "\n- Error: ".$e->getMessage();
-                }
-            }
-
-            return response()->json([
-                'message' => $message,
-            ], 422);
-        }
-        $text = trim(preg_replace('/[ \t]+/', ' ', str_replace(["\r\n", "\r"], "\n", $text)) ?? '');
+    public function normalizeText(string $text): string
+    {
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $text = trim((string) preg_replace('/[ \t]+/', ' ', $text));
+        $text = str_replace("\0", '', $text);
 
         $maxChars = 200000;
         if (mb_strlen($text) > $maxChars) {
             $text = rtrim(mb_substr($text, 0, $maxChars))."\n\n...[truncated]";
         }
 
-        $fields = $this->parseOpinionFields($text);
-
-        return response()->json([
-            'text' => $text,
-            'title' => $fields['title'],
-            'opinion_number' => $fields['opinion_number'],
-            'date' => $fields['date'],
-            'context' => $fields['context'],
-        ]);
-    }
-
-    private function resolveContext(Request $request): string
-    {
-        /** @var UploadedFile|null $file */
-        $file = $request->file('context_file');
-
-        if ($file) {
-            $contents = $file->get();
-            $contents = is_string($contents) ? $contents : '';
-            $contents = str_replace(["\r\n", "\r"], "\n", $contents);
-            $contents = str_replace("\0", '', $contents);
-
-            return trim($contents);
-        }
-
-        return trim((string) $request->input('context', ''));
+        return trim($text);
     }
 
     private function extractTextFromDocument(UploadedFile $file, string $ext): string
@@ -235,7 +55,7 @@ class OpinionsController extends Controller
             $pdf = $parser->parseFile($path);
 
             $text = (string) $pdf->getText();
-            $normalized = trim(preg_replace('/[ \t]+/', ' ', str_replace(["\r\n", "\r"], "\n", $text)) ?? '');
+            $normalized = trim((string) preg_replace('/[ \t]+/', ' ', str_replace(["\r\n", "\r"], "\n", $text)));
 
             if (mb_strlen($normalized) >= 60) {
                 return $text;
@@ -295,14 +115,9 @@ class OpinionsController extends Controller
         }
 
         $text = implode("\n\n", $chunks);
-        $ocr = $this->tryOcrImagesFromZip($zip, 'ppt/media/');
-        $ocr = trim($ocr);
+        $ocr = trim($this->tryOcrImagesFromZip($zip, 'ppt/media/'));
 
-        if ($ocr !== '') {
-            return trim($text) === '' ? $ocr : (trim($text)."\n\n".$ocr);
-        }
-
-        return $text;
+        return $ocr !== '' && trim($text) !== '' ? trim($text)."\n\n".$ocr : ($ocr !== '' ? $ocr : $text);
     }
 
     private function extractTextFromXlsxZip(ZipArchive $zip): string
@@ -389,7 +204,7 @@ class OpinionsController extends Controller
                     }
                 }
 
-                $line = trim(implode("\t", array_map(static fn ($v) => trim((string) $v), $rowValues)));
+                $line = trim(implode("\t", array_map(static fn ($value) => trim((string) $value), $rowValues)));
                 if ($line !== '') {
                     $lines[] = $line;
                 }
@@ -401,14 +216,9 @@ class OpinionsController extends Controller
         }
 
         $text = implode("\n\n", $out);
-        $ocr = $this->tryOcrImagesFromZip($zip, 'xl/media/');
-        $ocr = trim($ocr);
+        $ocr = trim($this->tryOcrImagesFromZip($zip, 'xl/media/'));
 
-        if ($ocr !== '') {
-            return trim($text) === '' ? $ocr : (trim($text)."\n\n".$ocr);
-        }
-
-        return $text;
+        return $ocr !== '' && trim($text) !== '' ? trim($text)."\n\n".$ocr : ($ocr !== '' ? $ocr : $text);
     }
 
     private function extractTextNodesFromXml(string $xml): array
@@ -433,109 +243,6 @@ class OpinionsController extends Controller
         }
 
         return $out;
-    }
-
-    private function parseOpinionFields(string $text): array
-    {
-        $text = str_replace("\0", '', $text);
-        $lines = preg_split("/\n+/", $text) ?: [];
-        $lines = array_values(array_filter(array_map(static fn ($v) => trim((string) $v), $lines), static fn ($v) => $v !== ''));
-
-        $title = $lines[0] ?? '';
-        $opinionNumber = '';
-        $date = '';
-        $matchedLineIndexes = [];
-
-        foreach ($lines as $i => $line) {
-            if ($opinionNumber === '') {
-                $op = $this->extractOpinionNumberLine($line);
-                if ($op !== '') {
-                    $opinionNumber = $op;
-                    $matchedLineIndexes[$i] = true;
-                }
-            }
-
-            if ($date === '') {
-                $d = $this->extractDateLine($line);
-                if ($d !== '') {
-                    $date = $d;
-                    $matchedLineIndexes[$i] = true;
-                }
-            }
-
-            if ($opinionNumber !== '' && $date !== '') {
-                break;
-            }
-        }
-
-        $context = $text;
-        if ($title !== '' || $opinionNumber !== '' || $date !== '') {
-            $contextLines = [];
-            foreach ($lines as $i => $line) {
-                if ($i === 0) {
-                    continue;
-                }
-                if (isset($matchedLineIndexes[$i])) {
-                    continue;
-                }
-                $contextLines[] = $line;
-            }
-            $context = trim(implode("\n", $contextLines));
-            if ($context === '') {
-                $context = trim($text);
-            }
-        }
-
-        return [
-            'title' => $title,
-            'opinion_number' => $opinionNumber,
-            'date' => $date,
-            'context' => $context,
-        ];
-    }
-
-    private function extractOpinionNumberLine(string $line): string
-    {
-        $lineNorm = preg_replace('/\s+/', ' ', trim($line)) ?? '';
-
-        if (preg_match('/\bopinion\b[^0-9]{0,20}([0-9]{1,4})\b.*?\b(s\.?|series)\b[^0-9]{0,10}([0-9]{4})\b/i', $lineNorm, $m)) {
-            $num = ltrim($m[1], '0');
-            $num = $num === '' ? $m[1] : $num;
-
-            return 'Opinion No. '.$num.', s. '.$m[3];
-        }
-
-        if (preg_match('/\bopinion\b[^0-9]{0,20}([0-9]{1,4})\b[^0-9]{0,20}([0-9]{4})\b/i', $lineNorm, $m)) {
-            $num = ltrim($m[1], '0');
-            $num = $num === '' ? $m[1] : $num;
-
-            return 'Opinion No. '.$num.', s. '.$m[2];
-        }
-
-        return '';
-    }
-
-    private function extractDateLine(string $line): string
-    {
-        $lineNorm = trim($line);
-
-        if (preg_match('/\b([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-]([0-9]{4})\b/', $lineNorm, $m)) {
-            try {
-                return Carbon::createFromFormat('m/d/Y', $m[1].'/'.$m[2].'/'.$m[3])->format('m/d/Y');
-            } catch (\Throwable $e) {
-                return '';
-            }
-        }
-
-        if (preg_match('/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/i', $lineNorm)) {
-            try {
-                return Carbon::parse($lineNorm)->format('m/d/Y');
-            } catch (\Throwable $e) {
-                return '';
-            }
-        }
-
-        return '';
     }
 
     private function extractTextFromPdfOcr(string $pdfPath): string
@@ -595,84 +302,6 @@ class OpinionsController extends Controller
         } finally {
             $this->deleteDirectory($tmpDir);
         }
-    }
-
-    private function runCommand(array $command, int $timeoutSeconds): string
-    {
-        $disableFunctions = strtolower((string) ini_get('disable_functions'));
-        if (! function_exists('proc_open') || str_contains($disableFunctions, 'proc_open')) {
-            throw new \RuntimeException('proc_open is disabled in PHP. Enable proc_open (and related proc_* functions) in php.ini disable_functions.');
-        }
-
-        $descriptors = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
-
-        $process = proc_open($command, $descriptors, $pipes);
-        if (! is_resource($process)) {
-            throw new \RuntimeException('Unable to start process.');
-        }
-
-        fclose($pipes[0]);
-        stream_set_blocking($pipes[1], false);
-        stream_set_blocking($pipes[2], false);
-
-        $stdout = '';
-        $stderr = '';
-        $start = microtime(true);
-
-        while (true) {
-            $status = proc_get_status($process);
-            $stdout .= stream_get_contents($pipes[1]);
-            $stderr .= stream_get_contents($pipes[2]);
-
-            if (! $status['running']) {
-                break;
-            }
-
-            if ((microtime(true) - $start) > $timeoutSeconds) {
-                proc_terminate($process);
-                throw new \RuntimeException('Process timed out.');
-            }
-
-            usleep(25000);
-        }
-
-        $stdout .= stream_get_contents($pipes[1]);
-        $stderr .= stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        $exitCode = proc_close($process);
-        if ($exitCode !== 0) {
-            throw new \RuntimeException(trim($stderr) === '' ? 'Process failed.' : trim($stderr));
-        }
-
-        return $stdout;
-    }
-
-    private function deleteDirectory(string $dir): void
-    {
-        if (! is_dir($dir)) {
-            return;
-        }
-
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($items as $item) {
-            if ($item->isDir()) {
-                @rmdir($item->getPathname());
-            } else {
-                @unlink($item->getPathname());
-            }
-        }
-
-        @rmdir($dir);
     }
 
     private function tryOcrImagesFromZip(ZipArchive $zip, string $prefix): string
@@ -740,6 +369,62 @@ class OpinionsController extends Controller
         }
     }
 
+    private function runCommand(array $command, int $timeoutSeconds): string
+    {
+        $disableFunctions = strtolower((string) ini_get('disable_functions'));
+        if (! function_exists('proc_open') || str_contains($disableFunctions, 'proc_open')) {
+            throw new \RuntimeException('proc_open is disabled in PHP. Enable proc_open (and related proc_* functions) in php.ini disable_functions.');
+        }
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = proc_open($command, $descriptors, $pipes);
+        if (! is_resource($process)) {
+            throw new \RuntimeException('Unable to start process.');
+        }
+
+        fclose($pipes[0]);
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
+
+        $stdout = '';
+        $stderr = '';
+        $start = microtime(true);
+
+        while (true) {
+            $status = proc_get_status($process);
+            $stdout .= stream_get_contents($pipes[1]);
+            $stderr .= stream_get_contents($pipes[2]);
+
+            if (! $status['running']) {
+                break;
+            }
+
+            if ((microtime(true) - $start) > $timeoutSeconds) {
+                proc_terminate($process);
+                throw new \RuntimeException('Process timed out.');
+            }
+
+            usleep(25000);
+        }
+
+        $stdout .= stream_get_contents($pipes[1]);
+        $stderr .= stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $exitCode = proc_close($process);
+        if ($exitCode !== 0) {
+            throw new \RuntimeException(trim($stderr) === '' ? 'Process failed.' : trim($stderr));
+        }
+
+        return $stdout;
+    }
+
     private function canRunExecutable(string $executable, array $args): bool
     {
         if ($executable === '') {
@@ -781,6 +466,28 @@ class OpinionsController extends Controller
         return $configuredValue;
     }
 
+    private function deleteDirectory(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($items as $item) {
+            if ($item->isDir()) {
+                @rmdir($item->getPathname());
+            } else {
+                @unlink($item->getPathname());
+            }
+        }
+
+        @rmdir($dir);
+    }
+
     private function defaultTesseractCandidates(): array
     {
         if (PHP_OS_FAMILY !== 'Windows') {
@@ -791,7 +498,6 @@ class OpinionsController extends Controller
         $programFilesX86 = (string) getenv('ProgramFiles(x86)');
         $localAppData = (string) getenv('LOCALAPPDATA');
         $userProfile = (string) getenv('USERPROFILE');
-
         $globs = glob('C:\\Users\\*\\AppData\\Local\\Microsoft\\WinGet\\Links\\tesseract.exe') ?: [];
         $globs = array_merge($globs, glob('C:\\Users\\*\\AppData\\Local\\Programs\\Tesseract-OCR\\tesseract.exe') ?: []);
 
@@ -802,7 +508,7 @@ class OpinionsController extends Controller
             $localAppData ? $localAppData.'\\Microsoft\\WinGet\\Links\\tesseract.exe' : null,
             'C:\\ProgramData\\chocolatey\\bin\\tesseract.exe',
             $userProfile ? $userProfile.'\\scoop\\apps\\tesseract\\current\\tesseract.exe' : null,
-        ], $globs), static fn ($v) => is_string($v) && $v !== ''));
+        ], $globs), static fn ($value) => is_string($value) && $value !== ''));
     }
 
     private function defaultPdftoppmCandidates(): array
@@ -828,16 +534,12 @@ class OpinionsController extends Controller
             $globs = array_merge($globs, glob($localAppData.'\\Microsoft\\WinGet\\Packages\\oschwartz10612.Poppler_*\\*\\Library\\bin\\pdftoppm.exe') ?: []);
         }
         $globs = array_merge($globs, glob('C:\\Users\\*\\AppData\\Local\\Microsoft\\WinGet\\Links\\pdftoppm.exe') ?: []);
-        $globs = array_merge($globs, glob('C:\\Users\\*\\AppData\\Local\\Microsoft\\WinGet\\Packages\\oschwartz10612.Poppler_*\\Release-*\\Library\\bin\\pdftoppm.exe') ?: []);
-        $globs = array_merge($globs, glob('C:\\Users\\*\\AppData\\Local\\Microsoft\\WinGet\\Packages\\oschwartz10612.Poppler_*\\*\\Library\\bin\\pdftoppm.exe') ?: []);
 
-        $fixed = [
+        return array_values(array_filter(array_merge($globs, [
             $localAppData ? $localAppData.'\\Microsoft\\WinGet\\Links\\pdftoppm.exe' : null,
             'C:\\ProgramData\\chocolatey\\bin\\pdftoppm.exe',
             $userProfile ? $userProfile.'\\scoop\\apps\\poppler\\current\\Library\\bin\\pdftoppm.exe' : null,
-        ];
-
-        return array_values(array_filter(array_merge($globs, $fixed), static fn ($v) => is_string($v) && $v !== ''));
+        ]), static fn ($value) => is_string($value) && $value !== ''));
     }
 
     private function renderPdfToImagesUsingImagick(string $pdfPath, string $prefix, int $dpi, int $maxPages): array

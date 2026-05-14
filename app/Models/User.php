@@ -13,6 +13,10 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_ADMIN_RESTRICTED = 'admin_restricted';
+    public const ROLE_USER = 'user';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -64,10 +68,23 @@ class User extends Authenticatable implements MustVerifyEmail
                 $user->name = $fullName;
             }
 
-            $user->role = $user->role ?: 'user';
+            if (! $user->role) {
+                $user->role = $user->is_admin ? self::ROLE_ADMIN : self::ROLE_USER;
+            }
+
             $user->status = $user->status ?: 'active';
-            $user->is_admin = $user->role === 'admin';
+            $user->is_admin = $user->isAdminRole();
         });
+    }
+
+    public function isAdminRole(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_ADMIN_RESTRICTED], true);
+    }
+
+    public function canAccessAmicus(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
     }
 
     public function getFullNameAttribute(): string

@@ -1,6 +1,6 @@
 @php
     $isEdit = $user->exists;
-    $selectedRole = old('role', in_array($user->role, ['admin', 'user'], true) ? $user->role : 'user');
+    $selectedRole = old('role', in_array($user->role, [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_ADMIN_RESTRICTED, \App\Models\User::ROLE_USER], true) ? $user->role : \App\Models\User::ROLE_USER);
 @endphp
 
 @if ($errors->any())
@@ -54,8 +54,9 @@
         <div>
             <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Role</label>
             <select name="role" required class="w-full rounded-2xl border border-slate-900/10 bg-white/80 px-5 py-3.5 text-sm text-slate-900 transition-all focus:border-blue-500/40 focus:ring-blue-500/15">
-                <option value="admin" @selected($selectedRole === 'admin')>Admin</option>
-                <option value="user" @selected($selectedRole === 'user')>User</option>
+                <option value="{{ \App\Models\User::ROLE_ADMIN }}" @selected($selectedRole === \App\Models\User::ROLE_ADMIN)>Full Admin</option>
+                <option value="{{ \App\Models\User::ROLE_ADMIN_RESTRICTED }}" @selected($selectedRole === \App\Models\User::ROLE_ADMIN_RESTRICTED)>Restricted Admin</option>
+                <option value="{{ \App\Models\User::ROLE_USER }}" @selected($selectedRole === \App\Models\User::ROLE_USER)>User</option>
             </select>
         </div>
 

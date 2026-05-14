@@ -18,8 +18,10 @@
         'showRoute' => 'chat.show',
         'createRoute' => 'conversations.store',
         'messagesRoute' => 'messages.store',
+        'documentReviewRoute' => 'document-review.store',
         'toggleSaveRoute' => 'conversations.toggle-save',
         'destroyRoute' => 'conversations.destroy',
+        'reviewableOpinions' => $reviewableOpinions ?? collect(),
         'theme' => 'pro',
     ])
 </x-admin-layout>

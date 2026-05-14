@@ -17,9 +17,13 @@ return new class extends Migration
             $table->text('response');
             $table->json('metadata')->nullable(); // To store source info, model, etc.
             $table->timestamps();
-
-            $table->fullText(['query']);
         });
+
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('ai_learned_knowledge', function (Blueprint $table) {
+                $table->fullText(['query']);
+            });
+        }
     }
 
     /**

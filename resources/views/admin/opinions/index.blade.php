@@ -76,7 +76,7 @@
                                     <div class="text-sm font-semibold text-slate-700">{{ $opinion->opinion_number }}</div>
                                 </td>
                                 <td class="px-8 py-6">
-                                    <div class="text-sm font-semibold text-slate-700">{{ optional($opinion->date)->format('m/d/Y') }}</div>
+                                    <div class="text-sm font-semibold text-slate-700">{{ optional($opinion->date)->format('Y') }}</div>
                                 </td>
                                 <td class="px-8 py-6 text-right">
                                     <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

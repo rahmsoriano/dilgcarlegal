@@ -512,7 +512,7 @@
             }
 
             .sidebar-kb.is-open .sidebar-kb-panel {
-                max-height: 220px;
+                max-height: 320px;
                 opacity: 1;
             }
 
@@ -895,7 +895,7 @@
 
                             @if ($showOpinionsNav && auth()->check() && auth()->user()->is_admin)
                                 @php
-                                    $kbActive = request()->routeIs('admin.opinions.*') || request()->routeIs('admin.faq-responses.*');
+                                    $kbActive = request()->routeIs('admin.opinions.*') || request()->routeIs('admin.faq-responses.*') || request()->routeIs('admin.amicus.*');
                                 @endphp
                                 <div class="sidebar-kb {{ $kbActive ? 'is-open' : '' }}">
                                     <a
@@ -933,19 +933,23 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 1.354-.784 2.535-1.917 3.091-.806.393-1.333 1.19-1.333 2.084v.225m0 3.75h.008v.008H12v-.008z" />
                                                 </svg>
                                             </div>
-                                            <span class="sidebar-nav-label text-sm font-semibold">FAQ Response Manager</span>
+                                            <span class="sidebar-nav-label text-sm font-semibold">FAQ Manager</span>
                                         </a>
+
+                                        @can('manage-amicus')
+                                            <a href="{{ route('admin.amicus.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.amicus.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
+                                                <div class="sidebar-nav-icon" style="background-color: rgba(0, 44, 118, 0.82);">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h10.5A2.25 2.25 0 0 1 19.5 6v12A2.25 2.25 0 0 1 17.25 20.25H6.75A2.25 2.25 0 0 1 4.5 18V6a2.25 2.25 0 0 1 2.25-2.25Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5M8.25 12h7.5M8.25 15.75h4.5" />
+                                                    </svg>
+                                                </div>
+                                                <span class="sidebar-nav-label text-sm font-semibold">Amicus</span>
+                                            </a>
+                                        @endcan
                                     </div>
                                 </div>
 
-                                    <a href="{{ route('admin.users.index') }}" class="sidebar-nav-link {{ request()->routeIs('admin.users.*') ? 'active-link' : '' }} flex items-center gap-3 px-4 py-2 transition-all">
-                                        <div class="sidebar-nav-icon">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a8.966 8.966 0 0 0 3-6.72 9 9 0 1 0-18 0 8.966 8.966 0 0 0 3 6.72m12 0A13.949 13.949 0 0 1 12 21c-2.331 0-4.53-.572-6-1.28m12 0a13.987 13.987 0 0 0-3.75-2.16M6 18.72a13.987 13.987 0 0 1 3.75-2.16m0 0a3.75 3.75 0 1 1 4.5 0m-4.5 0a3.75 3.75 0 0 0 4.5 0" />
-                                            </svg>
-                                        </div>
-                                        <span class="sidebar-nav-label text-sm font-semibold">User Management</span>
-                                    </a>
                                 @endif
                             @endif
 
