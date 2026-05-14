@@ -61,7 +61,9 @@ class ChatController extends Controller
             ->values();
 
         $activeConversation = $this->publicConversationsCollection($request)->firstWhere('id', $conversationId);
-        abort_unless($activeConversation, 404);
+        if (! $activeConversation) {
+            return redirect()->route('legal.ai.new');
+        }
 
         $messages = $this->publicMessagesCollection($request, $conversationId);
 

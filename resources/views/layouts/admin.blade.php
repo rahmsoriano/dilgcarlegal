@@ -1573,15 +1573,24 @@
                     : (preferArchive ? sidebarArchiveRoute : sidebarChatIndexRoute);
             };
 
+            const getPostDeleteRoute = () => sidebarNewChatRoute;
+
+            const redirectToNewChat = () => {
+                const url = `${getPostDeleteRoute()}${getPostDeleteRoute().includes('?') ? '&' : '?'}deleted=1`;
+                window.location.replace(url);
+            };
+
             const maybeRedirectFromStaleConversation = () => {
                 if (!activeConversationId) return;
-                if (getChatItems().length !== 0) return;
+                const activeItemStillExists = getChatItems().some((item) => String(item.dataset.conversationId) === String(activeConversationId));
+                if (activeItemStillExists) return;
 
                 const currentPath = window.location.pathname.replace(/\/+$/, '');
                 const adminDetailPath = `/admin/legal-ai/${activeConversationId}`;
                 const publicDetailPath = `/legal-ai/${activeConversationId}`;
+                const userDetailPath = `/chat/${activeConversationId}`;
 
-                if (currentPath === adminDetailPath || currentPath === publicDetailPath) {
+                if (currentPath === adminDetailPath || currentPath === publicDetailPath || currentPath === userDetailPath) {
                     window.location.replace(sidebarNewChatRoute);
                 }
             };
@@ -1988,7 +1997,7 @@
                     updateBulkSelectionUI();
 
                     if (deletedActive) {
-                        window.location.href = getPostRemovalRoute();
+                        window.location.href = getPostDeleteRoute();
                     }
                 });
             }
@@ -2071,9 +2080,7 @@
                         requestJson('delete', item.dataset.deleteUrl).then(() => {
                             item.remove();
                             ensureEmptyState();
-                            if (activeConversationId && String(activeConversationId) === String(item.dataset.conversationId)) {
-                                window.location.href = getPostRemovalRoute();
-                            }
+                            redirectToNewChat();
                         }).catch(() => {});
                         return;
                     }

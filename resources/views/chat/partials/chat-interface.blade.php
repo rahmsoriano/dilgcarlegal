@@ -1025,9 +1025,9 @@
     }
 
     .chat-send-premium {
-        width: 54px;
-        height: 54px;
-        border-radius: 18px;
+        width: 58px;
+        height: 58px;
+        border-radius: 20px;
         background: linear-gradient(135deg, #1d5eff 0%, #0c45d7 100%) !important;
         color: #ffffff !important;
         box-shadow: 0 14px 30px rgba(29, 94, 255, 0.28);
@@ -1039,7 +1039,19 @@
     }
 
     .chat-send-premium svg {
+        width: 24px;
+        height: 24px;
         color: #ffffff !important;
+    }
+
+    .chat-send-premium[data-mode="stop"] {
+        background: linear-gradient(135deg, #1f56ef 0%, #163eb8 100%) !important;
+        box-shadow: 0 18px 38px rgba(22, 62, 184, 0.34);
+    }
+
+    .chat-send-premium[data-mode="stop"] svg {
+        width: 26px;
+        height: 26px;
     }
 
     @media (max-width: 760px) {
@@ -1239,7 +1251,7 @@
                                 placeholder="Type your legal inquiry here..."
                             ></textarea>
                             <button id="chat-send" type="submit" aria-label="Send" class="chat-send-premium group flex items-center justify-center transition-all duration-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block;">
+                                <svg data-send-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 20px; height: 20px; display: block;">
                                     <path d="M3.478 2.405a.75.75 0 0 1 .81-.163l18 8.25a.75.75 0 0 1 0 1.362l-18 8.25A.75.75 0 0 1 3 19.5v-6.764a.75.75 0 0 1 .553-.724L12 9.75 3.553 7.488A.75.75 0 0 1 3 6.764V3a.75.75 0 0 1 .478-.595Z"/>
                                 </svg>
                             </button>
@@ -1294,6 +1306,35 @@
     const isPro = @json($isPro);
     const sidebarList = document.getElementById('sidebar-chats-list');
     const sidebarEmpty = document.getElementById('sidebar-chats-empty');
+    const sendIconDefault = `
+        <svg data-send-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" style="width: 24px; height: 24px; display: block;">
+            <path d="M3.478 2.405a.75.75 0 0 1 .81-.163l18 8.25a.75.75 0 0 1 0 1.362l-18 8.25A.75.75 0 0 1 3 19.5v-6.764a.75.75 0 0 1 .553-.724L12 9.75 3.553 7.488A.75.75 0 0 1 3 6.764V3a.75.75 0 0 1 .478-.595Z"/>
+        </svg>
+    `;
+    const sendIconStop = `
+        <svg data-send-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5" style="width: 26px; height: 26px; display: block;">
+            <rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor"/>
+        </svg>
+    `;
+
+    let activeGeneration = null;
+
+    const isCanceledRequest = (err) => {
+        return !!(
+            err?.code === 'ERR_CANCELED' ||
+            err?.name === 'CanceledError' ||
+            err?.message === 'canceled'
+        );
+    };
+
+    const setComposerBusy = (busy) => {
+        if (!sendBtn || !promptEl) return;
+        sendBtn.dataset.mode = busy ? 'stop' : 'send';
+        sendBtn.setAttribute('aria-label', busy ? 'Stop generating' : 'Send');
+        sendBtn.title = busy ? 'Stop generating' : 'Send';
+        sendBtn.innerHTML = busy ? sendIconStop : sendIconDefault;
+        promptEl.readOnly = busy;
+    };
 
     const fadeOutSuggestions = () => {
         if (!suggestionsEl || suggestionsEl.classList.contains('is-fading')) return;
@@ -1488,7 +1529,8 @@
         scrollBottomBtn.setAttribute('aria-hidden', near ? 'true' : 'false');
     };
 
-    const typeAssistantResponse = (bodyEl, html) => {
+    const typeAssistantResponse = (bodyEl, html, options = {}) => {
+        const { shouldStop } = options;
         const fullText = assistantHtmlToPlainText(html);
         const cutMatch = fullText.match(/(?:^|\n)\s*Other Related References That Might Help:\s*/i);
         const typedText = cutMatch ? fullText.slice(0, Math.max(0, cutMatch.index ?? 0)).trimEnd() : fullText;
@@ -1507,6 +1549,11 @@
         return new Promise((resolve) => {
             const start = performance.now();
             const tick = (now) => {
+                if (typeof shouldStop === 'function' && shouldStop()) {
+                    bodyEl.textContent = bodyEl.textContent.replace(/\|$/, '');
+                    resolve(false);
+                    return;
+                }
                 const elapsed = now - start;
                 const progress = Math.min(1, elapsed / duration);
                 const chars = Math.max(1, Math.min(length, Math.floor(elapsed / msPerChar)));
@@ -1516,10 +1563,11 @@
                     requestAnimationFrame(tick);
                     return;
                 }
-                resolve();
+                resolve(true);
             };
             requestAnimationFrame(tick);
-        }).then(() => {
+        }).then((completed) => {
+            if (!completed) return;
             bodyEl.innerHTML = String(html ?? '');
             void bodyEl.offsetWidth;
             bodyEl.classList.add('chat-reply-fade-in');
@@ -1550,7 +1598,7 @@
         });
     }
 
-    const ensureConversation = async () => {
+    const ensureConversation = async (requestOptions = {}) => {
         const existingUrl = form.dataset.activeConversationUrl;
         const existingMessagesUrl = form.dataset.messagesUrl;
         const existingId = form.dataset.conversationId;
@@ -1559,12 +1607,13 @@
             return { id: existingId, url: existingUrl, messagesUrl: existingMessagesUrl };
         }
 
-        const resp = await window.axios.post(form.dataset.createUrl, {}, { 
+        const resp = await window.axios.post(form.dataset.createUrl, {}, {
             headers: { 
                 Accept: 'application/json',
                 'X-Loader-Skip': 'true'
             },
             timeout: 45000,
+            ...requestOptions,
         });
         form.dataset.conversationId = String(resp.data.id);
         form.dataset.activeConversationUrl = resp.data.url;
@@ -1585,8 +1634,76 @@
         return { id: resp.data.id, url: resp.data.url, messagesUrl: resp.data.messages_url };
     };
 
+    const clearActiveGeneration = ({ focusPrompt = true } = {}) => {
+        activeGeneration = null;
+        setComposerBusy(false);
+        promptEl.disabled = false;
+        if (focusPrompt) promptEl.focus();
+    };
+
+    const stopActiveGeneration = ({ restorePrompt = true } = {}) => {
+        if (!activeGeneration) return false;
+
+        activeGeneration.stopped = true;
+        activeGeneration.controller?.abort();
+
+        if (restorePrompt && !promptEl.value.trim()) {
+            promptEl.value = activeGeneration.prompt;
+        }
+
+        if (activeGeneration.thinkingEl?.dataset?.thinking === 'true') {
+            activeGeneration.thinkingEl.remove();
+        }
+
+        clearActiveGeneration();
+        return true;
+    };
+
+    const deliverAssistantResponse = async (thinkingEl, content, generation) => {
+        if (!thinkingEl || generation.stopped) return;
+
+        if (thinkingEl.dataset.thinking === 'true') {
+            const body = thinkingEl.querySelector('.whitespace-pre-wrap');
+            if (body) {
+                await typeAssistantResponse(body, content, {
+                    shouldStop: () => generation.stopped,
+                });
+            } else {
+                thinkingEl.remove();
+                const el = renderMessage('assistant', '');
+                const body2 = el.querySelector('.whitespace-pre-wrap');
+                if (body2) {
+                    await typeAssistantResponse(body2, content, {
+                        shouldStop: () => generation.stopped,
+                    });
+                } else {
+                    el.remove();
+                    if (!generation.stopped) renderMessage('assistant', content);
+                }
+            }
+            delete thinkingEl.dataset.thinking;
+            return;
+        }
+
+        const el = renderMessage('assistant', '');
+        const body = el.querySelector('.whitespace-pre-wrap');
+        if (body) {
+            await typeAssistantResponse(body, content, {
+                shouldStop: () => generation.stopped,
+            });
+        } else {
+            el.remove();
+            if (!generation.stopped) renderMessage('assistant', content);
+        }
+    };
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (activeGeneration) {
+            stopActiveGeneration();
+            return;
+        }
 
         errorEl.classList.add('hidden');
         errorEl.textContent = '';
@@ -1595,68 +1712,63 @@
         if (!prompt) return;
 
         fadeOutSuggestions();
-        sendBtn.disabled = true;
-        promptEl.disabled = true;
+        setComposerBusy(true);
+        promptEl.disabled = false;
 
-        renderMessage('user', prompt);
+        const userMessageEl = renderMessage('user', prompt);
         promptEl.value = '';
         const thinkingEl = renderThinkingMessage();
         scrollToBottom();
 
+        const controller = new AbortController();
+        const generation = {
+            controller,
+            prompt,
+            thinkingEl,
+            userMessageEl,
+            stopped: false,
+        };
+        activeGeneration = generation;
+
         try {
-            const conv = await ensureConversation();
-            const resp = await window.axios.post(conv.messagesUrl, { prompt }, { 
+            const conv = await ensureConversation({ signal: controller.signal });
+            generation.conversation = conv;
+
+            const resp = await window.axios.post(conv.messagesUrl, { prompt }, {
                 headers: { 
                     Accept: 'application/json',
                     'X-Loader-Skip': 'true'
                 },
                 timeout: 45000,
+                signal: controller.signal,
             });
+
+            if (generation.stopped || activeGeneration !== generation) return;
+
             const content = resp?.data?.assistant_message?.content ?? '';
-            if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
-                const body = thinkingEl.querySelector('.whitespace-pre-wrap');
-                if (body) {
-                    await typeAssistantResponse(body, content);
-                } else {
-                    thinkingEl.remove();
-                    const el = renderMessage('assistant', '');
-                    const body2 = el.querySelector('.whitespace-pre-wrap');
-                    if (body2) {
-                        await typeAssistantResponse(body2, content);
-                    } else {
-                        el.remove();
-                        renderMessage('assistant', content);
-                    }
-                }
-                delete thinkingEl.dataset.thinking;
-            } else {
-                const el = renderMessage('assistant', '');
-                const body = el.querySelector('.whitespace-pre-wrap');
-                if (body) {
-                    await typeAssistantResponse(body, content);
-                } else {
-                    el.remove();
-                    renderMessage('assistant', content);
-                }
-            }
+            await deliverAssistantResponse(thinkingEl, content, generation);
+            if (generation.stopped || activeGeneration !== generation) return;
             upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(prompt), is_pinned: false });
             scrollToBottom();
         } catch (err) {
+            if (isCanceledRequest(err) || generation.stopped) {
+                return;
+            }
             if (thinkingEl && thinkingEl.dataset.thinking === 'true') thinkingEl.remove();
             const message = err?.response?.data?.message || 'Something went wrong while contacting the AI provider.';
             errorEl.textContent = message;
             errorEl.classList.remove('hidden');
         } finally {
-            sendBtn.disabled = false;
-            promptEl.disabled = false;
-            promptEl.focus();
+            if (activeGeneration === generation) {
+                clearActiveGeneration();
+            }
         }
     });
 
     if (suggestionsEl) {
         suggestionsEl.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-chat-suggestion]');
-            if (!btn || promptEl.disabled) return;
+            if (!btn || activeGeneration) return;
             const question = String(btn.getAttribute('data-chat-suggestion') || '').trim();
             if (!question) return;
 
@@ -1667,6 +1779,10 @@
     }
 
     promptEl.addEventListener('keydown', (e) => {
+        if (activeGeneration && e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            return;
+        }
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             form.requestSubmit();
@@ -1712,6 +1828,9 @@
         if (editBtn) {
             const bubble = editBtn.closest('.chat-user-bubble');
             if (!bubble) return;
+            if (activeGeneration && activeGeneration.userMessageEl?.contains(bubble)) {
+                stopActiveGeneration({ restorePrompt: false });
+            }
             if (bubble.classList.contains('is-editing')) return;
 
             const contentEl = bubble.querySelector('.whitespace-pre-wrap');
@@ -1802,60 +1921,52 @@
                 }
             }
 
-            sendBtn.disabled = true;
-            promptEl.disabled = true;
+            setComposerBusy(true);
+            promptEl.disabled = false;
 
             const thinkingEl = renderThinkingMessage();
             scrollToBottom();
 
+            const controller = new AbortController();
+            const generation = {
+                controller,
+                prompt: editedText,
+                thinkingEl,
+                userMessageEl: msgContainer,
+                stopped: false,
+            };
+            activeGeneration = generation;
+
             (async () => {
                 try {
-                    const conv = await ensureConversation();
+                    const conv = await ensureConversation({ signal: controller.signal });
+                    generation.conversation = conv;
                     const resp = await window.axios.post(conv.messagesUrl, { prompt: editedText }, {
                         headers: {
                             Accept: 'application/json',
                             'X-Loader-Skip': 'true'
                         },
                         timeout: 45000,
+                        signal: controller.signal,
                     });
+                    if (generation.stopped || activeGeneration !== generation) return;
                     const content = resp?.data?.assistant_message?.content ?? '';
-                    if (thinkingEl && thinkingEl.dataset.thinking === 'true') {
-                        const body = thinkingEl.querySelector('.whitespace-pre-wrap');
-                        if (body) {
-                            await typeAssistantResponse(body, content);
-                        } else {
-                            thinkingEl.remove();
-                            const el = renderMessage('assistant', '');
-                            const body2 = el.querySelector('.whitespace-pre-wrap');
-                            if (body2) {
-                                await typeAssistantResponse(body2, content);
-                            } else {
-                                el.remove();
-                                renderMessage('assistant', content);
-                            }
-                        }
-                        delete thinkingEl.dataset.thinking;
-                    } else {
-                        const el = renderMessage('assistant', '');
-                        const body = el.querySelector('.whitespace-pre-wrap');
-                        if (body) {
-                            await typeAssistantResponse(body, content);
-                        } else {
-                            el.remove();
-                            renderMessage('assistant', content);
-                        }
-                    }
+                    await deliverAssistantResponse(thinkingEl, content, generation);
+                    if (generation.stopped || activeGeneration !== generation) return;
                     upsertSidebarConversation({ id: conv.id, url: conv.url, title: normalizeTitle(editedText), is_pinned: false });
                     scrollToBottom();
                 } catch (err) {
+                    if (isCanceledRequest(err) || generation.stopped) {
+                        return;
+                    }
                     if (thinkingEl && thinkingEl.dataset.thinking === 'true') thinkingEl.remove();
                     const message = err?.response?.data?.message || 'Something went wrong while contacting the AI provider.';
                     errorEl.textContent = message;
                     errorEl.classList.remove('hidden');
                 } finally {
-                    sendBtn.disabled = false;
-                    promptEl.disabled = false;
-                    promptEl.focus();
+                    if (activeGeneration === generation) {
+                        clearActiveGeneration();
+                    }
                 }
             })();
 
