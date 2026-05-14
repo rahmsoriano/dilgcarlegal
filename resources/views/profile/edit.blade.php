@@ -39,10 +39,13 @@
             position: sticky;
             top: 0;
             z-index: 30;
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 1px solid rgba(205, 221, 245, 0.9);
+            background:
+                radial-gradient(circle at top left, rgba(255, 222, 21, 0.14), transparent 40%),
+                radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.08), transparent 45%),
+                linear-gradient(90deg, #002C76 0%, #083B8F 45%, #002C76 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(14px);
-            box-shadow: 0 14px 34px rgba(27, 60, 120, 0.06);
+            box-shadow: 0 14px 34px rgba(0, 44, 118, 0.18);
         }
 
         .settings-topbar__inner {
@@ -81,7 +84,7 @@
             font-size: 19px;
             font-weight: 800;
             line-height: 1.1;
-            color: #17306b;
+            color: #ffffff;
         }
 
         .settings-brand__subtitle {
@@ -89,7 +92,7 @@
             margin-top: 4px;
             font-size: 11px;
             font-weight: 500;
-            color: #48618f;
+            color: rgba(255, 255, 255, 0.8);
             letter-spacing: 0.01em;
         }
 
@@ -104,14 +107,14 @@
             display: inline-flex;
             align-items: center;
             gap: 9px;
-            color: #1d3f88;
+            color: rgba(255, 255, 255, 0.9);
             font-size: 14px;
             font-weight: 700;
             transition: color 160ms ease, transform 160ms ease;
         }
 
         .settings-nav-link:hover {
-            color: #0f2f75;
+            color: #ffffff;
             transform: translateY(-1px);
         }
 
@@ -164,16 +167,16 @@
             gap: 12px;
             padding: 10px 14px;
             border-radius: 20px;
-            border: 1px solid #deebfb;
+            border: 1px solid rgba(255, 255, 255, 0.14);
             background: rgba(255, 255, 255, 0.96);
-            box-shadow: 0 12px 28px rgba(23, 58, 118, 0.08);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
             transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
         }
 
         .settings-user:hover {
             transform: translateY(-1px);
-            border-color: #cfe0fb;
-            box-shadow: 0 16px 34px rgba(23, 58, 118, 0.12);
+            border-color: rgba(255, 255, 255, 0.28);
+            box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
         }
 
         .settings-user__avatar {

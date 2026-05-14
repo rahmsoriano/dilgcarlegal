@@ -1442,6 +1442,7 @@
             const bulkSaveLabel = @json($sidebarBulkSaveLabel);
             const sidebarArchiveRoute = @json(route($archiveRoute));
             const sidebarChatIndexRoute = @json(route($chatIndexRoute));
+            const sidebarNewChatRoute = @json(route($newChatRoute));
 
             const globalMenu = document.createElement('div');
             globalMenu.id = 'sidebar-chat-global-menu';
@@ -1545,6 +1546,7 @@
                 }
                 if (items.length > 0 && existing) existing.remove();
                 updateBulkSelectionUI();
+                maybeRedirectFromStaleConversation();
             };
 
             const selectAllEl = document.getElementById('sidebar-select-all');
@@ -1563,6 +1565,25 @@
                     const cb = item.querySelector('.sidebar-chat-select');
                     return cb instanceof HTMLInputElement && cb.checked;
                 });
+            };
+
+            const getPostRemovalRoute = ({ preferArchive = false } = {}) => {
+                return getChatItems().length === 0
+                    ? sidebarNewChatRoute
+                    : (preferArchive ? sidebarArchiveRoute : sidebarChatIndexRoute);
+            };
+
+            const maybeRedirectFromStaleConversation = () => {
+                if (!activeConversationId) return;
+                if (getChatItems().length !== 0) return;
+
+                const currentPath = window.location.pathname.replace(/\/+$/, '');
+                const adminDetailPath = `/admin/legal-ai/${activeConversationId}`;
+                const publicDetailPath = `/legal-ai/${activeConversationId}`;
+
+                if (currentPath === adminDetailPath || currentPath === publicDetailPath) {
+                    window.location.replace(sidebarNewChatRoute);
+                }
             };
 
             const setItemChecked = (item, checked) => {
@@ -1874,6 +1895,7 @@
                 });
                 chatsList.querySelectorAll('.sidebar-chat-item').forEach(updateMenuLabels);
                 updateBulkSelectionUI();
+                maybeRedirectFromStaleConversation();
             }
 
             if (selectAllEl instanceof HTMLInputElement) {
@@ -1966,7 +1988,7 @@
                     updateBulkSelectionUI();
 
                     if (deletedActive) {
-                        window.location.href = @json(route($chatIndexRoute));
+                        window.location.href = getPostRemovalRoute();
                     }
                 });
             }
@@ -2027,7 +2049,7 @@
                                     item.remove();
                                     ensureEmptyState();
                                     if (activeConversationId && String(activeConversationId) === String(item.dataset.conversationId)) {
-                                        window.location.href = sidebarSavedMode ? sidebarArchiveRoute : sidebarChatIndexRoute;
+                                        window.location.href = getPostRemovalRoute({ preferArchive: sidebarSavedMode });
                                     }
                                 }, 180);
                             } else {
@@ -2050,7 +2072,7 @@
                             item.remove();
                             ensureEmptyState();
                             if (activeConversationId && String(activeConversationId) === String(item.dataset.conversationId)) {
-                                window.location.href = @json(route($chatIndexRoute));
+                                window.location.href = getPostRemovalRoute();
                             }
                         }).catch(() => {});
                         return;

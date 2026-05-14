@@ -82,7 +82,9 @@ Route::middleware(['auth', 'active', 'can:admin'])->prefix('admin')->name('admin
     Route::get('/legal-ai', [AdminChatController::class, 'index'])->name('legal.ai');
     Route::get('/legal-ai/new', [AdminChatController::class, 'create'])->name('legal.ai.new');
     Route::get('/legal-ai/saved', [AdminChatController::class, 'saved'])->name('legal.ai.saved');
-    Route::get('/legal-ai/{conversation}', [AdminChatController::class, 'show'])->name('legal.ai.show');
+    Route::get('/legal-ai/{conversation}', [AdminChatController::class, 'show'])
+        ->name('legal.ai.show')
+        ->missing(fn () => redirect()->route('admin.legal.ai.new'));
     Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
     Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
