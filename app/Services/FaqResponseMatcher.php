@@ -74,6 +74,8 @@ class FaqResponseMatcher
         $coverageCandidate = $intersection / $candidateCount;
         $tokenScore = (($coveragePrompt * 0.6) + ($coverageCandidate * 0.4));
 
+        $conceptScore = $this->conceptScore($promptTokens, $candidateTokens);
+
         $containsScore = 0.0;
         if (str_contains($promptNorm, $candidateNorm) || str_contains($candidateNorm, $promptNorm)) {
             $short = min(mb_strlen($promptNorm), mb_strlen($candidateNorm));
@@ -85,8 +87,77 @@ class FaqResponseMatcher
         $similarityScore = $percent / 100;
 
         $orderedBonus = $this->orderedTokenBonus($promptTokens, $candidateTokens);
+        $fuzzyScore = $this->fuzzyTokenScore($promptTokens, $candidateTokens);
 
-        return max($containsScore, min(1.0, ($tokenScore * 0.55) + ($similarityScore * 0.35) + ($orderedBonus * 0.10)));
+        return max(
+            $containsScore,
+            $conceptScore,
+            min(1.0, ($tokenScore * 0.44) + ($similarityScore * 0.24) + ($orderedBonus * 0.10) + ($fuzzyScore * 0.22))
+        );
+    }
+
+    private function conceptScore(Collection $promptTokens, Collection $candidateTokens): float
+    {
+        $promptConcepts = $promptTokens
+            ->filter(fn ($token) => str_contains((string) $token, '_'))
+            ->values();
+        $candidateConcepts = $candidateTokens
+            ->filter(fn ($token) => str_contains((string) $token, '_'))
+            ->values();
+
+        if ($promptConcepts->isEmpty() || $candidateConcepts->isEmpty()) {
+            return 0.0;
+        }
+
+        $shared = $promptConcepts->intersect($candidateConcepts)->count();
+        if ($shared === 0) {
+            return 0.0;
+        }
+
+        $coverage = $shared / max(1, min($promptConcepts->count(), $candidateConcepts->count()));
+
+        return min(1.0, 0.80 + ($coverage * 0.16));
+    }
+
+    private function fuzzyTokenScore(Collection $promptTokens, Collection $candidateTokens): float
+    {
+        $promptValues = $promptTokens->values()->all();
+        $candidateValues = $candidateTokens->values()->all();
+        if (count($promptValues) === 0 || count($candidateValues) === 0) {
+            return 0.0;
+        }
+
+        $matched = 0;
+        foreach ($promptValues as $promptToken) {
+            foreach ($candidateValues as $candidateToken) {
+                if ($promptToken === $candidateToken || $this->tokensAreSimilar((string) $promptToken, (string) $candidateToken)) {
+                    $matched++;
+                    break;
+                }
+            }
+        }
+
+        return $matched / max(1, count($promptValues));
+    }
+
+    private function tokensAreSimilar(string $a, string $b): bool
+    {
+        if ($a === '' || $b === '') {
+            return false;
+        }
+
+        if (str_contains($a, '_') || str_contains($b, '_')) {
+            return false;
+        }
+
+        $short = min(mb_strlen($a), mb_strlen($b));
+        if ($short < 5) {
+            return false;
+        }
+
+        similar_text($a, $b, $percent);
+
+        return $percent >= 84;
     }
 
     private function orderedTokenBonus(Collection $promptTokens, Collection $candidateTokens): float
@@ -124,7 +195,6 @@ class FaqResponseMatcher
         return collect($raw)
             ->map(fn ($token) => trim((string) $token))
             ->filter(fn ($token) => $token !== '')
-            ->map(fn ($token) => str_replace('_', ' ', $token))
             ->filter(fn ($token) => mb_strlen($token) >= 3)
             ->reject(fn ($token) => in_array($token, $stop, true))
             ->unique()

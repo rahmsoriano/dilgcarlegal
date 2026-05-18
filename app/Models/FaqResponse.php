@@ -29,27 +29,67 @@ class FaqResponse extends Model
         $t = mb_strtolower(trim($text));
         $t = str_replace(['’', "'", '`'], '', $t);
         $phraseMap = [
+            'who heads the regional office' => 'who is current_regional_director',
+            'who heads regional office' => 'who is current_regional_director',
+            'who leads the regional office' => 'who is current_regional_director',
+            'who leads regional office' => 'who is current_regional_director',
+            'head of the regional office' => 'current_regional_director',
+            'head of regional office' => 'current_regional_director',
+            'regional office director' => 'regional_director',
+            'director of the region' => 'regional_director',
+            'director of region' => 'regional_director',
+            'head of the region' => 'regional_director',
+            'head of region' => 'regional_director',
+            'regional head' => 'regional_director',
+            'regional chief' => 'regional_director',
             'regional director' => 'regional_director',
+            'rd' => 'regional_director',
+            'incumbent regional_director' => 'current_regional_director',
             'current regional director' => 'current_regional_director',
+            'current regional_director' => 'current_regional_director',
             'present regional director' => 'current_regional_director',
+            'present regional_director' => 'current_regional_director',
             'kasalukuyang regional director' => 'current_regional_director',
+            'kasalukuyang regional_director' => 'current_regional_director',
+            'kasalukuyan regional director' => 'current_regional_director',
+            'kasalukuyan regional_director' => 'current_regional_director',
+            'ngayong regional director' => 'current_regional_director',
+            'ngayong regional_director' => 'current_regional_director',
+            'who heads' => 'who is',
+            'who leads' => 'who is',
+            'sino po' => 'sino',
+            'sino ba' => 'sino',
         ];
 
         foreach ($phraseMap as $from => $to) {
-            $t = str_replace($from, $to, $t);
+            $t = preg_replace('/\b'.preg_quote($from, '/').'\b/u', $to, $t) ?? $t;
         }
 
-        $t = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $t) ?? $t;
+        $t = preg_replace('/[^\p{L}\p{N}_\s]+/u', ' ', $t) ?? $t;
         $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
         $tokenMap = [
+            'actual' => 'current',
+            'existing' => 'current',
+            'incumbent' => 'current',
             'present' => 'current',
+            'presently' => 'current',
             'currently' => 'current',
+            'kasalukuyan' => 'current',
             'kasalukuyang' => 'current',
             'ngayon' => 'current',
+            'ngayong' => 'current',
+            'head' => 'director',
+            'chief' => 'director',
+            'lead' => 'director',
+            'leads' => 'director',
             'sino' => 'who',
             'anu' => 'what',
             'ano' => 'what',
             'paano' => 'how',
+            'kelan' => 'when',
+            'kailan' => 'when',
+            'saan' => 'where',
+            'nasaan' => 'where',
         ];
 
         $parts = preg_split('/\s+/u', trim($t)) ?: [];

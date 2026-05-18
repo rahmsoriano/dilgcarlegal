@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\AiLearnedKnowledge;
 use App\Models\LegalOpinionLibrary;
 use App\Services\FaqResponseMatcher;
+use App\Services\AmicusRetriever;
 use App\Services\GeminiChatClient;
 use App\Services\OpenAiChatClient;
 use App\Services\GroqChatClient;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
 
 class MessageController extends Controller
 {
-    public function storePublic(Request $request, int $conversationId, OpinionRetriever $retriever, GeminiChatClient $gemini, OpenAiChatClient $openai, GroqChatClient $groq, FaqResponseMatcher $faqMatcher)
+    public function storePublic(Request $request, int $conversationId, OpinionRetriever $retriever, AmicusRetriever $amicusRetriever, GeminiChatClient $gemini, OpenAiChatClient $openai, GroqChatClient $groq, FaqResponseMatcher $faqMatcher)
     {
         if (function_exists('set_time_limit')) {
             @set_time_limit(120);
@@ -70,7 +71,7 @@ class MessageController extends Controller
             ];
         }
 
-        $resp = $this->generateChatbotResponse($prompt, $history, $retriever, $gemini, $openai, $groq, $faqMatcher);
+        $resp = $this->generateChatbotResponse($prompt, $history, $retriever, $amicusRetriever, $gemini, $openai, $groq, $faqMatcher);
 
         $assistantContent = $resp['content'];
         $assistantModel = $resp['model'];
@@ -133,7 +134,7 @@ class MessageController extends Controller
         ]);
     }
 
-    public function store(Request $request, Conversation $conversation, OpinionRetriever $retriever, GeminiChatClient $gemini, OpenAiChatClient $openai, GroqChatClient $groq, FaqResponseMatcher $faqMatcher)
+    public function store(Request $request, Conversation $conversation, OpinionRetriever $retriever, AmicusRetriever $amicusRetriever, GeminiChatClient $gemini, OpenAiChatClient $openai, GroqChatClient $groq, FaqResponseMatcher $faqMatcher)
     {
         if (function_exists('set_time_limit')) {
             @set_time_limit(120);
@@ -177,7 +178,7 @@ class MessageController extends Controller
             ];
         }
 
-        $resp = $this->generateChatbotResponse($prompt, $history, $retriever, $gemini, $openai, $groq, $faqMatcher);
+        $resp = $this->generateChatbotResponse($prompt, $history, $retriever, $amicusRetriever, $gemini, $openai, $groq, $faqMatcher);
 
         $assistantContent = $resp['content'];
         $assistantModel = $resp['model'];
@@ -507,7 +508,7 @@ class MessageController extends Controller
         return $bestMatch ?? $options[0];
     }
 
-    private function generateChatbotResponse(string $prompt, array $history, OpinionRetriever $retriever, GeminiChatClient $gemini, OpenAiChatClient $openai, GroqChatClient $groq, FaqResponseMatcher $faqMatcher): array
+    private function generateChatbotResponse(string $prompt, array $history, OpinionRetriever $retriever, AmicusRetriever $amicusRetriever, GeminiChatClient $gemini, OpenAiChatClient $openai, GroqChatClient $groq, FaqResponseMatcher $faqMatcher): array
     {
         $systemPrompt = trim((string) config('services.chat.system_prompt', ''));
         $isSmallTalk = $this->isSmallTalk($prompt);
@@ -561,6 +562,20 @@ class MessageController extends Controller
         }
 
         try {
+            $amicusSections = $isSmallTalk ? [] : $amicusRetriever->retrieve($prompt, 4);
+        } catch (\Throwable $e) {
+            $amicusSections = [];
+        }
+
+        if (count($amicusSections) > 0) {
+            return [
+                'content' => $this->formatAmicusKnowledgeResponse($amicusSections),
+                'model' => 'amicus_knowledge',
+                'provider' => 'amicus_knowledge_base',
+            ];
+        }
+
+        try {
             // 1. Priority: Opinion Library
             $retrievedOpinions = $isSmallTalk ? [] : $retriever->retrieve($prompt, 12);
         } catch (\Throwable $e) {
@@ -592,6 +607,20 @@ class MessageController extends Controller
                     'content' => $this->formatFaqResponse((string) $faqMatch->response),
                     'model' => 'faq',
                     'provider' => 'faq_response_manager',
+                ];
+            }
+
+            try {
+                $amicusSections = $amicusRetriever->retrieve($prompt, 4);
+            } catch (\Throwable $e) {
+                $amicusSections = [];
+            }
+
+            if (count($amicusSections) > 0) {
+                return [
+                    'content' => $this->formatAmicusKnowledgeResponse($amicusSections),
+                    'model' => 'amicus_knowledge',
+                    'provider' => 'amicus_knowledge_base',
                 ];
             }
 
@@ -1832,16 +1861,11 @@ This answer is based on general legal information outside the stored DILG opinio
             return '';
         }
 
-        $escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $escaped = preg_replace_callback('/https?:\/\/[^\s<]+/i', static function ($matches) {
-            $url = (string) ($matches[0] ?? '');
-            $safeUrl = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $text = preg_replace('/^\s*\*\s+/m', '- ', $text) ?? $text;
+        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
 
-            return '<a href="'.$safeUrl.'" target="_blank" rel="noopener noreferrer" class="external-source-link">'.$safeUrl.'</a>';
-        }, $escaped) ?? $escaped;
-
-        $blocks = preg_split("/\n{2,}/", $escaped) ?: [];
-        $paragraphs = [];
+        $blocks = preg_split("/\n{2,}/", $text) ?: [];
+        $html = [];
 
         foreach ($blocks as $block) {
             $block = trim((string) $block);
@@ -1849,10 +1873,160 @@ This answer is based on general legal information outside the stored DILG opinio
                 continue;
             }
 
-            $paragraphs[] = '<p class="chat-faq-paragraph">'.nl2br($block, false).'</p>';
+            $lines = array_values(array_filter(array_map(
+                static fn ($line) => trim((string) $line),
+                preg_split("/\n/u", $block) ?: []
+            ), static fn ($line) => $line !== ''));
+
+            if ($lines === []) {
+                continue;
+            }
+
+            $firstLine = $lines[0];
+            if (count($lines) === 1 && $this->isFaqHeading($firstLine)) {
+                $html[] = '<div class="chat-faq-heading">'.$this->formatFaqInlineText(rtrim($firstLine, ':')).'</div>';
+                continue;
+            }
+
+            if ($this->isFaqListBlock($lines, false)) {
+                $html[] = $this->formatFaqList($lines, false);
+                continue;
+            }
+
+            if ($this->isFaqListBlock($lines, true)) {
+                $html[] = $this->formatFaqList($lines, true);
+                continue;
+            }
+
+            if ($this->isFaqHeading($firstLine) && count($lines) > 1) {
+                $html[] = '<div class="chat-faq-heading">'.$this->formatFaqInlineText(rtrim($firstLine, ':')).'</div>';
+                $remaining = array_slice($lines, 1);
+                if ($this->isFaqListBlock($remaining, false)) {
+                    $html[] = $this->formatFaqList($remaining, false);
+                    continue;
+                }
+                if ($this->isFaqListBlock($remaining, true)) {
+                    $html[] = $this->formatFaqList($remaining, true);
+                    continue;
+                }
+                $html[] = '<p class="chat-faq-paragraph">'.$this->formatFaqInlineText(implode("\n", $remaining), true).'</p>';
+                continue;
+            }
+
+            $html[] = '<p class="chat-faq-paragraph">'.$this->formatFaqInlineText($block, true).'</p>';
         }
 
-        return $paragraphs !== [] ? implode('', $paragraphs) : nl2br($escaped, false);
+        return $html !== [] ? '<div class="chat-faq-answer">'.implode('', $html).'</div>' : $this->formatFaqInlineText($text, true);
+    }
+
+    private function isFaqHeading(string $line): bool
+    {
+        $line = trim($line);
+        if ($line === '' || mb_strlen($line) > 80) {
+            return false;
+        }
+
+        if (str_ends_with($line, ':')) {
+            return true;
+        }
+
+        return preg_match('/^(answer|note|reminder|requirements?|steps?|procedure|legal basis|source|sources|contact|office|summary)$/iu', $line) === 1;
+    }
+
+    private function isFaqListBlock(array $lines, bool $numbered): bool
+    {
+        if ($lines === []) {
+            return false;
+        }
+
+        foreach ($lines as $line) {
+            $pattern = $numbered ? '/^\d+[\.\)]\s+\S/u' : '/^[-•]\s+\S/u';
+            if (preg_match($pattern, (string) $line) !== 1) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function formatFaqList(array $lines, bool $numbered): string
+    {
+        $items = [];
+        foreach ($lines as $line) {
+            $line = preg_replace($numbered ? '/^\d+[\.\)]\s+/u' : '/^[-•]\s+/u', '', (string) $line) ?? (string) $line;
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $items[] = '<li>'.$this->formatFaqInlineText($line).'</li>';
+        }
+
+        if ($items === []) {
+            return '';
+        }
+
+        $tag = $numbered ? 'ol' : 'ul';
+
+        return '<'.$tag.' class="chat-faq-list">'.implode('', $items).'</'.$tag.'>';
+    }
+
+    private function formatFaqInlineText(string $text, bool $preserveBreaks = false): string
+    {
+        $escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escaped = preg_replace_callback('/https?:\/\/[^\s<]+/i', static function ($matches) {
+            $url = rtrim((string) ($matches[0] ?? ''), '.,;)');
+            $trailing = substr((string) ($matches[0] ?? ''), strlen($url));
+            $safeUrl = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+            return '<a href="'.$safeUrl.'" target="_blank" rel="noopener noreferrer" class="external-source-link">'.$safeUrl.'</a>'.$trailing;
+        }, $escaped) ?? $escaped;
+
+        return $preserveBreaks ? nl2br($escaped, false) : $escaped;
+    }
+
+    private function formatAmicusKnowledgeResponse(array $sections): string
+    {
+        $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $sections = array_values(array_filter($sections, fn ($item) => is_array($item) && trim((string) ($item['content'] ?? '')) !== ''));
+        if ($sections === []) {
+            return '';
+        }
+
+        $main = $sections[0];
+        $title = trim((string) ($main['title'] ?? 'AMICUS Knowledge'));
+        $category = trim((string) ($main['category'] ?? ''));
+        $content = trim((string) ($main['content'] ?? ''));
+        $content = preg_replace("/\n{3,}/", "\n\n", str_replace(["\r\n", "\r"], "\n", $content)) ?? $content;
+
+        $out = '<div class="chat-faq-answer">';
+        $out .= '<div class="chat-faq-heading">AMICUS Knowledge Base</div>';
+        $out .= '<p class="chat-faq-paragraph"><strong>'.$escape($title).'</strong>';
+        if ($category !== '') {
+            $out .= '<br><span>'.$escape($category).'</span>';
+        }
+        $out .= '</p>';
+
+        $out .= '<p class="chat-faq-paragraph">'.$this->formatFaqInlineText($content, true).'</p>';
+
+        $others = array_slice($sections, 1, 3);
+        if ($others !== []) {
+            $out .= '<div class="chat-faq-heading">Related AMICUS Sections</div>';
+            $out .= '<ul class="chat-faq-list">';
+            foreach ($others as $section) {
+                $otherTitle = trim((string) ($section['title'] ?? 'Untitled section'));
+                $otherSnippet = trim((string) ($section['snippet'] ?? ''));
+                $item = '<strong>'.$escape($otherTitle).'</strong>';
+                if ($otherSnippet !== '') {
+                    $item .= '<br>'.$escape($otherSnippet);
+                }
+                $out .= '<li>'.$item.'</li>';
+            }
+            $out .= '</ul>';
+        }
+
+        $out .= '</div>';
+
+        return $out;
     }
 
     private function isOpinionListRequest(string $prompt): bool

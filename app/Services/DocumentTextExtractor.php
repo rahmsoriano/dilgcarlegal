@@ -51,17 +51,31 @@ class DocumentTextExtractor
         $path = $file->getPathname();
 
         if ($ext === 'pdf') {
-            $parser = new PdfParser;
-            $pdf = $parser->parseFile($path);
+            $text = '';
 
-            $text = (string) $pdf->getText();
-            $normalized = trim((string) preg_replace('/[ \t]+/', ' ', str_replace(["\r\n", "\r"], "\n", $text)));
+            try {
+                $parser = new PdfParser;
+                $pdf = $parser->parseFile($path);
 
-            if (mb_strlen($normalized) >= 60) {
-                return $text;
+                $text = (string) $pdf->getText();
+                $normalized = trim((string) preg_replace('/[ \t]+/', ' ', str_replace(["\r\n", "\r"], "\n", $text)));
+
+                if ($normalized !== '') {
+                    return $text;
+                }
+            } catch (\Throwable $e) {
+                // Some valid PDFs cannot be decoded by the text parser; OCR may still read them.
             }
 
-            return $this->extractTextFromPdfOcr($path);
+            try {
+                return $this->extractTextFromPdfOcr($path);
+            } catch (\RuntimeException $e) {
+                if (trim($text) !== '') {
+                    return $text;
+                }
+
+                throw $e;
+            }
         }
 
         $zip = new ZipArchive;

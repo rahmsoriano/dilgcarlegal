@@ -58,8 +58,9 @@ class OpinionRetriever
                 $foundIds = collect();
             }
 
-            if ($foundIds->isEmpty() && $idx < 6) {
-                $foundIds = $this->fallbackLikeSearchIds($q, $perQueryLimit);
+            if ($idx < 6) {
+                $fallbackIds = $this->fallbackLikeSearchIds($q, $perQueryLimit);
+                $foundIds = $foundIds->merge($fallbackIds);
             }
 
             $candidateIds = $candidateIds->merge($foundIds);
@@ -77,7 +78,7 @@ class OpinionRetriever
             ? collect()
             : LegalOpinionLibrary::query()
                 ->whereIn('id', $dedupedIds->all())
-                ->get(['id', 'title', 'opinion_number', 'date', 'context', 'keywords']);
+                ->get(['id', 'title', 'opinion_number', 'date', 'context', 'keywords', 'updated_at']);
 
         $scored = $deduped
             ->map(function (LegalOpinionLibrary $op) use ($query, $queryTokens) {
@@ -99,9 +100,17 @@ class OpinionRetriever
                     'op' => $op,
                     'score' => $this->scoreOpinion($op, $query),
                     'match_count' => $matchCount,
+                    'date_sort' => optional($op->date)->timestamp ?? optional($op->updated_at)->timestamp ?? 0,
                 ];
             })
-            ->sortByDesc('score');
+            ->sort(function (array $a, array $b) {
+                $scoreCompare = ((int) ($b['score'] ?? 0)) <=> ((int) ($a['score'] ?? 0));
+                if ($scoreCompare !== 0) {
+                    return $scoreCompare;
+                }
+
+                return ((int) ($b['date_sort'] ?? 0)) <=> ((int) ($a['date_sort'] ?? 0));
+            });
 
         $poolSize = max(12, $limit * 4);
         $pool = $scored->take($poolSize)->values();
@@ -124,6 +133,23 @@ class OpinionRetriever
         }
 
         $ranked = $ranked
+            ->sort(function (array $a, array $b) {
+                $scoreA = (int) ($a['score'] ?? 0);
+                $scoreB = (int) ($b['score'] ?? 0);
+                $dateA = (int) ($a['date_sort'] ?? 0);
+                $dateB = (int) ($b['date_sort'] ?? 0);
+                $closeEnough = abs($scoreA - $scoreB) <= max(8, (int) floor(max($scoreA, $scoreB) * 0.12));
+
+                if ($closeEnough && $dateA !== $dateB) {
+                    return $dateB <=> $dateA;
+                }
+
+                if ($scoreA !== $scoreB) {
+                    return $scoreB <=> $scoreA;
+                }
+
+                return $dateB <=> $dateA;
+            })
             ->take($limit)
             ->values();
 
@@ -141,6 +167,7 @@ class OpinionRetriever
                 'date' => optional($op->date)->format('Y-m-d'),
                 'snippet' => $snippet,
                 'context' => $context,
+                'keywords' => $op->keywords,
                 'url' => route('opinions.public.show', $op),
             ];
         }

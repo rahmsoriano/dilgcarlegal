@@ -10,6 +10,7 @@ use App\Services\GroqChatClient;
 use App\Services\OpenAiChatClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class DocumentReviewController extends Controller
@@ -71,6 +72,11 @@ class DocumentReviewController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         } catch (\Throwable $e) {
+            Log::error('Document review failed.', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+
             return response()->json([
                 'message' => 'Unable to review the selected document right now.',
             ], 500);

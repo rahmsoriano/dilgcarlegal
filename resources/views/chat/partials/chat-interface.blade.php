@@ -472,6 +472,37 @@
         margin-top: 0.9rem;
     }
 
+    .chat-faq-answer {
+        display: block;
+    }
+
+    .chat-faq-heading {
+        margin-top: 1rem;
+        margin-bottom: 0.35rem;
+        font-size: 0.95em;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .chat-faq-answer > .chat-faq-heading:first-child {
+        margin-top: 0;
+    }
+
+    .chat-faq-list {
+        margin: 0.45rem 0 0.95rem;
+        padding-left: 1.25rem;
+    }
+
+    .chat-faq-list li {
+        margin: 0.28rem 0;
+        padding-left: 0.15rem;
+    }
+
+    .chat-faq-paragraph + .chat-faq-list,
+    .chat-faq-list + .chat-faq-paragraph {
+        margin-top: 0.8rem;
+    }
+
     .chat-tool-row {
         display: flex;
         align-items: center;
@@ -602,6 +633,10 @@
     }
 
     .chat-doc-review-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
         min-height: 48px;
         border-radius: 1rem;
         background: linear-gradient(135deg, #002c76 0%, #1947a6 100%);
@@ -615,6 +650,31 @@
     .chat-doc-review-submit:hover {
         transform: translateY(-1px);
         box-shadow: 0 22px 36px rgba(0, 44, 118, 0.22);
+    }
+
+    .chat-doc-review-submit:disabled {
+        cursor: wait;
+        transform: none;
+    }
+
+    .chat-doc-review-submit-spinner {
+        display: none;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 9999px;
+        border: 2px solid rgba(255, 255, 255, 0.42);
+        border-top-color: #ffffff;
+        animation: chat-doc-review-spin 720ms linear infinite;
+    }
+
+    .chat-doc-review-submit.is-loading .chat-doc-review-submit-spinner {
+        display: inline-block;
+    }
+
+    @keyframes chat-doc-review-spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     .chat-doc-review-status {
@@ -1486,7 +1546,8 @@
                                     <div class="chat-doc-review-field">
                                         <label class="chat-doc-review-label">Action</label>
                                         <button id="document-review-submit" type="button" class="chat-doc-review-submit">
-                                            Review Document
+                                            <span class="chat-doc-review-submit-spinner" aria-hidden="true"></span>
+                                            <span id="document-review-submit-label">Review Document</span>
                                         </button>
                                     </div>
 
@@ -1551,6 +1612,7 @@
     const documentReviewOpinionEl = document.getElementById('document-review-opinion');
     const documentReviewFocusEl = document.getElementById('document-review-focus');
     const documentReviewSubmitBtn = document.getElementById('document-review-submit');
+    const documentReviewSubmitLabel = document.getElementById('document-review-submit-label');
     const documentReviewMetaEl = document.getElementById('document-review-meta');
     const documentReviewClearBtn = document.getElementById('document-review-clear');
     const isPro = @json($isPro);
@@ -1599,6 +1661,25 @@
         if (!documentReviewPanel || !documentReviewToggleBtn) return;
         documentReviewPanel.classList.toggle('is-open', open);
         documentReviewToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const setDocumentReviewLoading = (loading) => {
+        if (documentReviewSubmitBtn) {
+            documentReviewSubmitBtn.disabled = loading;
+            documentReviewSubmitBtn.classList.toggle('is-loading', loading);
+            documentReviewSubmitBtn.setAttribute('aria-busy', loading ? 'true' : 'false');
+        }
+        if (documentReviewSubmitLabel) {
+            documentReviewSubmitLabel.textContent = loading ? 'Reviewing...' : 'Review Document';
+        }
+        if (documentReviewMetaEl) {
+            documentReviewMetaEl.textContent = loading ? 'Reviewing document. Please wait...' : (documentReviewMetaEl.dataset.defaultText || 'No file selected.');
+        }
+        if (documentReviewFileBtn) documentReviewFileBtn.disabled = loading;
+        if (documentReviewFileInput) documentReviewFileInput.disabled = loading;
+        if (documentReviewOpinionEl) documentReviewOpinionEl.disabled = loading;
+        if (documentReviewFocusEl) documentReviewFocusEl.disabled = loading;
+        if (documentReviewClearBtn) documentReviewClearBtn.disabled = loading;
     };
 
     const escapeHtml = (value) => String(value ?? '')
@@ -1984,7 +2065,9 @@
             parts.push(`Selected opinion: ${selectedText}`);
         }
 
-        documentReviewMetaEl.textContent = parts.length > 0 ? parts.join(' • ') : 'No file selected.';
+        const text = parts.length > 0 ? parts.join(' • ') : 'No file selected.';
+        documentReviewMetaEl.dataset.defaultText = text;
+        documentReviewMetaEl.textContent = text;
         if (parts.length > 0) {
             setDocumentReviewOpen(true);
         }
@@ -2007,6 +2090,7 @@
 
         fadeOutSuggestions();
         setComposerBusy(true);
+        setDocumentReviewLoading(true);
 
         const summaryTitle = file ? `Please review this document: ${file.name}` : `Please review the selected legal opinion${documentReviewOpinionEl?.selectedOptions?.[0]?.textContent ? `: ${documentReviewOpinionEl.selectedOptions[0].textContent.trim()}` : ''}`;
         renderMessage('user', summaryTitle);
@@ -2022,10 +2106,9 @@
             const resp = await window.axios.post(form.dataset.documentReviewUrl, payload, {
                 headers: {
                     Accept: 'application/json',
-                    'Content-Type': 'multipart/form-data',
                     'X-Loader-Skip': 'true',
                 },
-                timeout: 120000,
+                timeout: 300000,
             });
 
             const reviewTitle = escapeHtml(resp?.data?.title || 'Document Review');
@@ -2045,6 +2128,7 @@
             }
             showComposerError(err?.response?.data?.message || 'Unable to review the document right now.');
         } finally {
+            setDocumentReviewLoading(false);
             setComposerBusy(false);
         }
     };
